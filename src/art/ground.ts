@@ -26,6 +26,10 @@ export function paintGround(map: WorldMap, seed: number): { ground: HTMLCanvasEl
   paintMarkings(p, map, at);
   paintPlayground(p, map);
   paintBushes(p, at, seed);
+  paintGardens(p, map, at, seed);
+  paintShores(p, map, at, seed);
+  paintForestDetails(p, map, at, seed);
+  paintBusStop(p, map, at);
 
   // Stíny budov a stromů nejdřív, ať se nekreslí přes střechy a koruny.
   for (const b of map.buildings) {
@@ -385,6 +389,130 @@ function paintBushes(p: Painter, at: (x: number, y: number) => number, seed: num
       p.blob(cx - 2, cy - 2, 2, 0x4f8a38, h * 50);
       if (h < 0.015) for (let i = 0; i < 4; i++) p.px(cx - 3 + Math.floor(p.rnd() * 6), cy - 3 + Math.floor(p.rnd() * 6), PAL.flower[i % 4]);
     }
+  }
+}
+
+// ---------- Zahrádky, břehy, les, zastávka ----------
+
+/** Za domky zahrádky: záhony s řádky zeleniny a laťkový plot s brankou. */
+function paintGardens(p: Painter, map: WorldMap, at: (x: number, y: number) => number, seed: number): void {
+  for (const b of map.buildings) {
+    if (b.name !== 'Dům') continue;
+    const gx0 = b.x - 1;
+    const gy0 = b.y - 3;
+    const gw = b.w + 2;
+    const gh = 3;
+    let free = true;
+    for (let y = gy0; y < gy0 + gh; y++) for (let x = gx0; x < gx0 + gw; x++) if (at(x, y) !== Tile.Grass) free = false;
+    if (!free) continue;
+    const x = gx0 * TILE + 3;
+    const y = gy0 * TILE + 3;
+    const w = gw * TILE - 6;
+    const h = gh * TILE - 3;
+    // Záhony: střídavě hlína a řádek rostlin
+    const v = hash2(b.x, b.y, seed + 61);
+    const crop = v < 0.33 ? 0x4f8a38 : v < 0.66 ? 0x6aa040 : 0x3a7a3a;
+    for (let j = 4; j < h - 4; j += 5) {
+      p.rect(x + 4, y + j, w - 8, 3, 0x6a4e30);
+      p.noise(x + 4, y + j, w - 8, 3, [0x5a4026, 0x7a5a38], 0.3);
+      for (let i = x + 5; i < x + w - 5; i += 2) p.px(i, y + j + 1, crop);
+      for (let i = x + 6; i < x + w - 5; i += 4) p.px(i, y + j, shade(crop, 1.3));
+    }
+    // Plot s brankou (mezera vpravo dole)
+    const fence = 0xd8c8a0;
+    const post = 0x7a6a4a;
+    p.rect(x, y, w, 1, fence);
+    p.rect(x, y, 1, h, fence);
+    p.rect(x + w - 1, y, 1, h, fence);
+    p.rect(x, y + h - 1, w - 10, 1, fence);
+    for (let i = 0; i < w; i += 4) {
+      p.px(x + i, y, post);
+      if (i < w - 10) p.px(x + i, y + h - 1, post);
+    }
+    for (let j = 0; j < h; j += 4) {
+      p.px(x, y + j, post);
+      p.px(x + w - 1, y + j, post);
+    }
+    p.rect(x + 2, y + h, w - 2, 1, PAL.shadow, 0.25);
+  }
+}
+
+/** Rákos na břehu a lekníny na klidné vodě. */
+function paintShores(p: Painter, map: WorldMap, at: (x: number, y: number) => number, seed: number): void {
+  for (let ty = 1; ty < map.height - 1; ty++) {
+    for (let tx = 1; tx < map.width - 1; tx++) {
+      const tile = at(tx, ty);
+      const h = hash2(tx, ty, seed + 71);
+      const nearWater = [at(tx + 1, ty), at(tx - 1, ty), at(tx, ty + 1), at(tx, ty - 1)].includes(Tile.Water);
+      if (tile === Tile.Grass && nearWater && h < 0.45) {
+        for (let i = 0; i < 9; i++) {
+          const rx = tx * TILE + 2 + Math.floor(p.rnd() * 12);
+          const ry = ty * TILE + 2 + Math.floor(p.rnd() * 12);
+          p.px(rx, ry, 0x5a7a2a);
+          p.px(rx + 1, ry - 1, 0x7a9a3a);
+          if (p.rnd() < 0.3) p.rect(rx, ry - 2, 1, 2, 0x6a4024);
+        }
+      }
+      if (tile === Tile.Water && h < 0.07 && ty > 66) {
+        // Leknín: zelený list se zářezem, občas květ
+        const cx = tx * TILE + 8;
+        const cy = ty * TILE + 8;
+        p.ellipse(cx, cy, 3, 2, 0x3a7a3a);
+        p.px(cx + 2, cy, 0x2a5f93);
+        p.px(cx - 1, cy - 1, 0x5a9a4a);
+        if (h < 0.025) p.px(cx, cy, 0xf0c0d8);
+      }
+    }
+  }
+}
+
+/** Les: padlé kmeny, muchomůrky a kapradí. */
+function paintForestDetails(p: Painter, map: WorldMap, at: (x: number, y: number) => number, seed: number): void {
+  for (let ty = 0; ty < map.height; ty++) {
+    for (let tx = 0; tx < map.width; tx++) {
+      if (at(tx, ty) !== Tile.ForestFloor) continue;
+      const h = hash2(tx, ty, seed + 83);
+      const x = tx * TILE;
+      const y = ty * TILE;
+      if (h < 0.03) {
+        p.rect(x + 2, y + 7, 12, 3, 0x5a3e24);
+        p.rect(x + 2, y + 7, 12, 1, 0x7a5636);
+        p.ellipse(x + 13, y + 8, 1, 1, 0xb08a5a);
+        p.px(x + 6, y + 6, 0x3f6a30);
+      } else if (h < 0.06) {
+        for (const [mx, my] of [[5, 6], [9, 9], [6, 11]]) {
+          p.rect(x + mx, y + my, 2, 2, 0xd02a1a);
+          p.px(x + mx, y + my, 0xffffff);
+        }
+      } else if (h < 0.14) {
+        const cx = x + 8;
+        const cy = y + 8;
+        for (let a = 0; a < 6; a++) {
+          const ang = (a / 6) * Math.PI * 2 + h * 10;
+          p.line(cx, cy, cx + Math.cos(ang) * 4, cy + Math.sin(ang) * 4, 0x4a8a3a);
+        }
+      }
+    }
+  }
+}
+
+/** Autobusová zastávka u hlavní silnice severně od návsi. */
+function paintBusStop(p: Painter, map: WorldMap, at: (x: number, y: number) => number): void {
+  const ty = CROSS_ROAD_Y - 9;
+  const mx = mainRoadX(ty, map.phase);
+  for (const tx of [mx + 2, mx - 1]) {
+    if (at(tx, ty) !== Tile.Sidewalk || at(tx, ty + 1) !== Tile.Sidewalk) continue;
+    const x = tx * TILE + 3;
+    const y = ty * TILE + 2;
+    p.rect(x + 2, y + 2, 10, 24, PAL.shadow, 0.3);
+    p.rect(x, y, 10, 24, 0x5a6a7a);
+    p.rect(x, y, 10, 1, 0x9aaabb);
+    p.rect(x + 1, y + 1, 8, 22, 0x6e7e8e);
+    p.rect(x + 1, y + 3, 1, 18, 0x9ac0d8);
+    // Cedule: žlutý ovál se zeleným „A“ pruhem
+    p.ellipse(x + 5, y + 28, 2, 2, 0xe8c020);
+    p.px(x + 5, y + 28, 0x2a7a3a);
+    return;
   }
 }
 

@@ -144,7 +144,7 @@ Hotovo:
 - Noc ve světě, reflektory aut, stíny budov a komíny.
 
 Zbývá do budoucna:
-- Ručně kreslený pixel-art místo grafiky kreslené kódem.
+- Grafika je pixel-art kreslený kódem po pixelech (src/art): malovaná mapa, sprity aut a postav s animací chůze, stopy na zemi, noční světla. Další krok by byl ručně kreslený tileset v editoru.
 - Krásná a Lysá hora.
 - Členové skupin za volantem, gamepad a ovládání na mobilu.
 
