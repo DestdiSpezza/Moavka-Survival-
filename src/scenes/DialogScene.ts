@@ -73,6 +73,10 @@ export class DialogScene extends Phaser.Scene {
     if (node.speaker === 'hero' || node.speaker === 'narrator') {
       this.portrait.setTexture(ctx.hero.gender === 'f' ? 'player-f' : 'player').setVisible(node.speaker === 'hero');
       this.nameText.setText(node.speaker === 'hero' ? ctx.hero.name : '').setColor('#9fffa0');
+    } else if (node.speaker === 'guest') {
+      const guest = this.dlg.dialog.guest ?? { name: '???', css: '#ffffff', sprite: 'ped-0' };
+      this.portrait.setTexture(guest.sprite).setVisible(true);
+      this.nameText.setText(guest.name).setColor(guest.css);
     } else {
       const npc = NPCS[node.speaker];
       this.portrait.setTexture(npc.sprite).setVisible(true);

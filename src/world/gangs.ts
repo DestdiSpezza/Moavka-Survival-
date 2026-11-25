@@ -24,11 +24,16 @@ export interface GroupSpec {
 }
 
 export const GROUPS: Record<GroupId, GroupSpec> = {
-  drevari: {
-    id: 'drevari', name: 'Dřevaři', color: 0xb03a2a, css: '#e0583f', members: 5, hp: 120, speed: 58,
+  hasici: {
+    id: 'hasici', name: 'Hasiči', color: 0xc8302a, css: '#e0583f', members: 5, hp: 120, speed: 60,
     melee: { damage: 13, range: 18, cooldown: 1.5 }, ranged: null, fleeAt: 0,
-    spotted: ['{To je on! Na pilu s ním!|To je ona! Na pilu s ní!}', 'Seš na našem dříví, čírko!', 'Vem sekeru, Franto!'],
-    helping: ['Nech ho bejt, ten je náš!', 'Sekera už se těší!'],
+    spotted: [
+      '{To je on! Ten, co nám zapálil popelnici!|To je ona! Ta, co nám zapálila popelnici!}',
+      'Kluci, sekery! Zásah!',
+      '{Tebe uhasíme, čírko!|Tebe uhasíme, čírko!}',
+      'Na tebe nepotřebujem hadici, stačí lopata!',
+    ],
+    helping: ['SDH Morávka, zásah!', 'Tohle hasíme my!', '{Nech ho bejt, ten je náš!|Nech ji bejt, ta je naše!}'],
   },
   stamgasti: {
     id: 'stamgasti', name: 'Štamgasti', color: 0xd8b030, css: '#f0c840', members: 5, hp: 70, speed: 55,
@@ -36,14 +41,8 @@ export const GROUPS: Record<GroupId, GroupSpec> = {
     spotted: ['{To je on! Ten, co nezaplatil útratu!|To je ona! Ta, co nezaplatila útratu!}', 'Hospodo, podrž mi pivo!', '{Ty seš ten punkáč!|Ty seš ta punkačka!}'],
     helping: ['Na zdraví, fízlové!', 'Za našeho kámoše!'],
   },
-  ekologove: {
-    id: 'ekologove', name: 'Biomatky', color: 0x3aa04a, css: '#5ad06a', members: 6, hp: 50, speed: 75,
-    melee: null, ranged: { kind: 'rock', damage: 8, range: 170, cooldown: 1.3 }, fleeAt: 0.3,
-    spotted: ['{To je on! Vrah stromů!|To je ona! Vražedkyně stromů!}', 'Smrdíš benzínem!', 'Za Beskydy!'],
-    helping: ['Policejní auta smrdí taky!', 'Za svobodu a les!'],
-  },
-  skola: {
-    id: 'skola', name: 'Omladina', color: 0x9a4ad0, css: '#c07af0', members: 6, hp: 45, speed: 98,
+  omladina: {
+    id: 'omladina', name: 'Omladina', color: 0x9a4ad0, css: '#c07af0', members: 6, hp: 45, speed: 98,
     melee: { damage: 8, range: 16, cooldown: 0.8 }, ranged: { kind: 'firework', damage: 15, range: 130, cooldown: 3.2 }, fleeAt: 0.4,
     spotted: ['{To je on!|To je ona!} Kluci, sem!', '{Ty vole, to je ten týpek!|Ty vole, to je ta holka!}', 'Dej mobil, {punkáči|punkačko}!'],
     helping: ['Fízlové, chytněte si nás!', 'Kluci, petardy!'],
@@ -56,25 +55,21 @@ function zone(map: WorldMap, name: string): Zone {
   return z;
 }
 
-/** Území skupiny (kde tě nepřátelská skupina napadne). Biomatky jsou všude (auta nesnáší kdekoli). */
+/** Území skupiny (kde tě nepřátelská skupina napadne). Hasiči hlídají zbrojnici a náves (a pijou v eRku). */
 export function territory(map: WorldMap, id: GroupId): Zone[] {
   switch (id) {
-    case 'drevari':
-      return [zone(map, 'Pila'), zone(map, 'Hospoda')];
+    case 'hasici':
+      return [zone(map, 'Hasiči')];
     case 'stamgasti':
       return [zone(map, 'Hospoda')];
-    case 'skola':
+    case 'omladina':
       return [zone(map, 'Škola')];
-    case 'ekologove':
-      return [{ name: 'Morávka', x: 0, y: 0, w: map.width, h: map.height }];
   }
 }
 
-/** Kde se členové objevují: Dřevaři na pile, Štamgasti u hospody, Omladina u školy, Biomatky u školky. */
+/** Kde se členové objevují: Hasiči u zbrojnice, Štamgasti u hospody, Omladina u hřiště za školou. */
 export function spawnAreas(map: WorldMap, id: GroupId): Zone[] {
-  if (id === 'drevari') return [zone(map, 'Pila')];
-  if (id !== 'ekologove') return territory(map, id);
-  return map.ecoSpawn;
+  return territory(map, id);
 }
 
 export function inZones(zones: Zone[], tx: number, ty: number): boolean {

@@ -1,6 +1,6 @@
 # Survive Morávka
 
-2D hra s pohledem shora z obce Morávka v Beskydech. Příběh po aktech, volný pohyb, krádeže aut, soupeřící skupiny (Dřevaři, Štamgasti, Biomatky, Omladina), respekt, policejní hledanost a pořádný chaos. Hraješ za hrdinu, nebo hrdinku, kterou na Morávku vytáhl příspěvek o festivalu v eRku.
+2D hra s pohledem shora z obce Morávka v Beskydech. Příběh po aktech, volný pohyb, krádeže aut, soupeřící skupiny (Hasiči, Štamgasti, Omladina), respekt, policejní hledanost a pořádný chaos. Hraješ za hrdinu, nebo hrdinku, kterou na Morávku vytáhl příspěvek o festivalu v eRku.
 
 Černý humor, nadsázka, trochu punk. Pixel-art. Česky.
 
@@ -13,7 +13,7 @@ Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 | | |
 |---|---|
 | Pěšky | WASD / šipky, SHIFT sprint, myš míření, levé tlačítko útok |
-| Zbraně | 1–5 výběr, Q nebo kolečko další |
+| Zbraně | 1–5 výběr, 6 beskydský čaj (když ho máš), Q nebo kolečko další |
 | Auto | E nastoupit / ukrást / vystoupit, W/S plyn a brzda, A/D zatáčení, MEZERNÍK ruční brzda, R rádio, levé tlačítko střelba z okna |
 | Rozhovor | E u postavy, 1–3 nebo myš volba (vždy tři možnosti) |
 | Hospoda eRko | E u dveří vejít, uvnitř E u dveří ven |
@@ -24,6 +24,7 @@ Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 ## Co ve hře je
 
 - Příběh po aktech. Akt 1 (Příjezd): autobus tě vysadí před eRkem, Slečna Kobyla tě pošle do hospody, uvnitř Prchard, servírka Plotková a osm štamgastů, se kterými jde mluvit.
+- Mise od štamgastů: prodej beskydského čaje Omladině s handlováním o cenu (Omyx), odvoz Zjebala domů na čas a výslech od Ajiny, kradené auto pro Vysokého Dennyho, lešení traktorem s vlečkou pro Dennyho sochaře.
 - Dvě oblasti: Morávka a Raškovice. Do Raškovic tě pustí až příběh. Mapa Morávky vychází ze skutečné vesnice ([náhled](docs/mapa-moravka.jpg)).
 - Čtyři skupiny v každé oblasti a respekt.
 - Policie s pěti úrovněmi hledanosti, zátarasy a zásahovkou. Hledanost roste, jen když tě někdo viděl: svědci volají policii a podle jejich popisu tě hledají.

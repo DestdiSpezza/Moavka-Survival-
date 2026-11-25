@@ -5,12 +5,17 @@ import { Step, type StepResult } from '../missions/steps';
 import { actOf, missionOf, nextMission } from '../story/acts';
 import type { Dialog, DialogCtx } from '../story/dialog';
 import { DIALOGS, RANDOM_STAMGAST, randomStamgast } from '../story/dialogs';
+import { allJobsDone, doneFlag, jobBy, jobOf, jobStatus, type JobId } from '../story/jobs';
 import { inPub, type NpcId } from '../story/npcs';
+import { Trailer } from '../entities/Trailer';
 import type { Point } from '../systems/combat';
 import type { StoryState } from '../systems/save';
 import type { DialogData } from './DialogScene';
 import type { GameScene } from './GameScene';
 import { Intro } from './Intro';
+import { createJob } from './jobs';
+import type { Job } from './jobs/Job';
+import { jobActiveDialog, jobOfferDialog } from './jobs/offers';
 
 export interface MissionHud {
   title: string;
@@ -50,8 +55,14 @@ export class Story {
   private intro: Intro | null = null;
   private marker: Phaser.GameObjects.Arc;
   private miniMarker: Phaser.GameObjects.Arc;
-  /** Oznámení, které počká, až bude hráč zase venku (z hospody se banner neukáže). */
-  private pending: { banner: string; toast: string } | null = null;
+  /** Oznámení, která počkají, až bude hráč zase venku (z hospody se banner neukáže). */
+  private pending: Array<{ banner: string; toast: string }> = [];
+  /** Rozdělaná mise od štamgasta. */
+  job: Job | null = null;
+  /** Vlečka za traktorem před eRkem (mise Dennyho sochaře). */
+  trailer: Trailer | null = null;
+  /** Dialogy, které vznikají za běhu (handlování, garáž, nabídky misí). */
+  private dynamic = new Map<string, () => Dialog | null>();
 
   constructor(private game: GameScene) {
     this.state = game.progress.story;
@@ -62,7 +73,9 @@ export class Story {
     this.miniMarker = game.add.circle(0, 0, 50, 0xffd23f).setDepth(21).setVisible(false);
     game.cameras.main.ignore(this.miniMarker);
     game.cameras.getCamera('minimap')?.ignore(this.marker);
+    this.attachTrailer();
     this.startMission();
+    this.resumeJob();
   }
 
   get hero() {
@@ -94,8 +107,10 @@ export class Story {
     return this.state.known.includes(id);
   }
 
-  /** Je postava teď v eRku? */
+  /** Je postava teď v eRku? (Zjebal čeká venku na odvoz, Denny sochař v ateliéru na lešení.) */
   inPub(id: NpcId): boolean {
+    if (id === 'zjebal' && this.state.job === 'zjebal-domu') return false;
+    if (id === 'dennySochar' && this.state.job === 'sochar-leseni') return false;
     return inPub(id, this.game.gangs.minute, this.festival);
   }
 
@@ -130,7 +145,31 @@ export class Story {
   }
 
   private dialogById(id: string): Dialog | null {
+    const dyn = this.dynamic.get(id);
+    if (dyn) return dyn();
     return DIALOGS[id === RANDOM_STAMGAST ? randomStamgast(this.game.random) : id] ?? null;
+  }
+
+  /** Dialog, který vzniká až za běhu (navazuje se na něj přes `then: id`). */
+  setDynamic(id: string, make: () => Dialog | null): void {
+    this.dynamic.set(id, make);
+  }
+
+  /**
+   * Rozhovor s postavou: když má pro hráče misi, nejdřív ji nabídne (nebo se zeptá,
+   * jak to jde); „Radši pokecáme“ vede na její běžný dialog `base`.
+   */
+  talkNpc(npc: NpcId, caller = 'Game', base?: Dialog, onDone?: () => void): void {
+    let baseId: string = npc;
+    if (base) {
+      baseId = `base:${npc}`;
+      this.setDynamic(baseId, () => base);
+    }
+    const def = jobBy(npc);
+    const status = def ? jobStatus(def.id, this.state.job, this.state.flags) : 'done';
+    if (def && status === 'open') this.talk(jobOfferDialog(this, def.id, baseId), caller, onDone);
+    else if (def && status === 'active') this.talk(jobActiveDialog(this, def.id, baseId), caller, onDone);
+    else this.talk(baseId, caller, onDone);
   }
 
   /** Otevře dialog; scéna `caller` mezitím stojí. */
@@ -185,20 +224,99 @@ export class Story {
     const done = missionOf(this.state.mission);
     this.state.mission = nextMission(this.state.mission);
     if (done && !this.state.mission) {
-      this.pending = { banner: `AKT ${this.state.act} POKRAČUJE…`, toast: 'Festival v eRku jede naplno. Rozhlédni se po Morávce.' };
+      this.announce(`AKT ${this.state.act} POKRAČUJE…`, 'Festival v eRku jede naplno. Štamgasti mají pro tebe práci.');
       Sound.jingle(true);
     }
     this.startMission();
     this.game.saveGame(false);
   }
 
+  /** Traktor před eRkem dostane vlečku. */
+  private attachTrailer(): void {
+    const g = this.game;
+    const tractor = g.vehicles
+      .filter((v) => v.spec.kind === 'traktor' && !v.owner && Phaser.Math.Distance.Between(v.x, v.y, this.pubDoor.x, this.pubDoor.y) < 160)
+      .sort((a, b) => Phaser.Math.Distance.Between(a.x, a.y, this.pubDoor.x, this.pubDoor.y) - Phaser.Math.Distance.Between(b.x, b.y, this.pubDoor.x, this.pubDoor.y))[0];
+    if (!tractor) return;
+    this.trailer = new Trailer(g, tractor);
+    this.trailer.ignoreOn(g.cameras.getCamera('minimap') ?? undefined);
+  }
+
+  /** Banner a hláška; když je hráč v hospodě, počkají, až vyjde ven. */
+  announce(banner: string, toast: string): void {
+    this.pending.push({ banner, toast });
+  }
+
+  // ---------- Mise od štamgastů ----------
+
+  /** Hráč misi přijal v rozhovoru. */
+  startJob(id: JobId): void {
+    if (this.job) return;
+    this.state.job = id;
+    const job = createJob(id, this.game, this);
+    this.job = job;
+    job.start();
+    Sound.jingle(true);
+    this.game.saveGame(false);
+  }
+
+  /** Po načtení hry: rozprodávání čaje pokračuje (čaj je v kapse), ostatní mise se zruší. */
+  private resumeJob(): void {
+    const id = this.state.job as JobId;
+    if (!id) return;
+    if (id === 'omyx-caj' && this.game.player.arsenal.ammo.caj > 0) {
+      const job = createJob(id, this.game, this);
+      this.job = job;
+      job.start(true);
+      return;
+    }
+    this.state.job = '';
+    if (jobOf(id)) this.announce('', `Rozdělaná mise „${jobOf(id)!.title}“ se po načtení zrušila. Vezmi si ji znovu.`);
+  }
+
+  private finishJob(ok: boolean, reason = ''): void {
+    const job = this.job;
+    if (!job) return;
+    const def = jobOf(job.id)!;
+    job.cleanup();
+    this.job = null;
+    this.state.job = '';
+    if (ok) {
+      this.flag(doneFlag(def.id));
+      if (def.reward.money) this.game.player.money += def.reward.money;
+      this.state.rel[def.giver] = Phaser.Math.Clamp((this.state.rel[def.giver] ?? 0) + def.reward.rel, -100, 100);
+      const pay = def.reward.money ? ` +${def.reward.money} Kč.` : '';
+      this.announce(`MISE SPLNĚNA: ${def.title.toUpperCase()}`, `${job.doneText}${pay}`.trim());
+      Sound.jingle(true);
+      if (allJobsDone(this.state.flags) && !this.has('a1-jobsDone')) {
+        this.flag('a1-jobsDone');
+        this.announce(`AKT ${this.state.act} POKRAČUJE…`, 'Všichni štamgasti jsou spokojení. Teda na jejich poměry.');
+      }
+    } else {
+      this.announce('MISE NEVYŠLA', reason || job.failReason);
+      Sound.jingle(false);
+    }
+    this.game.saveGame(false);
+  }
+
+  /** Hráč to vzdal v rozhovoru s tím, kdo misi dal. */
+  abandonJob(): void {
+    this.finishJob(false, 'Vzdáno. Štamgasti si to budou pamatovat. Do zítřka, pak zapomenou.');
+  }
+
   update(dt: number): void {
     const g = this.game;
     this.intro?.update(dt);
-    if (this.pending && !this.cutscene) {
-      g.events.emit('banner', this.pending.banner);
-      g.toast(this.pending.toast);
-      this.pending = null;
+    this.trailer?.update();
+    if (this.pending.length && !this.cutscene && !this.dialogOpen) {
+      const p = this.pending.shift()!;
+      if (p.banner) g.events.emit('banner', p.banner);
+      if (p.toast) g.toast(p.toast);
+    }
+    if (this.job && !this.dialogOpen) {
+      const r = this.job.update(dt);
+      if (r === 'done') this.finishJob(true);
+      else if (r === 'fail') this.finishJob(false);
     }
     const step = this.steps[this.index];
     if (step) {
@@ -217,10 +335,14 @@ export class Story {
     const g = this.game;
     const step = this.steps[this.index];
     const m = missionOf(this.state.mission);
-    const target = step?.target() ?? null;
+    const job = !step && this.job ? this.job : null;
+    const target = step?.target() ?? job?.target() ?? null;
     const act = actOf(this.state.act);
     g.registry.set('act', `Akt ${act.num}: ${act.title}`);
-    g.registry.set('mission', m && step ? ({ title: `AKT ${act.num} · ${m.title.toUpperCase()}`, objective: step.objective(), target } satisfies MissionHud) : null);
+    let hud: MissionHud | null = null;
+    if (m && step) hud = { title: `AKT ${act.num} · ${m.title.toUpperCase()}`, objective: step.objective(), target };
+    else if (job) hud = { title: `AKT ${act.num} · ${jobOf(job.id)!.title.toUpperCase()}`, objective: job.objective(), target };
+    g.registry.set('mission', hud);
     this.marker.setVisible(!!target);
     this.miniMarker.setVisible(!!target);
     if (target) {

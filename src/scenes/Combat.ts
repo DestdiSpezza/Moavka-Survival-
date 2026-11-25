@@ -49,7 +49,7 @@ export interface CrimeEvent {
   witness?: Pedestrian;
 }
 
-type WeaponKeys = Record<'one' | 'two' | 'three' | 'four' | 'five' | 'cycle', Phaser.Input.Keyboard.Key>;
+type WeaponKeys = Record<'one' | 'two' | 'three' | 'four' | 'five' | 'six' | 'cycle', Phaser.Input.Keyboard.Key>;
 
 /**
  * Boj: zbraně hráče, střelba (i z auta), chodci a jejich reakce,
@@ -72,7 +72,7 @@ export class Combat {
   constructor(private game: GameScene) {
     const scene = game;
     const kb = scene.input.keyboard!;
-    this.keys = kb.addKeys({ one: 'ONE', two: 'TWO', three: 'THREE', four: 'FOUR', five: 'FIVE', cycle: 'Q' }) as WeaponKeys;
+    this.keys = kb.addKeys({ one: 'ONE', two: 'TWO', three: 'THREE', four: 'FOUR', five: 'FIVE', six: 'SIX', cycle: 'Q' }) as WeaponKeys;
     scene.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => {
       if (dy !== 0) this.setArsenal(cycleWeapon(this.player.arsenal, dy > 0 ? 1 : -1));
     });
@@ -131,6 +131,19 @@ export class Combat {
 
   // ---------- Zbraně ----------
 
+  /** Dá hráči věc (beskydský čaj) a vezme ji do ruky; při 0 kusech ji z výbavy vyndá. */
+  setItem(id: WeaponId, count: number): void {
+    const a = this.player.arsenal;
+    const ammo = { ...a.ammo, [id]: count };
+    if (count <= 0) {
+      const owned = a.owned.filter((w) => w !== id);
+      this.setArsenal({ owned, ammo, current: a.current === id ? 'fists' : a.current });
+      return;
+    }
+    const owned = a.owned.includes(id) ? a.owned : WEAPON_ORDER.filter((w) => w === id || a.owned.includes(w));
+    this.setArsenal({ owned, ammo, current: id });
+  }
+
   private setArsenal(a: typeof this.player.arsenal): void {
     this.player.arsenal = a;
     this.player.updateLook();
@@ -140,7 +153,7 @@ export class Combat {
     const k = this.keys;
     // V rozhovoru nebo v nabídce vybírají čísla volbu, ne zbraň.
     if (this.game.story?.inputBlocked || this.game.economy?.menuOpen) return;
-    const pressed = [k.one, k.two, k.three, k.four, k.five].findIndex((key) => Phaser.Input.Keyboard.JustDown(key));
+    const pressed = [k.one, k.two, k.three, k.four, k.five, k.six].findIndex((key) => Phaser.Input.Keyboard.JustDown(key));
     if (pressed >= 0) this.setArsenal(selectWeapon(this.player.arsenal, WEAPON_ORDER[pressed]));
     if (Phaser.Input.Keyboard.JustDown(k.cycle)) this.setArsenal(cycleWeapon(this.player.arsenal, 1));
   }
@@ -156,6 +169,11 @@ export class Combat {
     if (!down || this.cooldown > 0) return;
     if (!def.auto && !justDown) return;
     if (driving && def.melee) return;
+    // Věc v ruce (čaj): „útok“ ji nabídne tomu, kdo stojí před hráčem.
+    if (def.item) {
+      if (justDown && !driving && !this.game.story?.inputBlocked) this.game.events.emit('useItem', def.id);
+      return;
+    }
     if (!canFire(a)) {
       if (justDown) this.game.toast(T.noAmmo);
       return;
@@ -568,7 +586,7 @@ export class Combat {
       const info = penalty();
       pl.health = 100;
       pl.armor = 0;
-      pl.arsenal = { ...pl.arsenal, owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0 } };
+      pl.arsenal = { ...pl.arsenal, owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 } };
       pl.move = { stamina: 100, exhausted: false };
       pl.dead = false;
       pl.setTexture('player');

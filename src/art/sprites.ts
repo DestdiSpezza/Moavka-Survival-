@@ -291,7 +291,7 @@ export interface HumanLook {
   skin: Color;
   tool: Tool;
   /** Vzor na bundě: kostka (flanel), pruhy (tepláky), nášivky (punk). */
-  pattern?: 'plaid' | 'stripes' | 'patches' | 'belly';
+  pattern?: 'plaid' | 'stripes' | 'patches' | 'belly' | 'reflex';
 }
 
 const FW = 24;
@@ -323,6 +323,10 @@ function human(p: Painter, ox: number, look: HumanLook, frame: number): void {
   } else if (look.pattern === 'stripes') {
     p.rect(cx - 1, cy - 5, 1, 10, 0xf2f2f2);
     p.rect(cx + 1, cy - 5, 1, 10, 0xf2f2f2, 0.6);
+  } else if (look.pattern === 'reflex') {
+    // Zásahový oblek: reflexní pruhy přes ramena.
+    p.rect(cx - 2, cy - 5, 1, 10, 0xe8e040);
+    p.rect(cx + 1, cy - 5, 1, 10, 0xd0d0c8);
   } else if (look.pattern === 'patches') {
     p.px(cx - 2, cy - 3, 0xd93f6a);
     p.px(cx - 1, cy + 3, 0xd93f6a);
@@ -473,6 +477,9 @@ export const CIVILIANS: HumanLook[] = [
 /** Postavy příběhu: každá jinak, ať se v hospodě poznají. */
 const NPC_LOOKS: Record<string, HumanLook> = {
   kobyla: { jacket: 0x8a6a9a, pants: 0x4a3a5a, hair: 'ponytail', hairColor: 0x7a4a22, skin: SKIN[2], tool: 'none' },
+  // Ajina, Zjebalova žena: růžový župan, natáčky; s pálkou, když hráč mlčí.
+  ajina: { jacket: 0xe07aa8, pants: 0xe07aa8, hair: 'beanie', hairColor: 0xe8e0d0, skin: SKIN[1], tool: 'none', pattern: 'belly' },
+  'ajina-bat': { jacket: 0xe07aa8, pants: 0xe07aa8, hair: 'beanie', hairColor: 0xe8e0d0, skin: SKIN[1], tool: 'bat', pattern: 'belly' },
   prchard: { jacket: 0xe8e4da, pants: 0x2a2a2a, hair: 'bald', hairColor: 0, skin: SKIN[1], tool: 'none', pattern: 'belly' },
   plotkova: { jacket: 0xc83a4a, pants: 0x1a1a1a, hair: 'long', hairColor: 0xe8c070, skin: SKIN[2], tool: 'bottle' },
   vesta: { jacket: 0x2a3a6a, pants: 0x2a2a3a, hair: 'short', hairColor: 0x2a1a10, skin: SKIN[0], tool: 'none' },
@@ -484,10 +491,9 @@ const NPC_LOOKS: Record<string, HumanLook> = {
 };
 
 const GANG_LOOKS: Record<string, HumanLook> = {
-  drevari: { jacket: 0xb03a2a, pants: 0x2a3a5a, hair: 'beanie', hairColor: 0x7a2a1a, skin: SKIN[1], tool: 'axe', pattern: 'plaid' },
+  hasici: { jacket: 0x2a3552, pants: 0x2a3552, hair: 'helmet', hairColor: 0xc8302a, skin: SKIN[1], tool: 'axe', pattern: 'reflex' },
   stamgasti: { jacket: 0xe8e0c0, pants: 0x4a4a4a, hair: 'gray', hairColor: 0x9a9a9a, skin: SKIN[3], tool: 'bottle', pattern: 'belly' },
-  ekologove: { jacket: 0x3aa04a, pants: 0x5a4a32, hair: 'long', hairColor: 0xd8c070, skin: SKIN[2], tool: 'sling' },
-  skola: { jacket: 0x9a4ad0, pants: 0x6a2a9a, hair: 'cap', hairColor: 0x1a1a1a, skin: SKIN[0], tool: 'bat', pattern: 'stripes' },
+  omladina: { jacket: 0x9a4ad0, pants: 0x6a2a9a, hair: 'cap', hairColor: 0x1a1a1a, skin: SKIN[0], tool: 'bat', pattern: 'stripes' },
 };
 
 export function generateHumanSprites(scene: Phaser.Scene): void {

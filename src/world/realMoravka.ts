@@ -208,7 +208,7 @@ export function buildMoravka(): WorldMap {
       reserve(d.x - 1, d.y - 1, d.w + 2, d.h + 2);
     }
   }
-  // Dvůr pily s klády, dvůr autoúprav, mýtina s táborem Biomatek.
+  // Dvůr pily s klády, dvůr autoúprav, mýtina v lese.
   fill(1, 5, 13, 12, Tile.Dirt);
   reserve(0, 4, 15, 14);
   fill(10, 33, 6, 3, Tile.Dirt);
@@ -344,7 +344,6 @@ export function buildMoravka(): WorldMap {
       prev: null,
     },
     spots: {
-      ecoGiver: { x: 49, y: 57 },
       dam: { x: 84, y: 67 },
       camp,
       smg: { x: 60, y: DAM_ROW },
@@ -355,8 +354,6 @@ export function buildMoravka(): WorldMap {
       kobyla,
       denny: { x: garage.x + garage.w / 2 + 2, y: garage.y + garage.h + 1 },
     },
-    // Biomatky se drží kolem školky.
-    ecoSpawn: [zones.find((z) => z.name === 'Školka')!],
     busStops: [
       { x: 40 * TILE + 3, y: 34 * TILE + 2 },
       { x: 45 * TILE + 3, y: 37 * TILE + 2 },

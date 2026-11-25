@@ -1,6 +1,6 @@
 import type { AreaId } from '../world/areas';
 import type { Arsenal } from './combat';
-import { newRespect, type Respect } from './respect';
+import { newRespect, normalizeRespect, type Respect } from './respect';
 
 export type Gender = 'm' | 'f';
 
@@ -26,6 +26,8 @@ export interface StoryState {
   known: string[];
   /** Počítadla (panáky s Plotkovou, kolik dlužní Denny sochař…). */
   counts: Record<string, number>;
+  /** Rozdělaná mise od štamgasta ('' = žádná; ADR-020). */
+  job: string;
 }
 
 /** Uložený postup hry. */
@@ -54,7 +56,7 @@ export const DEFAULT_HERO: Hero = { gender: 'm', name: 'Punkáč' };
 
 /** Příběh od začátku: Akt 1, úvodní scéna s autobusem. */
 export function newStory(): StoryState {
-  return { act: 1, mission: 'a1-prijezd', introDone: false, flags: [], rel: {}, known: [], counts: {} };
+  return { act: 1, mission: 'a1-prijezd', introDone: false, flags: [], rel: {}, known: [], counts: {}, job: '' };
 }
 
 export const SAVE_KEY = 'survive-moravka-save-v1';
@@ -63,7 +65,7 @@ export function newProgress(hero: Hero = DEFAULT_HERO): Progress {
   return {
     version: 2, area: 'moravka', unlocked: ['moravka'], money: 500, score: 0, areaScore: {}, respect: {},
     hideouts: [], health: 100, armor: 0, clock: 0, tutorial: [],
-    arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0 } },
+    arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 } },
     hero: { ...hero }, story: newStory(),
   };
 }
@@ -89,11 +91,22 @@ export function deserialize(text: string | null): Progress | null {
     const { missionsDone: _old, ...rest } = data;
     void _old;
     const base = newProgress(data.hero ?? DEFAULT_HERO);
-    if (data.version === 1) return { ...base, ...rest, version: 2, hero: { ...DEFAULT_HERO }, story: { ...newStory(), mission: 'a1-hospoda', introDone: true } } as Progress;
-    return { ...base, ...rest, story: { ...newStory(), ...data.story } } as Progress;
+    if (data.version === 1) return fixUp({ ...base, ...rest, version: 2, hero: { ...DEFAULT_HERO }, story: { ...newStory(), mission: 'a1-hospoda', introDone: true } } as Progress);
+    return fixUp({ ...base, ...rest, story: { ...newStory(), ...data.story } } as Progress);
   } catch {
     return null;
   }
+}
+
+/**
+ * Doplní, co starší uložení nezná: skupiny po přejmenování (Dřevaři → Hasiči, bez Biomatek)
+ * a náboje (počty) u nových věcí ve výbavě.
+ */
+function fixUp(p: Progress): Progress {
+  const respect: Progress['respect'] = {};
+  for (const [area, r] of Object.entries(p.respect ?? {})) respect[area as AreaId] = normalizeRespect(r as Record<string, number>);
+  const ammo = { ...newProgress().arsenal.ammo, ...p.arsenal.ammo };
+  return { ...p, respect, arsenal: { ...p.arsenal, ammo } };
 }
 
 /** Úložiště prohlížeče může chybět nebo házet (soukromé okno): pak se jen neuloží. */

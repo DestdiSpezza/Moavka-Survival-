@@ -330,8 +330,8 @@ export function generateCombat(scene: Phaser.Scene): void {
       g.fillStyle(0xe8c39a).fillCircle(8, 8, 3);
       g.fillStyle(hair).fillRect(6, 6, 3, 4);
     });
-  member('gang-drevari', 0xb03a2a, 0x3a2a1a, (g) => {
-    g.fillStyle(0x1a1a1a).fillRect(3, 4, 7, 1).fillRect(3, 11, 7, 1); // kostkovaná flanelka
+  member('gang-hasici', 0x2a3552, 0xc8302a, (g) => {
+    g.fillStyle(0xe8e040).fillRect(3, 4, 7, 1).fillRect(3, 11, 7, 1); // reflexní pruhy
     g.fillStyle(0x7a5a3a).fillRect(13, 7, 6, 2);
     g.fillStyle(0xc8c8c8).fillRect(18, 5, 3, 5); // sekera
   });
@@ -339,23 +339,11 @@ export function generateCombat(scene: Phaser.Scene): void {
     g.fillStyle(0xffffff).fillRect(4, 6, 3, 4); // pivní pěna na tričku
     g.fillStyle(0x3a8a3a).fillRect(13, 7, 5, 2); // láhev
   });
-  member('gang-ekologove', 0x3aa04a, 0xd8c070, (g) => {
-    g.fillStyle(0x8a5a2a).fillRect(13, 6, 4, 1).fillRect(13, 9, 4, 1); // prak
-    g.fillStyle(0xe8e0c8).fillRect(4, 7, 2, 2);
-  });
-  member('gang-skola', 0x9a4ad0, 0x1a1a1a, (g) => {
+  member('gang-omladina', 0x9a4ad0, 0x1a1a1a, (g) => {
     g.fillStyle(0xffffff).fillRect(4, 3, 2, 10); // pruhy na teplákovce
     g.fillStyle(0xb88a4a).fillRect(13, 7, 7, 2); // pálka
   });
   cop('cop-swat', 0x1a1a1a, 0x333333, true);
-
-  // Protestní stan Biomatek.
-  make('tent', 24, 18, (g) => {
-    g.fillStyle(0x000000, 0.3).fillEllipse(13, 12, 24, 12);
-    g.fillStyle(0x3aa04a).fillTriangle(2, 16, 12, 2, 22, 16);
-    g.fillStyle(0x2a7a3a).fillTriangle(12, 2, 22, 16, 12, 16);
-    g.fillStyle(0xf2e9d0).fillRect(5, 9, 8, 2);
-  });
 
   make('corpse', 16, 16, (g) => {
     g.fillStyle(0x7a1010, 0.8).fillEllipse(9, 9, 14, 10);

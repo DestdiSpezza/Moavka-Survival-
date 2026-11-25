@@ -178,7 +178,7 @@ Dlouhý běh: `npm run build && npm run soak` přehraje 30 minut herního času 
 
 - Rozložení podle mapy obce (ne na sto procent): křižovatka u **hospody eRko** (hospoda stojí hned západně od ní), silnice na severozápad, na Raškovice (severovýchod), na jihozápad a na jih ke **škole** s hřištěm a oválem.
 - Vlaský potok na západě (most na silnici na severozápad), řeka Morávka na severovýchodě a východě, podél ní silnice s cyklostezkou až k hrázi přehrady. Vznikla smyčka: na jih → po hrázi → podél řeky → zpátky na silnici na Raškovice.
-- Na místech podle mapy: Hasiči, Foop obchod, obecní úřad s parkovištěm a zastávkou, Vesta (prodává „pod pultem“; dřív Veseta), Autoúpravy Dan (garáž, před ní Vysoký Denny), Školka s pískovištěm, dealer Omyx u řeky, safe house (chata, úkryt) na jihovýchodě, pila Dřevařů za potokem.
+- Na místech podle mapy: Hasiči, Foop obchod, obecní úřad s parkovištěm a zastávkou, Vesta (prodává „pod pultem“; dřív Veseta), Autoúpravy Dan (garáž, před ní Vysoký Denny), Školka s pískovištěm, dealer Omyx u řeky, safe house (chata, úkryt) na jihovýchodě, stará pila za potokem (od P2 ateliér Dennyho sochaře).
 - Silnice a potoky se kreslí hladce i šikmo podle os (asfalt, chodníky s obrubníky, středové čáry, přechody, mosty se zábradlím, polní cesty s kolejemi). Hra dál počítá s dlaždicemi.
 - Mapu staví `src/world/realMoravka.ts` (souřadnice z mapy obce, 16 px mapy na dlaždici); Raškovice zůstávají generované.
 
@@ -202,27 +202,24 @@ Dlouhý běh: `npm run build && npm run soak` přehraje 30 minut herního času 
 
 Všechny skupiny jsou smyšlené.
 
+Od fáze P2 jsou skupiny tři (ADR-016, ADR-017): Dřevaři se změnili na Hasiče, Biomatky ze hry zmizely.
+
 | Skupina | Povaha | Kde je najdeš | Zbraně | Vozidla |
 |---|---|---|---|---|
-| **Dřevaři** | Drsní, málomluvní, řeší věci sekerou | Pila, hospoda | Sekery, motorové pily, palice | Traktory, lesní nákladáky, valníky |
+| **Hasiči** (dřív Dřevaři) | SDH Morávka: bál, požární útok, pivo ve zbrojnici | Hasičská zbrojnice u návsi | Hasičské sekery | Dodávka u zbrojnice |
 | **Štamgasti** | Opilci s velkým srdcem a krátkým fitilem | Hospoda (od rána do noci) | Láhve, molotovy, stará brokovnice | Rozbitá stará auta, mopedy |
-| **Biomatky** (dřív Ekologové) | Všudypřítomné, nesnáší auta, všechno musí být bio | U školky (auta nesnáší kdekoli) | Spreje, praky, zápalné bomby na auta | Kola, koloběžky, pěšky |
-| **Omladina** (dřív Škola) | Vesnický „sídlištní“ gang mlaďochů, mluví zkratkami generace Z | Škola, hřiště s oválem | Pálky, nože, petardy | Skútry, kradená auta |
+| **Omladina** (dřív Škola) | Mladí po maturitě (ADR-018), mluví zkratkami generace Z | Hřiště s oválem za školou | Pálky, nože, petardy | Skútry, kradená auta |
 
 ### Vztahy mezi skupinami (výchozí)
 
-| | Dřevaři | Štamgasti | Biomatky | Omladina |
-|---|---|---|---|---|
-| **Dřevaři** | — | 🙂 sdílejí hospodu | 💀 nepřátelé (kácení lesa) | 😐 neutrální |
-| **Štamgasti** | 🙂 | — | 😐 neutrální | 😠 rivalové (kluci jim kradou pivo) |
-| **Biomatky** | 💀 | 😐 | — | 😠 rivalové (skútry a petardy) |
-| **Omladina** | 😐 | 😠 | 😠 | — |
-
-Hospoda je sdílené území Dřevařů a Štamgastů: kdo si tam rozhádá jedny, má problém i s druhými.
+| | Hasiči | Štamgasti | Omladina |
+|---|---|---|---|
+| **Hasiči** | — | 🙂 pijou spolu v eRku | 😠 rivalové (petardy v popelnicích) |
+| **Štamgasti** | 🙂 | — | 😠 rivalové (kradou jim pivo) |
+| **Omladina** | 😠 | 😠 | — |
 
 ### Zvláštní chování
 
-- **Biomatky** útočí na hráče, když řídí auto (hlavně nákladní nebo kouřící), a ničí zaparkovaná vozidla. Pěšky nebo na kole tě nechají být.
 - **Štamgasti** jsou přes den pomalí a nepřesní, večer agresivnější.
-- **Dřevaři** jsou pomalí, ale vydrží nejvíc a jejich vozidla jsou těžká a ničivá.
+- **Hasiči** vydrží nejvíc a bijí sekerou.
 - **Omladina** je rychlá, útočí ve skupinkách a rychle utíká.

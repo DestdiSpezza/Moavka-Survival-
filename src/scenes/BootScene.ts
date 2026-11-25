@@ -1,3 +1,4 @@
+import { generateStoryProps } from '../art/props';
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import { T } from '../texts/cs';
@@ -27,6 +28,7 @@ export class BootScene extends Phaser.Scene {
     generateVehicles(this);
     generatePedestrian(this, 'driver', 0x4a6a8a, 0x5a3a22);
     generateCombat(this);
+    generateStoryProps(this);
     // Pixel-art sprity přepíšou jednodušší verze výše (stejné klíče).
     generateVehicleSprites(this);
     generateHumanSprites(this);

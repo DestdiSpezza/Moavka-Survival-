@@ -28,7 +28,7 @@ export interface AreaDef {
   playable: boolean;
   /** Místní názvy budov a míst (klíč = role v generátoru mapy). */
   labels: Record<string, string>;
-  /** Místní skupiny: stejné chování, jiné jméno (Raškovice mají Voraře místo Dřevařů…). */
+  /** Místní skupiny: stejné chování, jiné jméno (Raškovice mají Rybáře místo Štamgastů…). */
   groupNames?: Partial<Record<GroupId, string>>;
 }
 
@@ -50,13 +50,13 @@ export const AREAS: Record<AreaId, AreaDef> = {
     labels: {
       Hospoda: 'Hospoda U Kapra',
       Kostel: 'Kostel sv. Jana',
-      Pila: 'Pila na Morávce',
+      Hasiči: 'Hasičská zbrojnice',
       'Přehrada Morávka': 'Jez a koupaliště',
       'Cesta na Raškovice': 'Cesta na Krásnou',
       Náves: 'Náves Raškovice',
       Škola: 'Učiliště',
     },
-    groupNames: { drevari: 'Voraři', stamgasti: 'Rybáři', ekologove: 'Chalupáři', skola: 'Učňáci' },
+    groupNames: { hasici: 'Raškovští hasiči', stamgasti: 'Rybáři', omladina: 'Učňáci' },
   },
   krasna: {
     id: 'krasna', name: 'Krásná', toName: 'Krásné', seed: 4242, phase: 4.1, goal: { score: 6000, money: 12000 },

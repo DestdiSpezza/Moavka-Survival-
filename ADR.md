@@ -77,3 +77,40 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 ## ADR-015: Denny sochař se dá vyhodit
 - **Stav:** přijato (mechanika ve fázi P2)
 - **Rozhodnutí:** Když Dennyho sochaře nechceš, musí dostat pár ran pěstí, pak odejde pryč.
+
+## ADR-016: Dřevaři jsou Hasiči
+- **Stav:** přijato (fáze P2)
+- **Rozhodnutí:** Skupina Dřevaři se mění na Hasiče (SDH Morávka). Sídlí u hasičské zbrojnice u návsi, nosí zásahové obleky s reflexními pruhy a červené přilby, bijí sekerou. Kecají o hasičském bálu, požárním útoku a pivu ve zbrojnici. Stará pila je volná (ateliér Dennyho sochaře). V Raškovicích jsou to Raškovští hasiči (generovaná mapa má místo pily zbrojnici).
+- **Vztahy:** Hasiči a Štamgasti jsou přátelé (pijou spolu v eRku), oba nesnáší Omladinu (petardy v popelnicích).
+- **Uložení:** respekt u Dřevařů přejde na Hasiče.
+
+## ADR-017: Biomatky zmizely
+- **Stav:** přijato (fáze P2)
+- **Rozhodnutí:** Skupina Biomatky (v Raškovicích Chalupáři) je ze hry úplně pryč: členové, chování (ničení aut), hlášky, kola u obchodu už nikomu nepatří. Zůstávají tři skupiny: Hasiči, Štamgasti, Omladina. Respekt u Biomatek se ze starých uložení zahodí.
+
+## ADR-018: Omladina je plnoletá
+- **Stav:** přijato (fáze P2)
+- **Kontext:** Omladina vznikla ze skupiny „Škola“ a hráč jí v misi Omyxe prodává beskydský čaj.
+- **Rozhodnutí:** Omladina jsou mladí po maturitě (všichni mají občanku, Omyx to sám zmiňuje). Drží se u hřiště za školou, ale texty o nich nikdy nemluví jako o dětech ani žácích. Prodej dětem ve hře není a nebude.
+
+## ADR-019: Beskydský čaj a handlování
+- **Stav:** přijato (fáze P2)
+- **Rozhodnutí:** Čaj je věc ve výbavě (klávesa 6 nebo Q, počet jako náboje). „Útok“ s ním na člena Omladiny otevře handlování v dialogu: kupec nejdřív nechce, pak možná, pak se smlouvá. Hráč nabízí argumenty (původ, vzácnost, účinek, diskrétnost, status); každý z pěti typů kupců má jeden, který na něj platí, a jeden, který ho naštve. Kupec tlačí cenu dolů svými kecy a má omezenou trpělivost. Do mise se počítá jen prodej aspoň za 200 Kč (plná cena). Dohodu zakončí předávka: kamera se přiblíží, sáček letí ke kupci, bankovka zpátky.
+- **Logika:** `src/story/bargain.ts` (čistá, testovaná), dialog a předávka v `src/scenes/jobs/TeaJob.ts`.
+
+## ADR-020: Mise od štamgastů
+- **Stav:** přijato (fáze P2)
+- **Rozhodnutí:** Po vstupu do eRka dávají misi štamgasti v rozhovoru (Omyx, Zjebal, Vysoký Denny, Denny sochař). Hráč má najednou jen jednu; běžící jde u zadavatele vzdát. Nabídka má vždy tři volby a jedna z nich vede na běžný rozhovor („Radši pokecáme“). Odměny: peníze, vztah s postavou, respekt skupiny. Lešení (Denny sochař) jde až po odvozu Zjebala. Po všech čtyřech misích Akt 1 pokračuje a čeká na další obsah.
+- **Uložení:** splněné mise jsou příznaky `job:<id>`. Rozdělaný prodej čaje po načtení pokračuje (čaj je v kapse), ostatní rozdělané mise se zruší a dají se vzít znovu.
+
+## ADR-021: Zjebal domů a Ajina
+- **Stav:** přijato (fáze P2)
+- **Rozhodnutí:** Zjebal čeká před eRkem, hráč pro něj přijede autem (ne kolo ani skútr) a veze ho k Ajině na jihovýchod k řece. Limit = délka nejlepší trasy po silnici / (62 % nejvyšší rychlosti auta) + 10 %, nejméně 12 s. U domu vyletí Ajina (nová postava, růžový župan, natáčky) a ptá se, kde byl a kolik toho měl: pravda (stovka na benzín), lež (bačkora), mlčení (minutu tě honí s baseballkou po vesnici, bije i auto). Ajina je nezničitelná.
+
+## ADR-022: Auto pro Dennyho
+- **Stav:** přijato (fáze P2)
+- **Rozhodnutí:** Jakékoli nepolicejní auto, aspoň 90 % zdraví, žádná hvězda. Před garáží hráč vystoupí, auto samo vjede dovnitř (co je za vraty, se ořízne) a vrata spadnou. Denny platí 600 Kč. Mezi 13 a 17 h je garáž zavřená.
+
+## ADR-023: Traktor s vlečkou
+- **Stav:** přijato (fáze P2)
+- **Rozhodnutí:** Traktor před eRkem (kus vlevo od dveří, nikomu nepatří) má vlečku. Vlečka nemá vlastní fyziku: drží se za hákem a natáčí se k němu, s ničím nekoliduje. Lešení se nakládá u kostela a vykládá na staré pile; kusy lešení létají mezi hromadou a vlečkou. Traktor od Zjebala se nehlásí jako krádež.

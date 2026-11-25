@@ -26,6 +26,7 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Výhoda:** Prodává trávu (když za ním dojdeš) a poradí, jak na koho jít.
 - **Nevýhoda:** Po rozhovoru s ním hráčova postava pořád mele, že chce hulit a chce za Omyxem.
 - **Kde:** Přes den u řeky (prodává trávu), večer v eRku u stolu nejblíž dveřím (ADR-010). V Aktu 1 sedí v hospodě.
+- **Mise (Akt 1):** *Beskydský čaj.* Tři gramy se slevou za 450 Kč, prodat Omladině aspoň za 200 Kč za gram. Čaj v ruce (6 nebo Q), „útok“ na člena Omladiny otevře handlování (ADR-019).
 - **Plotková:** „Omyx. Neptej se, co prodává. Teda… ptej se, on ti to stejně řekne. Nahlas.“
 - **Hlášky:** „Zelený? Domácí, z Beskyd.“ / „Na Metějku jdi zezadu, zepředu má ústa.“ / „Kdo říkal, že se peru? Já se jen hlasitě objímám.“
 
@@ -41,7 +42,8 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Kdo:** Vysmátý přátelský neonácek, rád chlastá a dobře se baví.
 - **Výhoda:** Umí řídit těžké stroje (náklaďák a podobně).
 - **Nevýhoda:** Musí být brzy doma kvůli manželce.
-- **Kde:** U baru, směje se všemu, i když tomu nerozumí.
+- **Kde:** U štamgastského stolu (s plakátem), směje se všemu, i když tomu nerozumí.
+- **Mise (Akt 1):** *Zjebal domů.* Odvézt ho autem k Ajině v časovém limitu; u domu výslech: pravda, lež, nebo mlčení (pak honička s pálkou, ADR-021). Po misi dá hráči klíčky od traktoru.
 - **Plotková:** „Zjebal. Hodnej, dokud nezačne mluvit o politice. Naštěstí v deset musí domů, žena mu jinak zamkne.“
 - **Hlášky:** „Hehe, dobrý, dobrý!“ / „Náklaďák? Dám ti ho zaparkovat i do kurníku.“ / „Ještě jedno a jdu. Ne, fakt. Žena.“
 - **Pozor:** Žádné symboly, pozdravy ani nenávistné hlášky. Vtip je na jeho účet, ne na účet jiných (ADR-007).
@@ -53,6 +55,7 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Kde:** Mezi 13:00 a 17:00 v eRku (u zdi u kulečníku, opřený, mlčí), jinak stojí před svou garáží.
 - **Plotková:** „Vysoký Denny. Spraví ti auto, přelakuje, a kdyby bylo potřeba, tak i zmizí. Na co se ho zeptáš, odpoví ‚hm‘.“
 - **Hlášky:** „Hm.“ / „Dovez ho. Udělám.“ / „Co auto? Jaký auto?“
+- **Mise (Akt 1):** *Auto pro Dennyho.* Ukrást nepolicejní auto a dovézt ho do dílny aspoň na 90 % a bez hvězd; auto samo vjede do garáže. 600 Kč (ADR-022).
 
 ### Denny sochař
 - **Kdo:** Chudý, pořád něco chce, pořád si stěžuje.
@@ -61,6 +64,7 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Kde:** U konce baru, nad prázdnou sklenicí.
 - **Plotková:** „Denny sochař. Sochá hlavně dluhy. Nepůjčuj mu, nebo mu půjč a zapomeň na to.“
 - **Hlášky:** „Nemáš stovku? Vrátím. Fakt. Asi.“ / „Umění se v Beskydech nenosí.“ / „Mám rozdělanou sochu Lysé hory. Zatím je to kámen.“
+- **Mise (Akt 1):** *Lešení.* Traktorem s vlečkou od eRka ke kostelu, naložit lešení, odvézt na starou pilu (jeho „ateliér“). Jde až po misi se Zjebalem. 250 Kč z farářových peněz (ADR-023).
 
 ### Prchard
 - **Kdo:** Hospodský, majitel eRka.
@@ -98,5 +102,19 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Role:** První postava, kterou hráč potká po vystoupení z autobusu. Sarkasticky ho pošle do hospody.
 - **Hlášky:** „Vypadáš žíznivě. Nejbližší hospoda je eRko. Nejvzdálenější taky, jiná tu není.“ / „S takovým čírem tě do kostela nepustí. Do eRka jo, tam pustí i prase.“
 
+### Ajina
+- **Kdo:** Zjebalova žena. Růžový župan, natáčky, u dveří baseballka „na zloděje a na Zjebala“.
+- **Kde:** Doma na jihovýchodě u řeky. Vyletí ze dveří, když hráč přiveze Zjebala.
+- **Role:** Výslech po misi *Zjebal domů*: pravdu ocení stovkou na benzín, lež odmění bačkorou, a kdo mlčí, toho minutu honí s pálkou po vesnici (ADR-021).
+- **Hlášky:** „Z práce od Vesty je to domů pět minut. Pěšky. Po čtyřech deset.“ / „Mlčíš? TAK MLČÍŠ?!“ / „Domů se chodí v deset, ne v jedenáct!“
+
+### Kupci z Omladiny (mise Omyxe)
+Všichni plnoletí (ADR-018). Pět typů, každý má slabinu (argument, který zabere) a co ho naštve:
+- **Ondra s ring lightem** (influencer): zabere status a Insta, naštve diskrétnost.
+- **Tadeáš, co byl v Amsterdamu** (znalec): zabere původ, naštve status.
+- **Kuba Drobák** (skrblík, platí v drobných): zabere vzácnost, naštve účinek; někdy na dvě stovky nemá.
+- **Šimon VPN** (paranoik): zabere diskrétnost, naštve Insta.
+- **Bára Vibe**: zabere účinek, naštve původ („tam se koupe Metějka“).
+
 ### Zmínění, zatím bez role
-- **Lakatoš** (Dřevaři ho pořád hledají, má klíče od traktoru), **pan Franta** (rozhlas: odjel autem z hospody).
+- **Lakatoš** (Hasiči ho pořád hledají, nechává hadice v eRku), **pan Franta** (rozhlas: odjel autem z hospody).

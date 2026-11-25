@@ -11,6 +11,8 @@ interface Folk {
   ped: Pedestrian;
   label: Phaser.GameObjects.Text;
   home: { x: number; y: number };
+  /** Postava mise: kam jde a co dělá, řídí mise (Zjebal, Ajina, Denny sochař). */
+  free?: boolean;
 }
 
 const TALK_RANGE = 22;
@@ -32,33 +34,56 @@ export class Townsfolk {
     if (s.denny) this.add('dennyVysoky', (s.denny.x) * TILE, (s.denny.y) * TILE);
   }
 
+  get denny(): Pedestrian | null {
+    return this.folk.find((f) => f.id === 'dennyVysoky')?.ped ?? null;
+  }
+
   get kobyla(): Pedestrian | null {
     return this.folk.find((f) => f.id === 'kobyla')?.ped ?? null;
   }
 
-  private add(id: NpcId, x: number, y: number): void {
+  /** Postava pro misi: stojí, kde ji mise postaví, a mise ji zase odklidí (`remove`). */
+  spawn(id: NpcId, x: number, y: number, hp = 200): Pedestrian {
+    const f = this.add(id, x, y, hp);
+    f.free = true;
+    return f.ped;
+  }
+
+  remove(ped: Pedestrian): void {
+    const f = this.folk.find((x) => x.ped === ped);
+    if (!f) return;
+    this.folk = this.folk.filter((x) => x !== f);
+    f.label.destroy();
+    const peds = this.game.combat.peds;
+    if (peds.includes(ped)) peds.splice(peds.indexOf(ped), 1);
+    ped.destroy();
+  }
+
+  private add(id: NpcId, x: number, y: number, hp = 200): Folk {
     const g = this.game;
-    const ped = new Pedestrian(g, x, y, 0, true, NPCS[id].sprite, 200);
+    const ped = new Pedestrian(g, x, y, 0, true, NPCS[id].sprite, hp);
     ped.scripted = true;
     ped.setRotation(Math.PI / 2);
     g.cameras.getCamera('minimap')?.ignore(ped);
     g.combat.peds.push(ped);
     const label = g.add.text(x, y - 13, '', pixelFont(14, NPCS[id].css)).setOrigin(0.5).setScale(0.5).setStroke('#000', 3).setDepth(44);
     g.cameras.getCamera('minimap')?.ignore(label);
-    this.folk.push({ id, ped, label, home: { x, y } });
+    const f: Folk = { id, ped, label, home: { x, y } };
+    this.folk.push(f);
+    return f;
   }
 
   /** Postava, se kterou jde zrovna mluvit (pěšky, kousek od ní). */
   nearby(): Folk | null {
     const g = this.game;
     if (g.driving || g.player.dead || g.story.inputBlocked) return null;
-    return this.folk.find((f) => f.ped.active && f.ped.alive && f.ped.visible && Phaser.Math.Distance.Between(f.ped.x, f.ped.y, g.player.x, g.player.y) < TALK_RANGE) ?? null;
+    return this.folk.find((f) => !f.free && f.ped.active && f.ped.alive && f.ped.visible && Phaser.Math.Distance.Between(f.ped.x, f.ped.y, g.player.x, g.player.y) < TALK_RANGE) ?? null;
   }
 
   talkTo(f: Folk): void {
     const story = this.game.story;
     if (f.id === 'kobyla') story.talk('kobyla2');
-    else if (f.id === 'dennyVysoky') story.talk(this.garageDialog());
+    else if (f.id === 'dennyVysoky') story.talkNpc('dennyVysoky', 'Game', this.garageDialog());
   }
 
   update(): void {
@@ -73,7 +98,7 @@ export class Townsfolk {
         (p.body as Phaser.Physics.Arcade.Body).enable = !away;
       }
       f.label.setVisible(p.visible && p.alive).setText(g.story.knows(f.id) ? NPCS[f.id].name : '???').setPosition(Math.round(p.x), Math.round(p.y - 13));
-      if (!p.alive) continue;
+      if (!p.alive || f.free) continue;
       const body = p.body as Phaser.Physics.Arcade.Body;
       if (Phaser.Math.Distance.Between(p.x, p.y, f.home.x, f.home.y) > 6) g.walkTo(p, f.home, 40);
       else body.setVelocity(0, 0);
@@ -87,7 +112,8 @@ export class Townsfolk {
   private garage(): void {
     const g = this.game;
     const f = this.folk.find((x) => x.id === 'dennyVysoky');
-    if (!f || g.story.inputBlocked) return;
+    // Při misi „Auto pro Dennyho“ řeší příjezd k garáži mise.
+    if (!f || g.story.inputBlocked || g.story.state.job === 'denny-auto') return;
     const focus = g.driving ?? g.player;
     const d = Phaser.Math.Distance.Between(focus.x, focus.y, f.home.x, f.home.y);
     if (d > 70) this.dennyOffered = false;

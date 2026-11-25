@@ -6,7 +6,8 @@ import type { NpcId } from './npcs';
  * Texty můžou mít mužský i ženský tvar („{Vypil|Vypila} jsi“) a jméno ({jmeno}).
  */
 
-export type Speaker = NpcId | 'hero' | 'narrator';
+/** 'guest' = postava jen pro tenhle rozhovor (kupec z Omladiny), viz Dialog.guest. */
+export type Speaker = NpcId | 'hero' | 'narrator' | 'guest';
 
 /** Co dialog smí se hrou udělat. */
 export interface DialogCtx {
@@ -51,6 +52,8 @@ export interface Dialog {
   id: string;
   start: Dyn<string>;
   nodes: Record<string, DialogNode>;
+  /** Mluvčí 'guest': jméno, barva a postavička. */
+  guest?: { name: string; css: string; sprite: string };
 }
 
 export function resolve<T>(v: Dyn<T>, c: DialogCtx): T {

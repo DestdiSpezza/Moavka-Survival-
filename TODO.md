@@ -6,9 +6,14 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 ## Příběh (plán v docs/PRIBEH.md, rozhodnutí v ADR.md, postavy v NPC.md)
 
 - [x] **Fáze P1: Akt 1 – Příjezd** (zrušení zakázek, autobus a úvodní scéna, NPC na zastávce, mise do hospody, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti).
-- [ ] Fáze P2: výhody a nevýhody Štamgastů jako mechaniky (Metějka odpuzuje policii, Vysoký Denny opravuje a přelakuje, Omyx a touha hulit, Zjebal řídí náklaďák a musí domů, Denny sochař si půjčuje, Prchard určuje cenu piva, Kibi a ženy, Vesta pomáhá s kecama, Plotková naviguje a chce panáky).
-- [ ] Fáze P2: následky volby „s nikým se bavit nechci“ (těžší start, ADR-006).
-- [ ] Fáze P2: Denny sochař musí dostat pár ran pěstí, než odejde (ADR-015); v eRku se zatím nebojuje.
+- [x] **Fáze P2: Akt 1 – Mise v eRku** (Hasiči místo Dřevařů, bez Biomatek, mise Omyxe, Zjebala, Vysokého Dennyho a Dennyho sochaře).
+- [ ] Fáze P3: výhody a nevýhody Štamgastů jako mechaniky (Metějka odpuzuje policii, Vysoký Denny opravuje a přelakuje, Omyx a touha hulit, Zjebal řídí náklaďák a musí domů, Denny sochař si půjčuje, Prchard určuje cenu piva, Kibi a ženy, Vesta pomáhá s kecama, Plotková naviguje a chce panáky).
+- [ ] Fáze P3: následky volby „s nikým se bavit nechci“ (těžší start, ADR-006).
+- [ ] Fáze P3: mise od Metějky, Vesty, Kibiho a Plotkové (zadání dodáš).
+- [ ] Fáze P3: Denny sochař musí dostat pár ran pěstí, než odejde (ADR-015); v eRku se zatím nebojuje.
+- [ ] Omyx je v eRku jen večer (17–5); přes den u řeky zatím misi nenabízí.
+- [ ] Vlečka s ničím nekoliduje (projede zdí); fyzika vlečky a padající náklad v ostrých zatáčkách.
+- [ ] Hospoda v Raškovicích otevírá interiér eRka (do Raškovic se zatím nedá, ADR-011).
 - [ ] Skloňování jména hrdiny v oslovení (5. pád). Teď se jméno v dialozích píše tak, jak ho hráč zadal (např. „Co to bude, Jarmila?“).
 - [ ] Rozhovor s Kobylou a Dennym venku má zatím jen pár vět; rozšířit, až bude jasné, co po hráči chtějí.
 - [ ] Nové vozidlo náklaďák (pro Zjebala) a autobus jako běžné vozidlo s jízdním řádem.
@@ -76,7 +81,7 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 ## Dealeři a kontraband
 
 - [x] Dealer Omyx u řeky prodává trávu (čitelný efekt bez falešných sirén). Veseta prodává „pod pultem“ (zbraně, vesta, lékárničky).
-- [ ] Víc druhů zboží u Omyxe a jeho vztah s ostatními (Štamgasti mu nevěří, Biomatky „bio“).
+- [ ] Víc druhů zboží u Omyxe a jeho vztah s ostatními (Štamgasti mu nevěří, Hasiči „na výcvik“).
 - [ ] Efekty trávy. Pozor: falešné sirény a zátarasy jdou proti pravidlu „chaos musí být čitelný“ a okamžité +1★ proti systému svědků.
 - [ ] Těžké zbraně (bazuka, minigun) a granáty. Pozor na měřítko vesnice: policie na 1–3★ by neměla šanci.
 

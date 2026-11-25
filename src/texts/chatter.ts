@@ -2,23 +2,23 @@ import type { GroupId } from '../systems/respect';
 
 /**
  * Kecy členů skupin mezi sebou (bubliny nad hlavou). První řádek řekne jeden,
- * druhý mu odpoví. Omladina mluví zkratkami generace Z, Štamgasti hospodsky,
- * Dřevaři o dřevě, Biomatky o všem, co je bio.
+ * druhý mu odpoví. Omladina (plnoletá, ADR-018) mluví zkratkami generace Z,
+ * Štamgasti hospodsky, Hasiči o bálu, výjezdech a pivu ve zbrojnici.
  */
 export const CHATTER: Record<GroupId, { lines: string[]; replies: string[] }> = {
-  skola: {
+  omladina: {
     lines: [
       'Bruh, ten Omyx je fakt sus.',
       'No cap, Štamgasti jsou totální NPC.',
-      'Yk yk, dneska chillujem u školy.',
+      'Yk yk, dneska chillujem na hřišti.',
       'Fr fr, ta hospoda je mid.',
       'Lowkey bych dal kebab. Highkey dva.',
       'It\'s giving Ohio, brácho.',
-      'Dřevaři maj nula aury, ngl.',
-      'Biomatky jsou delulu, fr.',
+      'Hasiči maj nula aury, ngl.',
+      'Brigáda na pile? Hard pass, fr.',
       'Bro má rizz jak hasičská stříkačka.',
       'Touch grass? Tady je jen beton a kůrovec.',
-      'L ve škole, W na hřišti.',
+      'L na brigádě, W na hřišti.',
       'Sigma grindset: spát do jedenácti.',
       'Kdo mi dal fanum tax na svačinu?',
       'To je cringe jak učitel na TikToku.',
@@ -52,44 +52,24 @@ export const CHATTER: Record<GroupId, { lines: string[]; replies: string[] }> = 
     ],
     replies: ['Na zdraví!', 'Ty vole, to jo.', 'Hospodskej, ještě dvě!', 'Já nic, já jen piju.', 'Pravda pravdoucí.', 'Hik.', 'Platíš ty.', 'Metějka to ví.'],
   },
-  drevari: {
+  hasici: {
     lines: [
-      'Co je to za strom? Smrk. Nebo jedle. Hlavně že padá.',
-      'Kolik kubíků jsme dneska dali? Dvacet. A ten plot.',
-      'Kdo má ruma do lesa?',
-      'Kde je Lakatoš? Má klíče od traktoru.',
-      'Buk nebo habr? V kamnech je to jedno.',
-      'Kůrovec je náš nejlepší zaměstnavatel.',
-      'Lakatoš zase usnul v harvestoru.',
-      'Biomatky mi objímaly smrk. Musel jsem počkat.',
-      'Dneska osmnáct kubíků a jedna dopravní značka.',
-      'Řetěz tupej jak Štamgast po desátým.',
-      'Modřín voní, smrk platí.',
-      'Bez rumu se nekácí. To je zákon.',
-      'Kolik má ten buk? Tak tři metráky a babičku.',
-      'Lakatoš říkal, že je to jasan. Je to smrk.',
+      'Kdy je hasičskej bál? Já už mám vyžehlenou uniformu od minula.',
+      'Požární útok za 19 vteřin. Pak jsme to šli zapít.',
+      'Kdo nechal hadici v eRku? Zase Lakatoš?',
+      'Hoří? Ne, to Franta griluje.',
+      'Raškovští hasiči? Ti by neuhasili ani svíčku na dortu.',
+      'Proč máme v cisterně pivo? Na výcvik.',
+      'Zbrojnice je nejlepší hospoda bez licence.',
+      'Omladina zase odpálila popelnici. Výjezd za čtyři minuty, rekord.',
+      'Sekera je na dveře. Na lidi až v neděli.',
+      'Starosta chce novou stříkačku. My chceme novou pípu.',
+      'Výjezd k Metějkovi: zas zamknul klíče v autě a pivo v něm.',
+      'Hasič nikdy nespí. Jen zavře oči na lavičce před zbrojnicí.',
+      'Kočka na stromě? Ta tam bude v pondělí taky.',
+      'Hasičský bál bez rvačky je jen ples.',
     ],
-    replies: ['Smrk, jasně.', 'Rum je v traktoru.', 'Lakatoš ví.', 'Padá!', 'Ještě jeden kubík.', 'Dřevo je dřevo.', 'Tak to nařežem.', 'Kde je pila?'],
-  },
-  ekologove: {
-    lines: [
-      'Je školní jídelna čistá? Viděla jsem tam lepek!',
-      'Děti moc nezlobí? Ať nelezou na smrk bez helmy.',
-      'Bioolej je nejlepší lubrikant. Na pilu i na… všechno.',
-      'Chia semínka jsou nejlepší, dávám je i do guláše.',
-      'Kombuchu kvasím ve sklepě od jara. Už mluví.',
-      'Ten traktor smrdí. Napíšu petici.',
-      'Kupovat sýr v obchodě? To je tak 2010.',
-      'Zase tu jezdí auta. Kolem školky!',
-      'Bosá chůze je základ, i v zimě.',
-      'Látkové pleny, holky. Jednorázové jsou zlo.',
-      'Omyx prodává bio? Ptám se pro kamarádku.',
-      'Dřevaři kácí, my objímáme.',
-      'Čakry mám v klidu, jen ten hluk z pily.',
-      'Kuchařka dává do polévky sůl. Bílou!',
-      'Moje dcera je alergická na plast a na tatínka.',
-    ],
-    replies: ['Přesně tak!', 'Bio, samozřejmě.', 'Napíšu to do skupiny.', 'Hlavně bez lepku.', 'Chia, chia, chia!', 'To je tak toxické.', 'Souhlasím, sestro.', 'Petice!'],
+    replies: ['Zásah!', 'Stříkej!', 'To se zapije.', 'Lakatoš ví.', 'Na bál!', 'Voda je na hašení.', 'Sbor drží.', 'Kde je sekera?'],
   },
 };
 
@@ -99,7 +79,7 @@ export const OMYX = {
   pitch: [
     'Psst. Zelený? Domácí, z Beskyd.',
     'Omyx. Nejlepší tráva od Lysé hory po Frýdlant.',
-    'Biomatky to berou taky. Prej bio.',
+    'Hasiči to berou taky. Prej na výcvik.',
     'Neboj, fízlové sem nechoděj. Je tu moc komárů.',
     'Štamgasti mi nevěří. Ať si pijou.',
     'Omladina tomu říká vibe. Já tomu říkám kšeft.',
@@ -107,7 +87,7 @@ export const OMYX = {
   menuTitle: 'Omyx: tráva',
   menuHint: '„Prvních pět vteřin zdarma. Zbytek ne.“',
   buy: 'Tráva (150 Kč, minuta klidu)',
-  bought: 'Omyx: „Užívej. A neříkej Biomatkám, kde jsem.“',
+  bought: 'Omyx: „Užívej. A neříkej Hasičům, kde jsem.“',
   dead: 'Omyx je mrtvej. Tráva došla.',
   stonedEnd: 'Dojezd. Máš hlad jak Štamgast v neděli.',
   stonedLines: [

@@ -16,7 +16,8 @@ const TALK_RANGE = 24;
 const SPOTS: Record<NpcId, { x: number; y: number; face: number }> = {
   prchard: { x: 7, y: 3.6, face: Math.PI / 2 },
   plotkova: { x: 14, y: 8.5, face: Math.PI / 2 },
-  zjebal: { x: 9.5, y: 6.8, face: -Math.PI / 2 },
+  // Zjebal sedí u štamgastského stolu (s plakátem).
+  zjebal: { x: 25.5, y: 8.2, face: Math.PI / 2 },
   dennySochar: { x: 13.4, y: 5.4, face: Math.PI },
   vesta: { x: 8.6, y: 10.4, face: Math.PI },
   omyx: { x: 20.4, y: 11.6, face: Math.PI },
@@ -24,6 +25,7 @@ const SPOTS: Record<NpcId, { x: number; y: number; face: number }> = {
   dennyVysoky: { x: 23.6, y: 2.8, face: Math.PI },
   kibi: { x: 26.4, y: 3.6, face: -Math.PI / 2 },
   kobyla: { x: 0, y: 0, face: 0 },
+  ajina: { x: 0, y: 0, face: 0 },
 };
 
 /** Pevné věci v místnosti (dlaždice): bar, kulečník, stoly. */
@@ -112,6 +114,14 @@ export class PubScene extends Phaser.Scene {
     let nearest: Npc | null = null;
     let best = TALK_RANGE;
     for (const n of this.npcs) {
+      // Kdo si vzal misi a odešel (Zjebal čeká venku), v hospodě už není.
+      const here = this.story.inPub(n.id);
+      if (here !== n.sprite.visible) {
+        n.sprite.setVisible(here);
+        (n.sprite.body as Phaser.Physics.Arcade.StaticBody).enable = here;
+        n.label.setVisible(here);
+      }
+      if (!here) continue;
       n.label.setText(this.story.knows(n.id) ? NPCS[n.id].name : '???').setPosition(Math.round(n.sprite.x), Math.round(n.sprite.y - 13));
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, n.sprite.x, n.sprite.y);
       if (d < 60) n.sprite.setRotation(Phaser.Math.Angle.Between(n.sprite.x, n.sprite.y, this.player.x, this.player.y));
@@ -137,7 +147,7 @@ export class PubScene extends Phaser.Scene {
 
   private talkTo(id: NpcId): void {
     if (id === 'prchard' && !this.story.has('pubEntryDone')) this.story.onPubOpened();
-    else this.story.talk(id, 'Pub');
+    else this.story.talkNpc(id, 'Pub');
   }
 
   /** Plotková chodí s tácem mezi barem a stoly; u hráče se zastaví. */

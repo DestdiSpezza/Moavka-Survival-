@@ -54,7 +54,7 @@ describe.each([
       }
       return false;
     };
-    for (const b of ['Hospoda', 'Pila', 'Škola', 'Obchod', 'Kostel', 'Obecní úřad', 'Zdravotní středisko', 'Garáž', 'Chata']) {
+    for (const b of ['Hospoda', 'Hasiči', 'Škola', 'Obchod', 'Kostel', 'Obecní úřad', 'Zdravotní středisko', 'Garáž', 'Chata']) {
       expect(nextTo(b), b).toBe(true);
     }
     expect(map.tiles.some((row, y) => row.some((t, x) => t === Tile.Dam && r[y][x])), 'hráz').toBe(true);
@@ -138,11 +138,6 @@ describe('Morávka podle skutečné vesnice', () => {
     expect(zoneAt(map, Math.floor(exit.x / TILE), Math.floor(exit.y / TILE))).toBe('Cesta na Raškovice');
     const first = map.traffic[0][0];
     expect(Math.hypot(first.x - exit.x, first.y - exit.y)).toBeLessThan(5 * TILE);
-  });
-
-  it('Biomatky se drží u školky, Štamgasti u hospody, Dřevaři na pile', () => {
-    const skolka = map.zones.find((z) => z.name === 'Školka')!;
-    expect(map.ecoSpawn).toEqual([skolka]);
   });
 
   it('Vlaský potok teče na západě, řeka Morávka na východě', () => {

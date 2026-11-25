@@ -32,10 +32,11 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 
 | Fáze | Obsah | Stav |
 |---|---|---|
-| **P1** | **Akt 1: Příjezd** – zrušení zakázek, příběhový systém, autobus a úvodní scéna, NPC na zastávce, mise „Do hospody“, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti | **hotovo, čeká na schválení** |
-| P2 | Štamgasti v praxi: výhody a nevýhody postav jako mechaniky, vztahy s NPC, následky volby „s nikým se nebavím“ (těžší start), Denny sochař a pár ran (ADR-015) | další na řadě |
-| P3 | Akt 1 pokračuje: další mise aktu (obsah dodáš ty), konec aktu, přechod do Aktu 2 | čeká na příběh |
-| P4+ | Další akty (Raškovice, Krásná, Lysá hora), každý jako samostatná fáze | čeká na příběh |
+| P1 | Akt 1: Příjezd – zrušení zakázek, příběhový systém, autobus a úvodní scéna, NPC na zastávce, mise „Do hospody“, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti | hotovo (v main) |
+| **P2** | **Akt 1: Mise v eRku** – Dřevaři → Hasiči, bez Biomatek; mise Omyxe (beskydský čaj, handlování), Zjebala (odvoz, Ajina), Vysokého Dennyho (auto do dílny), Dennyho sochaře (lešení traktorem s vlečkou) | **hotovo, čeká na schválení** |
+| P3 | Štamgasti v praxi: výhody a nevýhody postav jako mechaniky, následky volby „s nikým se nebavím“ (těžší start), Denny sochař a pár ran (ADR-015), mise od Metějky, Vesty, Kibiho a Plotkové | čeká na zadání |
+| P4 | Akt 1 končí: konec aktu, přechod do Aktu 2 | čeká na příběh |
+| P5+ | Další akty (Raškovice, Krásná, Lysá hora), každý jako samostatná fáze | čeká na příběh |
 | průběžně | Ladění, testy hraním, ukládání, dokumentace | – |
 
 ---
@@ -139,3 +140,41 @@ Plotková se představí („Plotková. Neříkej mi Plotičko, to smí jen Kibi
 - Všechny tři volby úvodního dialogu fungují a jejich následek se uloží.
 - Zakázky ani „!“ ve hře nejsou; zbytek mechanik funguje jako předtím (ověří testy hraním).
 - Testy: data dialogů (každá volba někam vede, nikde nechybí text), stav příběhu, převod starého uložení.
+
+---
+
+## Fáze P2: Akt 1 – Mise v eRku (hotovo)
+
+Zadání: Dřevaři → Hasiči, Biomatky zrušit úplně; čtyři mise od štamgastů. Rozhodnutí v ADR-016 až ADR-023.
+
+### Skupiny
+- Hasiči (SDH Morávka) u hasičské zbrojnice, zásahové obleky s reflexními pruhy, červené přilby, sekery. Kecají o bálu, požárním útoku a pivu ve zbrojnici.
+- Biomatky pryč. Zůstávají tři skupiny; HUD ukazuje tři řádky respektu. Stará uložení: respekt Dřevařů přejde na Hasiče.
+
+### Jak mise fungují
+- Mise dává štamgast v rozhovoru (nabídka má tři volby, „Radši pokecáme“ vede na jeho běžný dialog). Hráč má najednou jen jednu. U zadavatele jde misi vzdát.
+- Nahoře v HUDu je název a úkol, šipka a značka ukazují cíl.
+- Po splnění: banner, hláška, peníze a vztah s postavou. Po všech čtyřech: „Akt 1 pokračuje…“.
+
+### Omyx: Beskydský čaj
+- Omyx (v eRku večer) prodá tři gramy se slevou za 450 Kč. Čaj je v ruce (6 nebo Q).
+- „Útok“ na člena Omladiny otevře handlování: nechce → možná → smlouvání. Kupec má slabinu a co ho naštve, tlačí cenu dolů svými kecy a dojde mu trpělivost. Policajt v okolí = „Ty vole, fízlové. Pak.“ Nabídka policajtovi = hvězda.
+- Předávka: kamera se přiblíží, sáček letí ke kupci, bankovka zpátky, pak teprve peníze.
+- Splněno: tři prodeje aspoň za 200 Kč. Dojde čaj dřív = mise nevyšla (jde vzít znovu).
+
+### Zjebal: domů k Ajině
+- Zjebal čeká před eRkem; přijeď pro něj autem (ne kolo, ne skútr). Limit podle trasy po silnici + 10 % (autopilot bez provozu ji ujel za 13 s ze 17).
+- U domu vyletí Ajina a vyptává se: pravda (100 Kč), lež (bačkora), mlčení (minuta honičky s pálkou, bije i auto).
+
+### Vysoký Denny: auto do dílny
+- Jakékoli nepolicejní auto, aspoň 90 %, žádná hvězda. Denny jinak odmítne a řekne proč.
+- Auto samo vjede do garáže (přední část mizí za vraty), vrata spadnou. 600 Kč.
+
+### Denny sochař: lešení
+- Až po Zjebalovi (od něj klíčky). Traktor s vlečkou před eRkem → kostel (nakládání: kusy lešení létají do vlečky) → stará pila (vykládání). 250 Kč.
+
+### Testy
+- `bargain.test.ts`: strop kupce, slabina a nenávist, chytrý hráč prodá za plnou cenu výrazně častěji než náhodný, texty v obou tvarech.
+- `jobs.test.ts`: pořadí a stav misí, časový limit, podmínky Dennyho.
+- `story.test.ts`: nabídky misí mají v každém uzlu tři volby.
+- Hraní v prohlížeči: všechny čtyři mise od nabídky po splnění, autopilot na trase Zjebala, honička s Ajinou, vjezd do garáže, nakládání a vykládání lešení.

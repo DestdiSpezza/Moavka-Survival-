@@ -96,30 +96,40 @@ export function findParkingSpot(map: WorldMap, sx: number, sy: number, taken: Se
 /** Zaparkovaná auta u důležitých míst. Policejní auto stojí u obecního úřadu. */
 export function parkedVehicles(map: WorldMap): ParkedVehicle[] {
   const taken = new Set<string>();
-  const near = (name: string) => {
+  const near = (name: string, dx = 0) => {
     const b = map.buildings.find((x) => x.name === name);
     if (!b) throw new Error(`Chybí budova ${name}`);
-    return { x: Math.floor(b.x + b.w / 2), y: b.y + b.h + 1 };
+    return { x: Math.floor(b.x + b.w / 2) + dx, y: b.y + b.h + 1 };
   };
   const dam = map.spots.damParking;
-  const plan: Array<[VehicleKind, { x: number; y: number }, GroupId | null]> = [
+  // Před dveřmi eRka se neparkuje (a traktor s vlečkou potřebuje místo za sebou).
+  const pub = map.buildings.find((x) => x.name === 'Hospoda');
+  if (pub) {
+    const dx = Math.floor(pub.x + pub.w / 2);
+    for (let x = dx - 2; x <= dx + 1; x++) for (let y = pub.y + pub.h; y <= pub.y + pub.h + 1; y++) taken.add(`${x},${y}`);
+    for (let x = dx - 11; x <= dx - 9; x++) taken.add(`${x},${pub.y + pub.h + 1}`);
+  }
+  // Čtvrtý údaj: natočení (traktor čelem na východ, ať má vlečka místo za sebou).
+  const plan: Array<[VehicleKind, { x: number; y: number }, GroupId | null, number?]> = [
     ['osobak', near('Hospoda'), 'stamgasti'],
-    ['traktor', near('Hospoda'), 'drevari'],
+    // Traktor před eRkem (s vlečkou pro Dennyho sochaře) nikomu ze skupin nepatří.
+    // Stojí kus vlevo od dveří, ať nezaclání vchodu.
+    ['traktor', near('Hospoda', -7), null, 0],
     ['skutr', near('Hospoda'), 'stamgasti'],
-    ['dodavka', near('Pila'), 'drevari'],
-    ['traktor', near('Pila'), 'drevari'],
-    ['osobak', near('Škola'), 'skola'],
-    ['skutr', near('Škola'), 'skola'],
-    ['skutr', near('Škola'), 'skola'],
+    ['dodavka', near('Hasiči'), 'hasici'],
+    ['traktor', near(map.buildings.some((b) => b.name === 'Pila') ? 'Pila' : 'Hasiči'), null],
+    ['osobak', near('Škola'), 'omladina'],
+    ['skutr', near('Škola'), 'omladina'],
+    ['skutr', near('Škola'), 'omladina'],
     ['policie', near('Obecní úřad'), null],
     ['dodavka', near('Obchod'), null],
-    ['kolo', near('Obchod'), 'ekologove'],
+    ['kolo', near('Obchod'), null],
     ['terenak', dam, null],
-    ['kolo', dam, 'ekologove'],
+    ['kolo', dam, null],
   ];
-  return plan.map(([kind, at, owner], i) => {
+  return plan.map(([kind, at, owner, angle], i) => {
     const { tx, ty } = findParkingSpot(map, at.x, at.y, taken);
-    return { kind, owner, x: (tx + 1) * TILE, y: (ty + 0.5) * TILE, angle: i % 2 ? Math.PI : 0 };
+    return { kind, owner, x: (tx + 1) * TILE, y: (ty + 0.5) * TILE, angle: angle ?? (i % 2 ? Math.PI : 0) };
   });
 }
 

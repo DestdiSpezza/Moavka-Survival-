@@ -10,19 +10,18 @@ describe('skupiny na mapě', () => {
     for (const id of GROUP_IDS) expect(spawnTiles(map, id).length, id).toBeGreaterThan(GROUPS[id].members * 2);
   });
 
-  it('pila patří Dřevařům, hospoda Dřevařům i Štamgastům, škola Škole', () => {
+  it('zbrojnice patří Hasičům, hospoda Štamgastům, hřiště u školy Omladině; pila je volná', () => {
     const pila = map.buildings.find((b) => b.name === 'Pila')!;
+    const hasici = map.buildings.find((b) => b.name === 'Hasiči')!;
     const hospoda = map.buildings.find((b) => b.name === 'Hospoda')!;
     const skola = map.buildings.find((b) => b.name === 'Škola')!;
-    expect(inZones(territory(map, 'drevari'), pila.x, pila.y)).toBe(true);
-    expect(inZones(territory(map, 'drevari'), hospoda.x, hospoda.y)).toBe(true);
+    expect(inZones(territory(map, 'hasici'), hasici.x, hasici.y)).toBe(true);
     expect(inZones(territory(map, 'stamgasti'), hospoda.x, hospoda.y)).toBe(true);
-    expect(inZones(territory(map, 'skola'), skola.x, skola.y)).toBe(true);
-    expect(inZones(territory(map, 'skola'), pila.x, pila.y)).toBe(false);
+    expect(inZones(territory(map, 'omladina'), skola.x, skola.y)).toBe(true);
+    for (const id of ['hasici', 'stamgasti', 'omladina'] as const) expect(inZones(territory(map, id), pila.x, pila.y), id).toBe(false);
   });
 
-  it('Biomatky jsou všude', () => {
-    expect(inZones(territory(map, 'ekologove'), 5, 5)).toBe(true);
-    expect(inZones(territory(map, 'ekologove'), 100, 80)).toBe(true);
+  it('skupiny jsou tři: Hasiči, Štamgasti, Omladina', () => {
+    expect(GROUP_IDS.map((id) => GROUPS[id].name)).toEqual(['Hasiči', 'Štamgasti', 'Omladina']);
   });
 });

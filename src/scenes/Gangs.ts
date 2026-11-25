@@ -6,7 +6,7 @@ import type { Vehicle } from '../entities/Vehicle';
 import { darkness, formatClock, GAME_MINUTES_PER_SECOND, isEvening, minuteOfDay } from '../systems/clock';
 import { type Point, rayCircleHit } from '../systems/combat';
 import {
-  applyRespect, attitude, ecoAngryAtVehicle, GROUP_IDS, type GroupId, newRespect, relation, type Respect, type RespectEvent,
+  applyRespect, attitude, GROUP_IDS, type GroupId, newRespect, relation, type Respect, type RespectEvent,
 } from '../systems/respect';
 import { lineOfSight } from '../systems/sight';
 import { groupName } from '../world/areas';
@@ -52,7 +52,7 @@ export interface RespectHud {
 /**
  * Skupiny Morávky: členové na svých územích, respekt hráče, postoj ke hráči
  * („To je on!“), pomoc spřáteleným, bitky mezi rivaly, útoky na policii,
- * vrhané věci a ničení aut Biomatkami. Taky herní čas (večer jsou Štamgasti horší).
+ * vrhané věci. Taky herní čas (večer jsou Štamgasti horší).
  */
 export class Gangs {
   respect: Respect = newRespect();
@@ -179,7 +179,7 @@ export class Gangs {
     const evening = g === 'stamgasti' && isEvening(this.minute);
     const speed = spec.speed * (evening ? 1.3 : 1);
 
-    // Útěk (Omladina a Biomatky při malém zdraví).
+    // Útěk (Omladina při malém zdraví).
     if (now < m.fleeUntil) {
       const from = this.foePos(m) ?? this.playerTarget() ?? m;
       const t = m.fleeTarget;
@@ -252,19 +252,10 @@ export class Gangs {
     const wanted = this.game.police.wanted.level;
 
     if (t) {
-      // Biomatky: auto je nepřítel, chodec ne (dokud je nenaštveš úplně).
-      if (g === 'ekologove') {
-        const angryCar = t.driving && ecoAngryAtVehicle(this.respect.ekologove, t.driving.spec.kind, t.driving.state !== 'ok');
-        if ((angryCar && this.sees(m, t, 140)) || (att === 'hunt' && this.sees(m, t))) {
-          this.engage(m, 'player', true);
-          return;
-        }
-      } else {
-        const inTerritory = inZones(this.territories[g], Math.floor(t.x / TILE), Math.floor(t.y / TILE));
-        if ((att === 'hunt' || (att === 'hostile' && inTerritory)) && this.sees(m, t)) {
-          this.engage(m, 'player', true);
-          return;
-        }
+      const inTerritory = inZones(this.territories[g], Math.floor(t.x / TILE), Math.floor(t.y / TILE));
+      if ((att === 'hunt' || (att === 'hostile' && inTerritory)) && this.sees(m, t)) {
+        this.engage(m, 'player', true);
+        return;
       }
 
       // Spřátelená skupina: když tě honí policie poblíž, pustí se do policajtů.
@@ -292,17 +283,6 @@ export class Gangs {
       return;
     }
 
-    // Biomatky ničí zaparkovaná auta.
-    if (g === 'ekologove' && this.game.random() < 0.004) {
-      const car = this.game.vehicles.find(
-        (v) => v.driver === 'none' && !v.wrecked && v.state === 'ok' && v.owner !== 'ekologove' && v.spec.kind !== 'kolo' &&
-          Phaser.Math.Distance.Between(v.x, v.y, m.x, m.y) < 140,
-      );
-      if (car) {
-        m.foe = car;
-        m.foeUntil = now + 10;
-      }
-    }
   }
 
   /** Člen jde na cíl; na hráče s výkřikem „To je on!“ a přidají se kamarádi okolo. */
@@ -621,7 +601,7 @@ export class Gangs {
     }
     const before = this.respect;
     this.respect = applyRespect(this.respect, g, event);
-    // Ukázat změny u hráče: „-25 Biomatky, +10 Dřevaři“.
+    // Ukázat změny u hráče: „-25 Omladina, +10 Hasiči“.
     const pl = this.game.driving ?? this.game.player;
     let row = 0;
     for (const id of GROUP_IDS) {

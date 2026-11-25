@@ -2,17 +2,17 @@ import { clamp } from './math';
 
 /** Skupiny Morávky a respekt hráče u nich. */
 
-export type GroupId = 'drevari' | 'stamgasti' | 'ekologove' | 'skola';
-export const GROUP_IDS: GroupId[] = ['drevari', 'stamgasti', 'ekologove', 'skola'];
+export type GroupId = 'hasici' | 'stamgasti' | 'omladina';
+export const GROUP_IDS: GroupId[] = ['hasici', 'stamgasti', 'omladina'];
 
 /** Vztah mezi skupinami: 1 přátelé, 0 neutrální, -1 rivalové, -2 nepřátelé. */
 export type Relation = 1 | 0 | -1 | -2;
 
+// Hasiči pijou v eRku se Štamgasty; Omladině nemůžou odpustit petardy v popelnicích.
 const RELATIONS: Record<GroupId, Record<GroupId, Relation>> = {
-  drevari: { drevari: 1, stamgasti: 1, ekologove: -2, skola: 0 },
-  stamgasti: { drevari: 1, stamgasti: 1, ekologove: 0, skola: -1 },
-  ekologove: { drevari: -2, stamgasti: 0, ekologove: 1, skola: -1 },
-  skola: { drevari: 0, stamgasti: -1, ekologove: -1, skola: 1 },
+  hasici: { hasici: 1, stamgasti: 1, omladina: -1 },
+  stamgasti: { hasici: 1, stamgasti: 1, omladina: -1 },
+  omladina: { hasici: -1, stamgasti: -1, omladina: 1 },
 };
 
 export function relation(a: GroupId, b: GroupId): Relation {
@@ -22,7 +22,7 @@ export function relation(a: GroupId, b: GroupId): Relation {
 export type Respect = Record<GroupId, number>;
 
 export function newRespect(): Respect {
-  return { drevari: 0, stamgasti: 0, ekologove: 0, skola: 0 };
+  return { hasici: 0, stamgasti: 0, omladina: 0 };
 }
 
 export type RespectEvent =
@@ -83,17 +83,17 @@ export function attitude(respect: number, aggression = 0): Attitude {
   return 'hunt';
 }
 
-/** Zakázky podle respektu (fáze 6): zelené vždy, žluté od +30, červené od +60. */
-export function missionTiers(respect: number): Array<'green' | 'yellow' | 'red'> {
-  const tiers: Array<'green' | 'yellow' | 'red'> = ['green'];
-  if (respect >= 30) tiers.push('yellow');
-  if (respect >= 60) tiers.push('red');
-  return tiers;
-}
-
-/** Biomatky nesnáší auta. Kolo jim nevadí, nákladní a kouřící auta nejvíc. */
-export function ecoAngryAtVehicle(respect: number, kind: string, smoking: boolean): boolean {
-  if (kind === 'kolo') return false;
-  const heavy = kind === 'traktor' || kind === 'dodavka' || kind === 'zasahovka';
-  return respect < (heavy || smoking ? 70 : 50);
+/**
+ * Respekt z uložení z doby, kdy byli Dřevaři a Biomatky (ADR-016, ADR-017):
+ * Dřevaři → Hasiči, Škola → Omladina, Biomatky zmizely.
+ */
+export function normalizeRespect(r: Partial<Record<string, number>> | undefined): Respect {
+  const out = newRespect();
+  if (!r) return out;
+  const old: Record<string, GroupId> = { drevari: 'hasici', skola: 'omladina' };
+  for (const [k, v] of Object.entries(r)) {
+    const id = (GROUP_IDS as string[]).includes(k) ? (k as GroupId) : old[k];
+    if (id && typeof v === 'number') out[id] = v;
+  }
+  return out;
 }

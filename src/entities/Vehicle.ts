@@ -19,6 +19,8 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
   driver: Driver = 'none';
   /** Hráč ho už jednou ukradl (krádež se hlásí jen poprvé). */
   stolen = false;
+  /** Řídí ho skript (vjezd do garáže): jízdní model ho nechá být. */
+  scripted = false;
   /** Skupina, které vozidlo patří. */
   owner: GroupId | null = null;
   /** Kdy ho naposledy poškodil hráč (herní čas v s); podle toho se pozná, kdo ho zničil. */
@@ -68,6 +70,11 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
   preUpdate(time: number, delta: number): void {
     super.preUpdate(time, delta);
     this.shadow.setPosition(this.x + 2, this.y + 3).setRotation(this.rotation);
+  }
+
+  /** Stín pod autem (při vjezdu do garáže se schová). */
+  setShadowVisible(on: boolean): void {
+    this.shadow.setVisible(on);
   }
 
   get speed(): number {

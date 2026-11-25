@@ -111,6 +111,8 @@ export class GameScene extends Phaser.Scene {
   vehicles: Vehicle[] = [];
   /** Auto, které hráč právě řídí. */
   driving: Vehicle | null = null;
+  /** Přiblížení kamery při důležité chvíli (předávka čaje); 1 = normálně. */
+  cinemaZoom = 1;
   combat!: Combat;
   police!: Police;
   gangs!: Gangs;
@@ -689,11 +691,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const v of this.vehicles) {
-      if (v.wrecked) continue;
+      if (v.wrecked || v.scripted) continue;
       const tile = this.tileAt(v.x, v.y);
       const surface = surfaceFor(tile, v.spec.params.offroad);
       let input: DriveInput;
-      if (v === this.driving) input = this.playerDriveInput();
+      if (v === this.driving) input = this.story.cutscene ? { throttle: 0, steer: 0, handbrake: true } : this.playerDriveInput();
       else if (v.driver === 'npc') input = this.trafficInput(v, dt);
       else if (v.driver === 'police') input = this.police.driveInput(v, dt);
       else input = { throttle: 0, steer: 0, handbrake: true };
@@ -715,8 +717,8 @@ export class GameScene extends Phaser.Scene {
     // Za jízdy se kamera trochu oddálí, ať je vidět, kam se řítíš.
     const cam = this.cameras.main;
     const speed = this.driving ? Math.abs(this.driving.speed) : 0;
-    const zoom = WORLD_ZOOM - 0.5 * Math.min(1, speed / 200);
-    cam.setZoom(Phaser.Math.Linear(cam.zoom, zoom, 0.04));
+    const zoom = (WORLD_ZOOM - 0.5 * Math.min(1, speed / 200)) * this.cinemaZoom;
+    cam.setZoom(Phaser.Math.Linear(cam.zoom, zoom, this.cinemaZoom === 1 ? 0.04 : 0.12));
 
     const focus = this.driving ?? this.player;
     const tx = Math.floor(focus.x / TILE);

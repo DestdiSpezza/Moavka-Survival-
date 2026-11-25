@@ -61,6 +61,12 @@ describe('ukládání', () => {
     expect('missionsDone' in (p ?? {})).toBe(false);
   });
 
+  it('starší uložení: respekt Dřevařů přejde na Hasiče, Biomatky zmizí', () => {
+    const old = { ...newProgress(), respect: { moravka: { drevari: 20, stamgasti: 5, ekologove: -40, skola: -10 } } };
+    const p = deserialize(JSON.stringify(old));
+    expect(p?.respect.moravka).toEqual({ hasici: 20, stamgasti: 5, omladina: -10 });
+  });
+
   it('nová hra si pamatuje hrdinku a jméno a začne úvodní scénou', () => {
     const p = newProgress({ gender: 'f', name: 'Jarmila' });
     expect(deserialize(serialize(p))?.hero).toEqual({ gender: 'f', name: 'Jarmila' });

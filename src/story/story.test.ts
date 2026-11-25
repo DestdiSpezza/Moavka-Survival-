@@ -112,3 +112,23 @@ describe('hrdina a hrdinka', () => {
     expect(fillText(T.stolePolice, { gender: 'f', name: 'X' })).toContain('Ukradlas');
   });
 });
+
+describe('nabídky misí', () => {
+  it('každá nabídka a „jak to jde“ mají v každém uzlu tři volby a vedou, kam mají', async () => {
+    const { jobOfferDialog, jobActiveDialog } = await import('../scenes/jobs/offers');
+    const { JOBS } = await import('./jobs');
+    const fake = { startJob: () => {}, abandonJob: () => {} } as never;
+    const ids = new Set(['base']);
+    for (const j of JOBS) {
+      for (const d of [jobOfferDialog(fake, j.id, 'base'), jobActiveDialog(fake, j.id, 'base')]) {
+        expect(validateDialog(d, ids), d.id).toEqual([]);
+        for (const n of Object.values(d.nodes)) {
+          for (const gender of ['m', 'f'] as const) {
+            const text = typeof n.text === 'string' ? n.text : '';
+            expect(fillText(text, { gender, name: 'X' }), text).not.toMatch(/[{}|]/);
+          }
+        }
+      }
+    }
+  });
+});

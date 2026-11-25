@@ -1,6 +1,6 @@
 /** Zbraně, munice, zdraví a vesta. Čistá logika bez vykreslování. */
 
-export type WeaponId = 'fists' | 'bat' | 'pistol' | 'shotgun' | 'smg';
+export type WeaponId = 'fists' | 'bat' | 'pistol' | 'shotgun' | 'smg' | 'caj';
 
 export interface WeaponDef {
   id: WeaponId;
@@ -21,6 +21,8 @@ export interface WeaponDef {
   maxAmmo: number;
   /** Jak daleko je výstřel slyšet (chodci utíkají). */
   noise: number;
+  /** Není to zbraň, ale věc v ruce: „útok“ ji nabídne (beskydský čaj, ADR-019). */
+  item?: boolean;
 }
 
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
@@ -29,9 +31,10 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   pistol: { id: 'pistol', name: 'Pistole', melee: false, damage: 25, cooldown: 0.3, range: 260, pellets: 1, spread: 0.04, auto: false, pickupAmmo: 24, maxAmmo: 120, noise: 220 },
   shotgun: { id: 'shotgun', name: 'Brokovnice', melee: false, damage: 12, cooldown: 0.9, range: 150, pellets: 7, spread: 0.45, auto: false, pickupAmmo: 10, maxAmmo: 50, noise: 300 },
   smg: { id: 'smg', name: 'Samopal', melee: false, damage: 14, cooldown: 0.09, range: 230, pellets: 1, spread: 0.12, auto: true, pickupAmmo: 60, maxAmmo: 300, noise: 260 },
+  caj: { id: 'caj', name: 'Beskydský čaj', melee: false, damage: 0, cooldown: 0.5, range: 26, pellets: 0, spread: 0, auto: false, pickupAmmo: 3, maxAmmo: 9, noise: 0, item: true },
 };
 
-export const WEAPON_ORDER: WeaponId[] = ['fists', 'bat', 'pistol', 'shotgun', 'smg'];
+export const WEAPON_ORDER: WeaponId[] = ['fists', 'bat', 'pistol', 'shotgun', 'smg', 'caj'];
 
 export interface Arsenal {
   owned: WeaponId[];
@@ -40,7 +43,7 @@ export interface Arsenal {
 }
 
 export function newArsenal(): Arsenal {
-  return { owned: ['fists'], ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0 }, current: 'fists' };
+  return { owned: ['fists'], ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 }, current: 'fists' };
 }
 
 /** Sebrání zbraně: přidá ji do výbavy a doplní munici (do maxima). Novou zbraň rovnou vezme do ruky. */

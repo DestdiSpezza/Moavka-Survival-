@@ -54,7 +54,7 @@ export function pickupSpots(map: WorldMap): PickupSpot[] {
   const plan: Array<[PickupKind, { x: number; y: number }]> = [
     ['bat', below('Škola', 3)],
     ['pistol', behind('Hospoda')],
-    ['shotgun', behind('Pila')],
+    ['shotgun', behind(map.buildings.some((b) => b.name === 'Pila') ? 'Pila' : 'Hasiči')],
     ['smg', map.spots.smg],
     ['vest', below('Obecní úřad')],
     ['medkit', below('Zdravotní středisko')],

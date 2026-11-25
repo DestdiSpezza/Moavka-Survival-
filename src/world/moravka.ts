@@ -65,11 +65,9 @@ export type Decor =
 
 /** Pojmenovaná místa pro zakázky, výbavu a skupiny (v dlaždicích). */
 export interface MapSpots {
-  /** Zadavatel zakázek Biomatek. */
-  ecoGiver: { x: number; y: number };
   /** U přehrady (zakázky, auta). */
   dam: { x: number; y: number };
-  /** Tábor Biomatek v lese. */
+  /** Mýtina v lese (zatím bez využití). */
   camp: { x: number; y: number };
   /** Samopal na hrázi. */
   smg: { x: number; y: number };
@@ -107,8 +105,6 @@ export interface WorldMap {
   /** Výjezd na sever (další oblast) a na jih (předchozí oblast). */
   exits: { next: MapExit; prev: MapExit | null };
   spots: MapSpots;
-  /** Kde se objevují Biomatky (v Morávce u školky, jinde v lese a u vody). */
-  ecoSpawn: Zone[];
   /** Autobusové zastávky (px, levý horní roh přístřešku). */
   busStops: Array<{ x: number; y: number }>;
   crosswalks: Crosswalk[];
@@ -223,12 +219,10 @@ export function buildArea(seed: number, phase: number): WorldMap {
   // Škola s hřištěm.
   building('Škola', roadE + 22, CROSS_ROAD_Y - 10, 10, 7, Tile.RoofRed);
   fill(roadE + 22, CROSS_ROAD_Y - 3, 10, 2, Tile.Dirt);
-  // Pila na západním břehu u lesa.
+  // Hasičská zbrojnice na západním břehu, před ní cvičiště na požární útok.
   fill(18, CROSS_ROAD_Y + 4, 14, 10, Tile.Dirt);
-  building('Pila', 19, CROSS_ROAD_Y + 5, 7, 5, Tile.RoofBrown);
+  building('Hasiči', 19, CROSS_ROAD_Y + 5, 7, 5, Tile.RoofRed);
   fill(28, CROSS_ROAD_Y + 6, 3, 1, Tile.Logs);
-  fill(28, CROSS_ROAD_Y + 9, 3, 1, Tile.Logs);
-  fill(20, CROSS_ROAD_Y + 11, 5, 1, Tile.Logs);
 
   // Garáž u silnice na sever (opravy, přelakování, prodej aut).
   let garageX = 0;
@@ -265,7 +259,7 @@ export function buildArea(seed: number, phase: number): WorldMap {
     { name: 'Chata', x: 14, y: 22, w: 9, h: 9 },
     // Náves sahá přes silnici až ke křižovatce, kde hráč začíná.
     { name: 'Náves', x: Math.min(roadE - 6, mainRoadX(CROSS_ROAD_Y) - 2), y: CROSS_ROAD_Y - 10, w: 28 + Math.max(0, roadE - 6 - (mainRoadX(CROSS_ROAD_Y) - 2)), h: 24 },
-    { name: 'Pila', x: 16, y: CROSS_ROAD_Y + 2, w: 18, h: 14 },
+    { name: 'Hasiči', x: 16, y: CROSS_ROAD_Y + 2, w: 18, h: 14 },
     { name: 'Přehrada Morávka', x: 0, y: DAM_Y - 2, w: MAP_W, h: MAP_H - DAM_Y + 2 },
     { name: 'Cesta na Raškovice', x: 0, y: 0, w: MAP_W, h: 8 },
     { name: 'Les', x: 0, y: 0, w: 18, h: MAP_H },
@@ -294,7 +288,6 @@ export function buildArea(seed: number, phase: number): WorldMap {
   const west = [...east].reverse().map((p) => ({ x: p.x, y: p.y - TILE }));
 
   const damZone = zones.find((z) => z.name === 'Přehrada Morávka')!;
-  const naves = zones.find((z) => z.name === 'Náves')!;
   const school = buildings.find((b) => b.name === 'Škola')!;
   const northAt = { x: (mainRoadX(2) + 1) * TILE, y: 2 * TILE };
   const southAt = { x: (mainRoadX(DAM_Y - 3) + 1) * TILE, y: (DAM_Y - 3) * TILE };
@@ -318,18 +311,12 @@ export function buildArea(seed: number, phase: number): WorldMap {
       prev: { at: southAt, arrive: { x: southAt.x, y: southAt.y - 5 * TILE } },
     },
     spots: {
-      ecoGiver: { x: 33, y: damZone.y - 2 },
       dam: { x: 60, y: damZone.y - 2 },
       camp: { x: 17, y: 18 },
       smg: { x: 34, y: damZone.y + 1 },
       damParking: { x: mainRoadX(DAM_Y - 3) + 4, y: DAM_Y - 3 },
       hriste: { x: school.x + 7, y: school.y + school.h + 1 },
     },
-    ecoSpawn: [
-      { name: 'Les', x: 14, y: 10, w: 8, h: 50 },
-      { name: 'Hráz', x: 28, y: damZone.y, w: 60, h: 3 },
-      naves,
-    ],
     busStops: busX === undefined ? [] : [{ x: busX * TILE + 3, y: busY * TILE + 2 }],
     crosswalks: [
       { road: 1, along: mainRoadX(CROSS_ROAD_Y) + 4.5 - 16 },

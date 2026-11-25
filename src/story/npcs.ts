@@ -3,7 +3,7 @@
  * postavička a kde jsou podle hodin.
  */
 
-export type NpcId = 'kobyla' | 'prchard' | 'plotkova' | 'vesta' | 'omyx' | 'metejka' | 'zjebal' | 'dennyVysoky' | 'dennySochar' | 'kibi';
+export type NpcId = 'kobyla' | 'prchard' | 'plotkova' | 'vesta' | 'omyx' | 'metejka' | 'zjebal' | 'dennyVysoky' | 'dennySochar' | 'kibi' | 'ajina';
 
 export interface NpcDef {
   id: NpcId;
@@ -25,6 +25,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
   dennyVysoky: { id: 'dennyVysoky', name: 'Vysoký Denny', css: '#7ab0e8', sprite: 'npc-dennyVysoky' },
   dennySochar: { id: 'dennySochar', name: 'Denny sochař', css: '#b8a890', sprite: 'npc-dennySochar' },
   kibi: { id: 'kibi', name: 'Kibi', css: '#ff8ad0', sprite: 'npc-kibi' },
+  ajina: { id: 'ajina', name: 'Ajina', css: '#ff7ab0', sprite: 'npc-ajina' },
 };
 
 /** Štamgasti (Prchard je za barem, Plotková obsluhuje). */
@@ -44,7 +45,7 @@ function within(minute: number, span: { from: number; to: number }): boolean {
  * s Prchardem) tam sedí všichni; potom podle hodin.
  */
 export function inPub(id: NpcId, minute: number, festival: boolean): boolean {
-  if (id === 'kobyla') return false;
+  if (id === 'kobyla' || id === 'ajina') return false;
   if (festival) return true;
   if (id === 'dennyVysoky') return within(minute, DENNY_PUB);
   if (id === 'omyx') return within(minute, OMYX_PUB);
