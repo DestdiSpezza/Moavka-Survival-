@@ -1,5 +1,7 @@
 # Survive Morávka: plán vývoje po fázích
 
+> **Hra přechází na příběhovku.** Fáze 0–9 níže jsou hotový základ (mechaniky). Plán příběhu po aktech je v [PRIBEH.md](PRIBEH.md), rozhodnutí v [ADR.md](../ADR.md), postavy v [NPC.md](../NPC.md).
+
 Hra s pohledem shora (2D) z obce Morávka v Beskydech a jejího okolí. Hráč chodí pěšky, krade a řídí auta, bojuje, plní zakázky pro soupeřící skupiny a utíká policii. Do další oblasti postoupí, když v té současné vydělá dost peněz a nasbírá cílové skóre. Splnit všechny mise k tomu není potřeba.
 
 Každá fáze končí **hratelným stavem**. Hra se tak dá zkoušet po každém kroku a nic se nestaví naslepo.
