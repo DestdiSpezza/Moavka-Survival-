@@ -42,14 +42,17 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 
 ## Fáze P1: Akt 1 – Příjezd
 
-### 0. Hrdina
-- Jméno a důvod příjezdu dodá zadání (ADR-012). Do té doby ho NPC oslovují „punkáči“.
+### 0. Hrdina nebo hrdinka
+- Nová hra začne volbou: hrdina, nebo hrdinka (jiná postavička, texty v mužském nebo ženském tvaru) a jméno, které si hráč napíše (ADR-012).
+- Pak telefon s příspěvkem jako z Instagramu: „Super festival v eRku na Morávce!“. Proto hrdina jede.
 
 ### 1. Zrušení zakázek
 - Pryč: zadavatelé „!“, nabídky, katalog zakázek, odměny a komplikace zakázek, krok tutoriálu o zakázkách.
 - Zůstává: kroky (`steps.ts`), ukazatel cíle, text úkolu v HUDu. Z `Missions` se stane `Story` (běh aktu a misí).
 - Staré uložené hry: postup, peníze a výbava zůstanou, rozehraná zakázka se zahodí. Příběh v nich začne od Aktu 1 bez úvodní animace.
 - Výjezd do Raškovic se zavře (otevře ho až některý akt). Budova Veseta se přejmenuje na Vestovu (obchod pod pultem zůstává).
+- Neprůstřelná výbava se přejmenuje na „Neprůstřelná vesta“ (ADR-013).
+- Garáž Autoúpravy Dan ovládá Vysoký Denny rozhovorem; mezi 13 a 17 hodinou je v eRku a garáž je zavřená (ADR-014). Omyx je přes den u řeky, večer v eRku.
 
 ### 2. Příběhový systém
 - `src/story/`: akty jako data (akt → mise → kroky), stav příběhu (aktuální akt a mise, příznaky typu `metPlotkova`, `refusedTalk`), vztahy s NPC (−100 až 100).
@@ -64,7 +67,7 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 - Na zastávce před eRkem přibude přístřešek a cedule (nová zastávka „Morávka, eRko“).
 
 ### 4. NPC na zastávce
-- Místní na lavičce (návrh: **paní Kordulová**, viz NPC.md) se otočí a sarkasticky poradí, kde je hospoda. Bublina nad hlavou, pak dialogové okno.
+- Na zastávce stojí **Slečna Kobyla** (viz NPC.md), otočí se a sarkasticky poradí, kde je hospoda. Bublina nad hlavou, pak dialogové okno se 3 odpověďmi.
 - Návrhy hlášek (vybereme jednu nebo se budou střídat):
   - „Vypadáš žíznivě. Nejbližší hospoda je eRko. Nejvzdálenější taky, jiná tu není.“
   - „S takovým čírem tě do kostela nepustí. Do eRka jo, tam pustí i prase.“

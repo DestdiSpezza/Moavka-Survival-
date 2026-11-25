@@ -61,6 +61,19 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 - **Kontext:** Výjezd do Raškovic se dosud otevřel po splnění cíle oblasti (skóre 1 500 a 2 500 Kč), hlavně ze zakázek.
 - **Rozhodnutí:** Výjezd zůstane zavřený, dokud ho neotevře některý akt. Skóre a peníze se sbírají dál (obchody, garáž, chata).
 
-## ADR-012: Hrdina
-- **Stav:** otevřeno (jméno a důvod příjezdu dodá zadání)
-- **Zatím:** Punkáč se zeleným čírem, jak ho hra kreslí. Dokud nebude jméno, NPC mu říkají „punkáči“.
+## ADR-012: Hrdina nebo hrdinka
+- **Stav:** přijato
+- **Rozhodnutí:** Na začátku nové hry si hráč vybere hrdinu, nebo hrdinku (později to bude v příběhu důležité) a napíše jméno. Texty, které hráče oslovují, mají mužský i ženský tvar.
+- **Důvod příjezdu:** Na Instagramu vyskočila akce: v eRku na Morávce je super festival.
+
+## ADR-013: Neprůstřelná vesta
+- **Stav:** přijato
+- **Rozhodnutí:** Výbava „Vesta“ se přejmenuje na „Neprůstřelná vesta“ (v HUDu „Nepr. vesta“), ať se neplete se Štamgastem Vestou.
+
+## ADR-014: Vysoký Denny je garáž
+- **Stav:** přijato
+- **Rozhodnutí:** Autoúpravy Dan patří Vysokému Dennymu (Dan = Denny). Garáž se ovládá rozhovorem s ním (oprava, přelakování, výkup), Denny stojí před garáží. Mezi 13:00 a 17:00 sedí v eRku a garáž je zavřená.
+
+## ADR-015: Denny sochař se dá vyhodit
+- **Stav:** přijato (mechanika ve fázi P2)
+- **Rozhodnutí:** Když Dennyho sochaře nechceš, musí dostat pár ran pěstí, pak odejde pryč.

@@ -1,5 +1,7 @@
 # NPC: postavy příběhu
 
+Hrdina nebo hrdinka (volba na začátku, jméno si hráč napíše sám) přijíždí do Morávky, protože na Instagramu vyskočila akce: v eRku je super festival.
+
 Postavy z hospody eRko a okolí. U každé: kdo to je, výhoda a nevýhoda pro hráče, kde ji najdeš,
 co o ní řekne Plotková (dialog „Kdo jsou ti chlapi u stolu?“) a pár hlášek.
 Výhody a nevýhody se jako mechaniky zapnou ve fázi P2 (viz [docs/PRIBEH.md](docs/PRIBEH.md)).
@@ -44,23 +46,21 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Hlášky:** „Hehe, dobrý, dobrý!“ / „Náklaďák? Dám ti ho zaparkovat i do kurníku.“ / „Ještě jedno a jdu. Ne, fakt. Žena.“
 - **Pozor:** Žádné symboly, pozdravy ani nenávistné hlášky. Vtip je na jeho účet, ne na účet jiných (ADR-007).
 
-### Vysoký Denny
-- **Kdo:** Tichý přátelský mechanik. Umí zmizet auto. I člověka.
-- **Výhoda:** Přebarví a opraví auto.
+### Vysoký Denny (Dan)
+- **Kdo:** Tichý přátelský mechanik, majitel Autoúprav Dan (Dan = Denny, stejná postava). Umí zmizet auto. I člověka.
+- **Výhoda:** Přebarví a opraví auto, vykoupí auto. Dřívější garáž je teď rozhovor s ním (3 volby).
 - **Nevýhoda:** Moc neporadí.
-- **Kde:** U zdi u kulečníku, opřený, mlčí.
+- **Kde:** Mezi 13:00 a 17:00 v eRku (u zdi u kulečníku, opřený, mlčí), jinak stojí před svou garáží.
 - **Plotková:** „Vysoký Denny. Spraví ti auto, přelakuje, a kdyby bylo potřeba, tak i zmizí. Na co se ho zeptáš, odpoví ‚hm‘.“
 - **Hlášky:** „Hm.“ / „Dovez ho. Udělám.“ / „Co auto? Jaký auto?“
-- **Otázka:** Má nahradit Autoúpravy Dan (dnešní garáž), nebo být druhá možnost vedle nich?
 
 ### Denny sochař
 - **Kdo:** Chudý, pořád něco chce, pořád si stěžuje.
-- **Výhoda:** Zbavit se ho.
+- **Výhoda:** Jde se ho zbavit: musí dostat pár ran pěstí, pak odejde pryč.
 - **Nevýhoda:** Pořád si chce půjčit peníze (volba ano / ne).
 - **Kde:** U konce baru, nad prázdnou sklenicí.
 - **Plotková:** „Denny sochař. Sochá hlavně dluhy. Nepůjčuj mu, nebo mu půjč a zapomeň na to.“
 - **Hlášky:** „Nemáš stovku? Vrátím. Fakt. Asi.“ / „Umění se v Beskydech nenosí.“ / „Mám rozdělanou sochu Lysé hory. Zatím je to kámen.“
-- **Otázka:** „Výhoda: zbavit se ho“ znamená, že ho jde odbýt a dá pokoj? Nebo něco jiného?
 
 ### Prchard
 - **Kdo:** Hospodský, majitel eRka.
@@ -93,8 +93,8 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 
 ## Venku
 
-### Paní Kordulová (návrh)
-- **Kdo:** Místní důchodkyně na lavičce u zastávky před eRkem. Vidí všechno, komentuje všechno.
+### Slečna Kobyla
+- **Kdo:** Místní na zastávce před eRkem, s ohonem jako kobyla. Vidí všechno, komentuje všechno. Na „paní“ je háklivá.
 - **Role:** První postava, kterou hráč potká po vystoupení z autobusu. Sarkasticky ho pošle do hospody.
 - **Hlášky:** „Vypadáš žíznivě. Nejbližší hospoda je eRko. Nejvzdálenější taky, jiná tu není.“ / „S takovým čírem tě do kostela nepustí. Do eRka jo, tam pustí i prase.“
 
