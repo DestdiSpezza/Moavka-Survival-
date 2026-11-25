@@ -1,5 +1,6 @@
 import { TILE } from '../config';
-import { DAM_Y, mainRoadX, riverX, type WorldMap } from './moravka';
+import { pointAlong, polylineLength } from './geom';
+import type { WorldMap } from './moravka';
 import { isSolid, Tile } from './tiles';
 
 export interface Crossing {
@@ -14,25 +15,35 @@ function walkable(t: number | undefined): boolean {
 }
 
 /**
- * Najde, kudy divočák přeběhne hlavní silnici: z východní strany do pruhu mezi
- * silnicí a řekou a zpátky. Celá trasa musí jít proběhnout (žádné domy).
+ * Najde, kudy divočák přeběhne hlavní silnici: z pole nebo lesa na jedné straně
+ * kus za silnici na druhou stranu a zpátky. Celá trasa musí jít proběhnout (žádné domy ani voda).
  * `ok` může vyloučit místa (např. ta, která hráč právě vidí).
  */
 export function findBoarCrossing(map: WorldMap, rnd: () => number, ok: (x: number, y: number) => boolean): Crossing | null {
-  for (let tries = 0; tries < 40; tries++) {
-    const ty = 4 + Math.floor(rnd() * (DAM_Y - 12));
-    const road = mainRoadX(ty, map.phase);
-    const river = riverX(ty, map.phase);
-    const fx = road + 9 + Math.floor(rnd() * 8);
-    const tx = river + 3 + Math.floor(rnd() * Math.max(1, road - river - 4));
-    if (tx >= road) continue;
+  const mains = map.roads.filter((r) => r.kind === 'main');
+  if (!mains.length) return null;
+  for (let tries = 0; tries < 60; tries++) {
+    const road = mains[Math.floor(rnd() * mains.length)];
+    const p = pointAlong(road.pts, 2 + rnd() * Math.max(0, polylineLength(road.pts) - 4));
+    const side = rnd() < 0.5 ? 1 : -1;
+    // Kolmo k silnici: odkud (dál) a kam (blíž za silnicí).
+    const nx = -p.dy * side;
+    const ny = p.dx * side;
+    const far = road.width / 2 + 7 + rnd() * 7;
+    const near = road.width / 2 + 2.5 + rnd() * 3;
+    const from = { x: p.x + nx * far, y: p.y + ny * far };
+    const to = { x: p.x - nx * near, y: p.y - ny * near };
+    const steps = Math.ceil((far + near) * 5);
     let clear = true;
-    for (let x = tx; x <= fx; x++) if (!walkable(map.tiles[ty]?.[x])) clear = false;
-    const start = map.tiles[ty]?.[fx];
+    for (let i = 0; i <= steps && clear; i++) {
+      const k = i / steps;
+      if (!walkable(map.tiles[Math.floor(from.y + (to.y - from.y) * k)]?.[Math.floor(from.x + (to.x - from.x) * k)])) clear = false;
+    }
+    const start = map.tiles[Math.floor(from.y)]?.[Math.floor(from.x)];
     if (!clear || (start !== Tile.Grass && start !== Tile.ForestFloor && start !== Tile.Dirt)) continue;
-    const from = { x: (fx + 0.5) * TILE, y: (ty + 0.5) * TILE };
-    if (!ok(from.x, from.y)) continue;
-    return { from, to: { x: (tx + 0.5) * TILE, y: (ty + 0.5) * TILE } };
+    const fromPx = { x: from.x * TILE, y: from.y * TILE };
+    if (!ok(fromPx.x, fromPx.y)) continue;
+    return { from: fromPx, to: { x: to.x * TILE, y: to.y * TILE } };
   }
   return null;
 }

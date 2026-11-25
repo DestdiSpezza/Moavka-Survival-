@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { Sound } from '../audio/Sound';
 import { paintGround } from '../art/ground';
 import { paintWater } from '../art/water';
-import { buildArea } from '../world/moravka';
+import { buildWorld } from '../world/world';
 import { newProgress, type Progress, readSave } from '../systems/save';
 import { T } from '../texts/cs';
 import { AREAS } from '../world/areas';
@@ -20,7 +20,7 @@ export class TitleScene extends Phaser.Scene {
     // Pozadí: skutečná malba Morávky, kamera pomalu pluje nad vesnicí.
     const area = AREAS.moravka;
     if (!this.textures.exists('ground-moravka')) {
-      const art = paintGround(buildArea(area.seed, area.phase), area.seed);
+      const art = paintGround(buildWorld(area.id), area.seed);
       this.textures.addCanvas('ground-moravka', art.ground);
       this.textures.addCanvas('lights-moravka', art.lights);
       this.registry.set('chimneys-moravka', art.chimneys);

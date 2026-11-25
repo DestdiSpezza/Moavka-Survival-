@@ -1,8 +1,9 @@
 import { TILE } from '../config';
 import { createRng } from '../systems/rng';
-import { type Building, CROSS_ROAD_Y, DAM_Y, mainRoadX, type WorldMap } from '../world/moravka';
+import type { Building, WorldMap } from '../world/moravka';
 import { Tile } from '../world/tiles';
 import { type Color, hash2, mix, PAL, Painter, shade } from './painter';
+import { buildFields, type Lamp, lampPositions, paintBusStops, paintDecor, paintMarkings, paintRoads, paintStreams, streamTile } from './roads';
 
 /**
  * Statická malba celé mapy shora (styl GTA 2): terén s variacemi, asfalt s
@@ -19,17 +20,24 @@ export function paintGround(map: WorldMap, seed: number): { ground: HTMLCanvasEl
   windows = [];
   chimneys = [];
 
+  // Voda potoků se kreslí hladce podle osy; jezero zůstává po dlaždicích.
+  const stream: boolean[][] = t.map((row, ty) => row.map((tile, tx) => tile === Tile.Water && streamTile(map, tx, ty)));
+  const lake = (tx: number, ty: number) => at(tx, ty) === Tile.Water && !stream[ty]?.[tx];
+  const fields = buildFields(map);
+
   for (let ty = 0; ty < map.height; ty++) {
-    for (let tx = 0; tx < map.width; tx++) paintTile(p, at(tx, ty), tx, ty, at, seed);
+    for (let tx = 0; tx < map.width; tx++) paintTile(p, at(tx, ty), tx, ty, at, seed, !!stream[ty][tx]);
   }
-  paintEdges(p, map, at);
-  paintMarkings(p, map, at);
-  paintPlayground(p, map);
-  paintBushes(p, at, seed);
+  paintEdges(p, map, at, lake);
+  paintStreams(p, fields);
+  paintRoads(p, map, fields, lake);
+  paintMarkings(p, map, fields);
+  paintDecor(p, map);
+  paintBushes(p, map, at, seed);
   paintGardens(p, map, at, seed);
-  paintShores(p, map, at, seed);
+  paintShores(p, map, at, seed, lake);
   paintForestDetails(p, map, at, seed);
-  paintBusStop(p, map, at);
+  paintBusStops(p, map);
 
   // Stíny budov a stromů nejdřív, ať se nekreslí přes střechy a koruny.
   for (const b of map.buildings) {
@@ -43,7 +51,7 @@ export function paintGround(map: WorldMap, seed: number): { ground: HTMLCanvasEl
   for (const [tx, ty] of trees) p.ellipse(tx * TILE + 11, ty * TILE + 12, 9, 7, PAL.shadow, 0.28);
 
   for (const b of map.buildings) paintBuilding(p, b, seed);
-  const lamps = lampPositions(map, at);
+  const lamps = lampPositions(map, fields);
   for (const l of lamps) paintLamp(p, l);
   for (const [tx, ty] of trees) paintTree(p, tx, ty, seed);
 
@@ -56,32 +64,6 @@ export function paintGround(map: WorldMap, seed: number): { ground: HTMLCanvasEl
 let windows: Array<{ x: number; y: number; w: number; h: number }> = [];
 /** Komíny (odtud stoupá kouř). */
 let chimneys: Array<{ x: number; y: number }> = [];
-
-interface Lamp {
-  /** Pata sloupu */
-  x: number;
-  y: number;
-  /** Kam svítí (bod nad silnicí) */
-  lx: number;
-  ly: number;
-}
-
-/** Lampy na chodnících podél silnice, zhruba po šesti dlaždicích. */
-function lampPositions(map: WorldMap, at: (x: number, y: number) => number): Lamp[] {
-  const out: Lamp[] = [];
-  for (let ty = 1; ty < map.height - 1; ty++) {
-    for (let tx = 1; tx < map.width - 1; tx++) {
-      if (at(tx, ty) !== Tile.Sidewalk || (tx * 3 + ty * 5) % 7 !== 0) continue;
-      const dirs: Array<[number, number]> = [[0, -1], [0, 1], [-1, 0], [1, 0]];
-      const road = dirs.find(([dx, dy]) => at(tx + dx, ty + dy) === Tile.Road);
-      if (!road) continue;
-      const x = tx * TILE + 8 - road[0] * 5;
-      const y = ty * TILE + 8 - road[1] * 5;
-      out.push({ x, y, lx: x + road[0] * 9, ly: y + road[1] * 9 });
-    }
-  }
-  return out;
-}
 
 function paintLamp(p: Painter, l: Lamp): void {
   p.ellipse(l.x + 1, l.y + 1, 2, 2, PAL.shadow, 0.35);
@@ -108,7 +90,7 @@ function paintNightLights(W: number, H: number, lamps: Lamp[]): HTMLCanvasElemen
 
 // ---------- Dlaždice ----------
 
-function paintTile(p: Painter, tile: number, tx: number, ty: number, at: (x: number, y: number) => number, seed: number): void {
+function paintTile(p: Painter, tile: number, tx: number, ty: number, at: (x: number, y: number) => number, seed: number, stream: boolean): void {
   const x = tx * TILE;
   const y = ty * TILE;
   const h = hash2(tx, ty, seed);
@@ -146,24 +128,11 @@ function paintTile(p: Painter, tile: number, tx: number, ty: number, at: (x: num
       p.rect(x + 3, y + 3, 3, 1, 0x9a968e);
       break;
     case Tile.Road:
-      asphalt(p, x, y, h);
-      break;
     case Tile.Sidewalk:
-      pavement(p, x, y, tx, ty, seed);
+    case Tile.Bridge:
+      // Pod silnicí a chodníkem tráva: asfalt a dlaždice se kreslí hladce podle osy.
+      grass(p, x, y, h, seed);
       break;
-    case Tile.Bridge: {
-      // Prkna napříč směrem jízdy (most vede východ–západ).
-      for (let i = 0; i < TILE; i += 3) {
-        const c = PAL.plank[(tx * 5 + i) % PAL.plank.length];
-        p.rect(x + i, y, 2, TILE, c);
-        p.rect(x + i + 2, y, 1, TILE, 0x3e2a18);
-      }
-      p.noise(x, y, TILE, TILE, [0x5a3f26, 0x8a6a46], 0.12);
-      // Zábradlí, kde je pod mostem voda.
-      if (at(tx, ty - 1) === Tile.Water) rail(p, x, y, true);
-      if (at(tx, ty + 1) === Tile.Water) rail(p, x, y + TILE - 3, true);
-      break;
-    }
     case Tile.Dam:
       p.rect(x, y, TILE, TILE, PAL.concrete[0]);
       p.noise(x, y, TILE, TILE, PAL.concrete, 0.35);
@@ -188,7 +157,8 @@ function paintTile(p: Painter, tile: number, tx: number, ty: number, at: (x: num
       }
       break;
     case Tile.Water:
-      p.clear(x, y, TILE, TILE);
+      if (stream) grass(p, x, y, h, seed);
+      else p.clear(x, y, TILE, TILE);
       break;
     default:
       // Zdi a střechy pokryje kreslení budov.
@@ -225,58 +195,9 @@ function grass(p: Painter, x: number, y: number, h: number, seed: number): void 
   }
 }
 
-function asphalt(p: Painter, x: number, y: number, h: number): void {
-  p.rect(x, y, TILE, TILE, PAL.asphalt[0]);
-  p.noise(x, y, TILE, TILE, PAL.asphalt, 0.7);
-  if (h < 0.07) {
-    // Prasklina
-    let cx = x + 2 + Math.floor(h * 100) % 10;
-    let cy = y + 1;
-    for (let i = 0; i < 12; i++) {
-      p.px(cx, cy, 0x2e2e32);
-      cy++;
-      cx += p.rnd() < 0.4 ? (p.rnd() < 0.5 ? -1 : 1) : 0;
-    }
-  } else if (h < 0.11) {
-    // Záplata
-    p.rect(x + 3, y + 4, 8, 6, 0x3c3c40);
-    p.noise(x + 3, y + 4, 8, 6, [0x37373b, 0x434347], 0.5);
-  } else if (h > 0.985) {
-    // Kanál
-    p.ellipse(x + 8, y + 8, 3, 3, 0x2a2a2e);
-    p.rect(x + 6, y + 8, 5, 1, 0x56565c);
-  }
-  // Olejová skvrna
-  if (h > 0.6 && h < 0.63) p.ellipse(x + 8, y + 9, 3, 2, 0x2c2c33, 0.6);
-}
-
-function pavement(p: Painter, x: number, y: number, tx: number, ty: number, seed: number): void {
-  // Betonové dlaždice 8×8 se spárami, každá trochu jinak světlá.
-  for (let j = 0; j < 2; j++) {
-    for (let i = 0; i < 2; i++) {
-      const v = hash2(tx * 2 + i, ty * 2 + j, seed + 9);
-      const c = PAL.pavement[Math.floor(v * PAL.pavement.length)];
-      p.rect(x + i * 8, y + j * 8, 8, 8, c);
-      p.noise(x + i * 8, y + j * 8, 8, 8, [shade(c, 0.93), shade(c, 1.05)], 0.3);
-      if (v > 0.9) p.line(x + i * 8 + 1, y + j * 8 + 2, x + i * 8 + 6, y + j * 8 + 5, shade(c, 0.75));
-    }
-  }
-  p.rect(x, y + 7, TILE, 1, PAL.pavementSeam);
-  p.rect(x + 7, y, 1, TILE, PAL.pavementSeam);
-  p.rect(x, y + 15, TILE, 1, PAL.pavementSeam);
-  p.rect(x + 15, y, 1, TILE, PAL.pavementSeam);
-}
-
-function rail(p: Painter, x: number, y: number, horizontal: boolean): void {
-  if (!horizontal) return;
-  p.rect(x, y, TILE, 3, 0x3e2a18);
-  p.rect(x, y, TILE, 1, 0x8a6a46);
-  for (let i = 1; i < TILE; i += 6) p.rect(x + i, y, 2, 3, 0x2a1c10);
-}
-
 // ---------- Okraje: obrubníky, krajnice, břehy, skály ----------
 
-function paintEdges(p: Painter, map: WorldMap, at: (x: number, y: number) => number): void {
+function paintEdges(p: Painter, map: WorldMap, at: (x: number, y: number) => number, lake: (x: number, y: number) => boolean): void {
   const dirs: Array<[number, number]> = [[0, -1], [0, 1], [-1, 0], [1, 0]];
   for (let ty = 0; ty < map.height; ty++) {
     for (let tx = 0; tx < map.width; tx++) {
@@ -292,26 +213,14 @@ function paintEdges(p: Painter, map: WorldMap, at: (x: number, y: number) => num
           if (dx === -1) p.rect(x, y, w, TILE, c, a);
           if (dx === 1) p.rect(x + TILE - w, y, w, TILE, c, a);
         };
-        if (tile === Tile.Sidewalk && n === Tile.Road) {
-          // Obrubník: světlá hrana a pod ní stín do silnice.
-          edge(2, PAL.curb);
-          edge(1, 0xe2ded4);
-        }
-        if (tile === Tile.Road && n === Tile.Sidewalk) edge(1, 0x2a2a2e, 0.6);
-        if (tile === Tile.Road && (n === Tile.Grass || n === Tile.Dirt || n === Tile.ForestFloor)) {
-          edge(2, 0x5f5a50, 0.8);
-          edge(1, 0x6e6658, 0.6);
-        }
-        if (tile === Tile.Water && n !== Tile.Water) {
-          // Pěna u břehu (voda je průhledná, kreslí se jen pěna).
+        if (lake(tx, ty) && n !== Tile.Water) {
+          // Pěna u břehu jezera (voda je průhledná, kreslí se jen pěna).
           if (dy === -1) p.dither(x, y, TILE, 2, PAL.foam, 0.9);
           if (dy === 1) p.dither(x, y + TILE - 2, TILE, 2, PAL.foam, 0.9);
           if (dx === -1) p.dither(x, y, 2, TILE, PAL.foam, 0.9);
           if (dx === 1) p.dither(x + TILE - 2, y, 2, TILE, PAL.foam, 0.9);
         }
-        if ((tile === Tile.Grass || tile === Tile.Dirt || tile === Tile.ForestFloor || tile === Tile.Sidewalk) && n === Tile.Water) {
-          edge(2, 0x3a3226, 0.5);
-        }
+        if ((tile === Tile.Grass || tile === Tile.Dirt || tile === Tile.ForestFloor) && lake(tx + dx, ty + dy)) edge(2, 0x3a3226, 0.5);
         if (tile === Tile.Rock && n !== Tile.Rock) {
           edge(1, 0x46423c);
           if (dy === -1 || dx === -1) edge(2, 0xa5a198, 0.5);
@@ -322,63 +231,14 @@ function paintEdges(p: Painter, map: WorldMap, at: (x: number, y: number) => num
   }
 }
 
-// ---------- Vodorovné značení ----------
-
-function paintMarkings(p: Painter, map: WorldMap, at: (x: number, y: number) => number): void {
-  const phase = map.phase;
-  // Hlavní silnice: přerušovaná žlutá čára mezi pruhy.
-  for (let ty = 0; ty < DAM_Y; ty++) {
-    const mx = mainRoadX(ty, phase);
-    if (at(mx, ty) !== Tile.Road || at(mx + 1, ty) !== Tile.Road) continue;
-    if (Math.abs(ty - CROSS_ROAD_Y) <= 1 || ty === CROSS_ROAD_Y + 2) continue;
-    for (let py = ty * TILE; py < ty * TILE + TILE; py++) {
-      if (((py >> 3) & 1) === 0) p.rect((mx + 1) * TILE - 1, py, 2, 1, PAL.lineYellow);
-    }
-  }
-  // Příčná silnice: bílá přerušovaná, mimo křižovatku.
-  for (let tx = 0; tx < map.width; tx++) {
-    const y0 = CROSS_ROAD_Y;
-    if (at(tx, y0) !== Tile.Road || at(tx, y0 + 1) !== Tile.Road) continue;
-    if (at(tx, y0 - 1) === Tile.Road || at(tx, y0 + 2) === Tile.Road) continue;
-    for (let px = tx * TILE; px < tx * TILE + TILE; px++) {
-      if (((px >> 3) & 1) === 0) p.rect(px, (y0 + 1) * TILE - 1, 1, 2, PAL.lineWhite);
-    }
-  }
-  // Přechod pro chodce na příčné silnici kousek za křižovatkou a na hlavní nad ní.
-  const zx = (mainRoadX(CROSS_ROAD_Y, phase) + 4) * TILE;
-  if (at(zx / TILE, CROSS_ROAD_Y) === Tile.Road) {
-    for (let i = 0; i < 14; i += 4) p.rect(zx + i, CROSS_ROAD_Y * TILE + 3, 2, TILE * 2 - 6, PAL.lineWhite, 0.9);
-  }
-  const zy = CROSS_ROAD_Y - 4;
-  const zmx = mainRoadX(zy, phase);
-  if (at(zmx, zy) === Tile.Road && at(zmx + 1, zy) === Tile.Road) {
-    for (let i = 0; i < 14; i += 4) p.rect(zmx * TILE + 3, zy * TILE + i, TILE * 2 - 6, 2, PAL.lineWhite, 0.9);
-  }
-}
-
-/** Hřiště u školy: čáry a koše na basket. */
-function paintPlayground(p: Painter, map: WorldMap): void {
-  const school = map.buildings.find((b) => b.name === 'Škola');
-  if (!school) return;
-  const x = school.x * TILE;
-  const y = (school.y + school.h) * TILE;
-  const w = school.w * TILE;
-  const h = 2 * TILE;
-  p.rect(x + 2, y + 2, w - 4, h - 4, 0x8a5a3a);
-  p.noise(x + 2, y + 2, w - 4, h - 4, [0x7e5234, 0x956444], 0.3);
-  p.frame(x + 3, y + 3, w - 6, h - 6, 0xe8e6da);
-  p.rect(x + w / 2, y + 3, 1, h - 6, 0xe8e6da);
-  p.ellipse(x + w / 2, y + h / 2, 4, 4, 0xe8e6da);
-  p.ellipse(x + w / 2, y + h / 2, 3, 3, 0x8a5a3a);
-  p.rect(x + 4, y + h / 2 - 2, 2, 4, 0xd86a2a);
-  p.rect(x + w - 6, y + h / 2 - 2, 2, 4, 0xd86a2a);
-}
-
 /** Keře a záhony v zahradách. */
-function paintBushes(p: Painter, at: (x: number, y: number) => number, seed: number): void {
-  for (let ty = 2; ty < DAM_Y - 2; ty++) {
-    for (let tx = 17; tx < 99; tx++) {
-      if (at(tx, ty) !== Tile.Grass) continue;
+function paintBushes(p: Painter, map: WorldMap, at: (x: number, y: number) => number, seed: number): void {
+  // Na hřiště, pískoviště a parkoviště keře nepatří.
+  const onDecor = (tx: number, ty: number) =>
+    map.decor.some((d) => (d.kind === 'oval' ? Math.hypot((tx + 0.5 - d.x) / d.rx, (ty + 0.5 - d.y) / d.ry) < 1.15 : tx >= d.x - 1 && tx <= d.x + d.w && ty >= d.y - 1 && ty <= d.y + d.h));
+  for (let ty = 2; ty < map.height - 2; ty++) {
+    for (let tx = 2; tx < map.width - 2; tx++) {
+      if (at(tx, ty) !== Tile.Grass || onDecor(tx, ty)) continue;
       const h = hash2(tx, ty, seed + 31);
       if (h > 0.05) continue;
       const cx = tx * TILE + 8;
@@ -438,7 +298,7 @@ function paintGardens(p: Painter, map: WorldMap, at: (x: number, y: number) => n
 }
 
 /** Rákos na břehu a lekníny na klidné vodě. */
-function paintShores(p: Painter, map: WorldMap, at: (x: number, y: number) => number, seed: number): void {
+function paintShores(p: Painter, map: WorldMap, at: (x: number, y: number) => number, seed: number, lake: (x: number, y: number) => boolean): void {
   for (let ty = 1; ty < map.height - 1; ty++) {
     for (let tx = 1; tx < map.width - 1; tx++) {
       const tile = at(tx, ty);
@@ -453,7 +313,7 @@ function paintShores(p: Painter, map: WorldMap, at: (x: number, y: number) => nu
           if (p.rnd() < 0.3) p.rect(rx, ry - 2, 1, 2, 0x6a4024);
         }
       }
-      if (tile === Tile.Water && h < 0.07 && ty > 66) {
+      if (lake(tx, ty) && lake(tx, ty - 1) && h < 0.07) {
         // Leknín: zelený list se zářezem, občas květ
         const cx = tx * TILE + 8;
         const cy = ty * TILE + 8;
@@ -493,26 +353,6 @@ function paintForestDetails(p: Painter, map: WorldMap, at: (x: number, y: number
         }
       }
     }
-  }
-}
-
-/** Autobusová zastávka u hlavní silnice severně od návsi. */
-function paintBusStop(p: Painter, map: WorldMap, at: (x: number, y: number) => number): void {
-  const ty = CROSS_ROAD_Y - 9;
-  const mx = mainRoadX(ty, map.phase);
-  for (const tx of [mx + 2, mx - 1]) {
-    if (at(tx, ty) !== Tile.Sidewalk || at(tx, ty + 1) !== Tile.Sidewalk) continue;
-    const x = tx * TILE + 3;
-    const y = ty * TILE + 2;
-    p.rect(x + 2, y + 2, 10, 24, PAL.shadow, 0.3);
-    p.rect(x, y, 10, 24, 0x5a6a7a);
-    p.rect(x, y, 10, 1, 0x9aaabb);
-    p.rect(x + 1, y + 1, 8, 22, 0x6e7e8e);
-    p.rect(x + 1, y + 3, 1, 18, 0x9ac0d8);
-    // Cedule: žlutý ovál se zeleným „A“ pruhem
-    p.ellipse(x + 5, y + 28, 2, 2, 0xe8c020);
-    p.px(x + 5, y + 28, 0x2a7a3a);
-    return;
   }
 }
 
@@ -603,6 +443,32 @@ export function paintBuilding(p: Painter, b: Building, seed: number): void {
     case 'Chata':
       pitched(p, x, y, w, h - face, 0x4e3624, v, true);
       facade(p, x, y + h - face, w, face, 0x7a5632, 'house', v);
+      return;
+    case 'Hasiči':
+      // Hasičská zbrojnice: rovná střecha s majákem, červená vrata.
+      flat(p, x, y, w, h - face, 0x8e8e94, v);
+      p.rect(x + w - 12, y + 6, 6, 4, 0xd02020);
+      p.px(x + w - 10, y + 7, 0xff8a8a);
+      facade(p, x, y + h - face, w, face, 0xc8402e, 'garage', v);
+      return;
+    case 'Veseta':
+      pitched(p, x, y, w, h - face, roof, v, false);
+      facade(p, x, y + h - face, w, face, 0xe0d4b8, 'shop', v);
+      awning(p, x + 3, y + h, w - 6);
+      return;
+    case 'Omyx':
+      // Plechová bouda u řeky.
+      corrugated(p, x, y, w, h - face, 0x6a6a5a, true);
+      facade(p, x, y + h - face, w, face, 0x8a7a5a, 'barn', v);
+      return;
+    case 'Školka':
+      pitched(p, x, y, w, h - face, roof, v, false);
+      facade(p, x, y + h - face, w, face, 0xf0d870, 'office', v);
+      return;
+    case 'Tělocvična':
+      flat(p, x, y, w, h - face, 0x9a968e, v);
+      skylights(p, x + 8, y + 8, w - 16, 4);
+      facade(p, x, y + h - face, w, face, 0xd6b878, 'office', v);
       return;
     case 'Hospoda':
       pitched(p, x, y, w, h - face, roof, v, false);

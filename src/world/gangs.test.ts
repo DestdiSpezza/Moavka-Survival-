@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GROUP_IDS } from '../systems/respect';
 import { GROUPS, inZones, spawnTiles, territory } from './gangs';
-import { buildMoravka } from './moravka';
+import { buildMoravka } from './realMoravka';
 
 const map = buildMoravka();
 

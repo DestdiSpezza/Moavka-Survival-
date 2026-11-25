@@ -21,7 +21,7 @@ Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 
 ## Co ve hře je
 
-- Dvě oblasti: Morávka a Raškovice. Do Raškovic tě pustí po splnění cíle Morávky (skóre a peníze).
+- Dvě oblasti: Morávka a Raškovice. Do Raškovic tě pustí po splnění cíle Morávky (skóre a peníze). Mapa Morávky vychází ze skutečné vesnice ([náhled](docs/mapa-moravka.jpg)).
 - Čtyři skupiny v každé oblasti, respekt, zakázky se zelenou, žlutou a červenou obtížností a náhodnými komplikacemi.
 - Policie s pěti úrovněmi hledanosti, zátarasy a zásahovkou. Hledanost roste, jen když tě někdo viděl: svědci volají policii a podle jejich popisu tě hledají.
 - Živá vesnice: nehody v provozu, hádky a rvačky řidičů, opilci, divočáci na silnici, policie honí i NPC, obecní rozhlas hlásí, co se právě stalo.

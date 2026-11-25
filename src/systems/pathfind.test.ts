@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMoravka } from '../world/moravka';
+import { buildMoravka } from '../world/realMoravka';
 import { isSolid, Tile } from '../world/tiles';
 import { findPath } from './pathfind';
 

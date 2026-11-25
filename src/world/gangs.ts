@@ -73,12 +73,7 @@ export function territory(map: WorldMap, id: GroupId): Zone[] {
 /** Kde se členové objevují. Ekologové v lese u vesnice, u přehrady a na návsi. */
 export function spawnAreas(map: WorldMap, id: GroupId): Zone[] {
   if (id !== 'ekologove') return territory(map, id);
-  const dam = zone(map, 'Přehrada Morávka');
-  return [
-    { name: 'Les', x: 14, y: 10, w: 8, h: 50 },
-    { name: 'Hráz', x: 28, y: dam.y, w: 60, h: 3 },
-    zone(map, 'Náves'),
-  ];
+  return map.ecoSpawn;
 }
 
 export function inZones(zones: Zone[], tx: number, ty: number): boolean {

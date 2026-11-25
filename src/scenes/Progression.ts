@@ -1,10 +1,8 @@
 import Phaser from 'phaser';
-import { TILE } from '../config';
 import type { Vehicle } from '../entities/Vehicle';
 import { driftScore, escapeBonus, isDrifting, SCORE, wreckScore } from '../systems/score';
 import { lateralSpeed } from '../systems/vehicleModel';
 import { AREAS, type AreaId, goalMet } from '../world/areas';
-import { DAM_Y, mainRoadX } from '../world/moravka';
 import { pixelFont } from './BootScene';
 import type { PedHurtEvent } from './Combat';
 import type { GameScene } from './GameScene';
@@ -42,11 +40,9 @@ export class Progression {
 
   constructor(private game: GameScene) {
     const area = game.area;
-    const phase = game.world.phase;
-    const north = { x: (mainRoadX(2, phase) + 1) * TILE, y: 2 * TILE };
-    const south = { x: (mainRoadX(DAM_Y - 3, phase) + 1) * TILE, y: (DAM_Y - 3) * TILE };
-    if (area.next) this.addExit(area.next, north, { x: north.x, y: north.y + 5 * TILE }, '▲');
-    if (area.prev) this.addExit(area.prev, south, { x: south.x, y: south.y - 5 * TILE }, '▼');
+    const { next, prev } = game.world.exits;
+    if (area.next) this.addExit(area.next, next.at, next.arrive, '▲');
+    if (area.prev && prev) this.addExit(area.prev, prev.at, prev.arrive, '▼');
     this.goalAnnounced = this.goalReached();
 
     game.events.on('pedHurt', (e: PedHurtEvent) => {

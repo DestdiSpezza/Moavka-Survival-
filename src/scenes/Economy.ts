@@ -52,7 +52,9 @@ export class Economy {
       return { x: (t.tx + 0.5) * TILE, y: (t.ty + 0.5) * TILE };
     };
     this.addPlace('garage', door('Garáž'), '', 0x8a8a9a);
-    this.addPlace('shop', door('Obchod', -2), 'POD PULTEM', 0xd8b030);
+    // Pod pultem prodává dealer Veseta (v Morávce), jinde se kupuje v obchodě.
+    const dealer = map.buildings.some((x) => x.name === 'Veseta');
+    this.addPlace('shop', dealer ? door('Veseta') : door('Obchod', -2), 'POD PULTEM', 0xd8b030);
     this.addPlace('hideout', door('Chata'), '', 0x7a5236);
     const kb = game.input.keyboard!;
     this.keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'].map((k) => kb.addKey(k));

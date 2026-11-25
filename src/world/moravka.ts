@@ -1,9 +1,12 @@
+import { TILE } from '../config';
 import { createRng } from '../systems/rng';
+import type { Pt } from './geom';
 import { Tile } from './tiles';
 
 /**
- * Mapa první oblasti: Morávka v údolí řeky.
- * Sever = cesta na Raškovice, jih = přehrada Morávka, po stranách lesy a kopce.
+ * Společný tvar mapy oblasti a generátor údolí (Raškovice a další oblasti):
+ * řeka, hlavní silnice podél ní, příčná silnice přes most, přehrada na jihu.
+ * Morávka má vlastní mapu podle skutečné vesnice (realMoravka.ts).
  * Mapa se generuje kódem ze semínka, takže je pokaždé stejná a jde snadno upravovat.
  */
 export const MAP_W = 120;
@@ -26,6 +29,56 @@ export interface Zone {
   h: number;
 }
 
+export type RoadKind = 'main' | 'side' | 'track';
+
+/** Silnice jako lomená čára (osa) v dlaždicích; šířka taky v dlaždicích. */
+export interface RoadLine {
+  kind: RoadKind;
+  width: number;
+  pts: Pt[];
+}
+
+/** Potok nebo řeka jako lomená čára. */
+export interface StreamLine {
+  width: number;
+  pts: Pt[];
+}
+
+/** Výjezd do jiné oblasti (v px): kde je značka a kam hráč přijede. */
+export interface MapExit {
+  at: { x: number; y: number };
+  arrive: { x: number; y: number };
+}
+
+/** Přechod pro chodce: silnice (index) a vzdálenost od jejího začátku v dlaždicích. */
+export interface Crosswalk {
+  road: number;
+  along: number;
+}
+
+/** Ozdoby malované do terénu: atletický ovál, hřiště s čárami. */
+export type Decor =
+  | { kind: 'oval'; x: number; y: number; rx: number; ry: number }
+  | { kind: 'court'; x: number; y: number; w: number; h: number }
+  | { kind: 'playground'; x: number; y: number; w: number; h: number }
+  | { kind: 'parking'; x: number; y: number; w: number; h: number };
+
+/** Pojmenovaná místa pro zakázky, výbavu a skupiny (v dlaždicích). */
+export interface MapSpots {
+  /** Zadavatel zakázek Ekologů. */
+  ecoGiver: { x: number; y: number };
+  /** U přehrady (zakázky, auta). */
+  dam: { x: number; y: number };
+  /** Tábor Ekologů v lese. */
+  camp: { x: number; y: number };
+  /** Samopal na hrázi. */
+  smg: { x: number; y: number };
+  /** Parkování u přehrady. */
+  damParking: { x: number; y: number };
+  /** Školní hřiště. */
+  hriste: { x: number; y: number };
+}
+
 export interface WorldMap {
   width: number;
   height: number;
@@ -37,6 +90,21 @@ export interface WorldMap {
   hospital: { x: number; y: number };
   /** Posun vlnění řeky a silnice (viz riverX). */
   phase: number;
+  /** Osy silnic (pro kreslení a provoz). */
+  roads: RoadLine[];
+  /** Osy potoků a řek (kreslí se hladce, jezero zůstává po dlaždicích). */
+  streams: StreamLine[];
+  /** Trasy provozu v px (jezdí se vpravo). */
+  traffic: Array<Array<{ x: number; y: number }>>;
+  /** Výjezd na sever (další oblast) a na jih (předchozí oblast). */
+  exits: { next: MapExit; prev: MapExit | null };
+  spots: MapSpots;
+  /** Kde se objevují Ekologové (všude, nejvíc v lese a u vody). */
+  ecoSpawn: Zone[];
+  /** Autobusové zastávky (px, levý horní roh přístřešku). */
+  busStops: Array<{ x: number; y: number }>;
+  crosswalks: Crosswalk[];
+  decor: Decor[];
 }
 
 /** Osa řeky: x souřadnice středu koryta v daném řádku. `phase` posouvá vlnění (jiná oblast = jiné údolí). */
@@ -56,11 +124,6 @@ function mainRoadXOf(y: number, phase: number): number {
 
 export const DAM_Y = 66;
 export const CROSS_ROAD_Y = 34;
-
-/** Morávka (první oblast). */
-export function buildMoravka(): WorldMap {
-  return buildArea(1234, 0);
-}
 
 /** Vygeneruje údolí: řeka, silnice, náves, škola, pila, přehrada, domy, lesy. */
 export function buildArea(seed: number, phase: number): WorldMap {
@@ -201,6 +264,35 @@ export function buildArea(seed: number, phase: number): WorldMap {
     { name: 'Les', x: 98, y: 0, w: MAP_W - 98, h: MAP_H },
   ];
 
+  // Osy silnic a řeky pro kreslení (dlaždice výše zůstávají, jak byly).
+  const mainPts: Pt[] = [[mainRoadX(0) + 1, 0]];
+  for (let y = 0; y < DAM_Y; y++) mainPts.push([mainRoadX(y) + 1, y + 0.5]);
+  const roads = [
+    { kind: 'main' as const, width: 2, pts: mainPts },
+    { kind: 'main' as const, width: 2, pts: [[16, CROSS_ROAD_Y + 1], [100, CROSS_ROAD_Y + 1]] as Pt[] },
+    { kind: 'side' as const, width: 2, pts: [[27, CROSS_ROAD_Y + 2], [27, DAM_Y]] as Pt[] },
+  ];
+  const riverPts: Pt[] = [];
+  for (let y = 0; y < DAM_Y; y++) riverPts.push([riverX(y) + 0.5, y + 0.5]);
+
+  // Provoz: jezdí se vpravo. Na jih po západním pruhu hlavní silnice, na sever po východním,
+  // na východ po jižním pruhu příčné silnice, na západ po severním.
+  const px = (x: number, y: number) => ({ x: (x + 0.5) * TILE, y: (y + 0.5) * TILE });
+  const south: Array<{ x: number; y: number }> = [];
+  for (let y = 1; y <= DAM_Y - 2; y += 2) south.push(px(mainRoadX(y), y));
+  const north = [...south].reverse().map((p) => ({ x: p.x + TILE, y: p.y }));
+  const east: Array<{ x: number; y: number }> = [];
+  for (let x = 17; x <= 98; x += 2) east.push(px(x, CROSS_ROAD_Y + 1));
+  const west = [...east].reverse().map((p) => ({ x: p.x, y: p.y - TILE }));
+
+  const damZone = zones.find((z) => z.name === 'Přehrada Morávka')!;
+  const naves = zones.find((z) => z.name === 'Náves')!;
+  const school = buildings.find((b) => b.name === 'Škola')!;
+  const northAt = { x: (mainRoadX(2) + 1) * TILE, y: 2 * TILE };
+  const southAt = { x: (mainRoadX(DAM_Y - 3) + 1) * TILE, y: (DAM_Y - 3) * TILE };
+  const busY = CROSS_ROAD_Y - 9;
+  const busX = [mainRoadX(busY) + 2, mainRoadX(busY) - 1].find((x) => t[busY][x] === Tile.Sidewalk && t[busY + 1][x] === Tile.Sidewalk);
+
   return {
     width: MAP_W,
     height: MAP_H,
@@ -210,10 +302,36 @@ export function buildArea(seed: number, phase: number): WorldMap {
     spawn: { x: mainRoadX(CROSS_ROAD_Y), y: CROSS_ROAD_Y },
     hospital: { x: roadE + 22, y: CROSS_ROAD_Y + 3 },
     phase,
+    roads,
+    streams: [{ width: 3, pts: riverPts }],
+    traffic: [south, north, east, west],
+    exits: {
+      next: { at: northAt, arrive: { x: northAt.x, y: northAt.y + 5 * TILE } },
+      prev: { at: southAt, arrive: { x: southAt.x, y: southAt.y - 5 * TILE } },
+    },
+    spots: {
+      ecoGiver: { x: 33, y: damZone.y - 2 },
+      dam: { x: 60, y: damZone.y - 2 },
+      camp: { x: 17, y: 18 },
+      smg: { x: 34, y: damZone.y + 1 },
+      damParking: { x: mainRoadX(DAM_Y - 3) + 4, y: DAM_Y - 3 },
+      hriste: { x: school.x + 7, y: school.y + school.h + 1 },
+    },
+    ecoSpawn: [
+      { name: 'Les', x: 14, y: 10, w: 8, h: 50 },
+      { name: 'Hráz', x: 28, y: damZone.y, w: 60, h: 3 },
+      naves,
+    ],
+    busStops: busX === undefined ? [] : [{ x: busX * TILE + 3, y: busY * TILE + 2 }],
+    crosswalks: [
+      { road: 1, along: mainRoadX(CROSS_ROAD_Y) + 4.5 - 16 },
+      { road: 0, along: CROSS_ROAD_Y - 3.5 },
+    ],
+    decor: [{ kind: 'court', x: school.x, y: school.y + school.h, w: school.w, h: 2 }],
   };
 }
 
-function canPlace(t: number[][], x: number, y: number, w: number, h: number): boolean {
+export function canPlace(t: number[][], x: number, y: number, w: number, h: number): boolean {
   for (let j = y - 1; j <= y + h; j++) {
     for (let i = x - 1; i <= x + w; i++) {
       if (t[j]?.[i] !== Tile.Grass) return false;

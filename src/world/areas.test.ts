@@ -3,7 +3,7 @@ import { TILE } from '../config';
 import { GROUP_IDS } from '../systems/respect';
 import { AREAS, goalMet, placeLabel } from './areas';
 import { spawnTiles } from './gangs';
-import { buildArea } from './moravka';
+import { buildWorld } from './world';
 import { pickupSpots } from './pickups';
 import { Tile } from './tiles';
 import { parkedVehicles, trafficPaths } from './vehicles';
@@ -29,12 +29,13 @@ describe('oblasti', () => {
 
   it('místní názvy', () => {
     expect(placeLabel('raskovice', 'Hospoda')).toBe('Hospoda U Kapra');
-    expect(placeLabel('moravka', 'Hospoda')).toBe('Hospoda');
+    expect(placeLabel('moravka', 'Hospoda')).toBe('Hospoda eRko');
+    expect(placeLabel('moravka', 'Kostel')).toBe('Kostel');
   });
 
   const playable = Object.values(AREAS).filter((a) => a.playable);
   it.each(playable.map((a) => [a.name, a] as const))('%s: auta, věci a skupiny mají kde být, provoz jezdí po silnici', (_n, area) => {
-    const map = buildArea(area.seed, area.phase);
+    const map = buildWorld(area.id);
     expect(parkedVehicles(map).length).toBeGreaterThan(5);
     expect(pickupSpots(map).length).toBeGreaterThan(5);
     for (const g of GROUP_IDS) expect(spawnTiles(map, g).length).toBeGreaterThan(5);

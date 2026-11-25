@@ -5,8 +5,10 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 
 ## Mapa (podmínka pro velkou část zbytku)
 
-- [ ] **Přestavba mapy na silniční síť se smyčkami** (ručně v editoru Tiled). Bez alternativních tras nejdou objížďky, uzavírky, IZS hledající cestu ani autobus objíždějící přes pole.
-- [ ] Nová místa: benzínka, stodola, autoservis, fotbalové hřiště, pastviny, pole s kukuřicí, kontejnery.
+- [x] Morávka podle skutečné vesnice, se smyčkou (jih → hráz → silnice podél řeky → silnice na Raškovice). Autoúpravy (Dan) a fotbalové hřiště s oválem jsou.
+- [ ] Silniční síť se smyčkami i v dalších oblastech (Raškovice jsou zatím generované údolí s jednou křižovatkou). Bez alternativních tras nejdou objížďky, uzavírky, IZS hledající cestu ani autobus objíždějící přes pole.
+- [ ] Nová místa: benzínka, stodola, pastviny, pole s kukuřicí, kontejnery.
+- [ ] Hladší okraj přehrady (jezero je zatím po dlaždicích, potoky a silnice už jsou hladké).
 - [ ] Krajnice nebo výhybny, aby měla kam uhnout auta před sanitkou a hasiči.
 - [ ] Objíždění: auto v provozu umí jen čekat, protáhnout se krokem, nebo odjet na konec trasy. Objížďka kolem nehody nebo hádky potřebuje silniční síť se smyčkami.
 - [ ] Oblasti Krásná a Lysá hora.
@@ -59,7 +61,7 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 
 ## Dealeři a kontraband
 
-- [ ] Omyx a dealer v lese (přejmenovat: „Vesta“ se plete s neprůstřelnou vestou).
+- [ ] Dealer Omyx: na mapě stojí jeho bouda u řeky, ale zatím nic neprodává. Veseta už prodává „pod pultem“ (zbraně, vesta, lékárničky).
 - [ ] Efekty trávy. Pozor: falešné sirény a zátarasy jdou proti pravidlu „chaos musí být čitelný“ a okamžité +1★ proti systému svědků.
 - [ ] Těžké zbraně (bazuka, minigun) a granáty. Pozor na měřítko vesnice: policie na 1–3★ by neměla šanci.
 

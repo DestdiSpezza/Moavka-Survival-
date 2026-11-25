@@ -51,12 +51,11 @@ export function pickupSpots(map: WorldMap): PickupSpot[] {
     const b = map.buildings.find((x) => x.name === name)!;
     return { x: b.x + Math.floor(b.w / 2) + dx, y: b.y + b.h + 2 };
   };
-  const dam = map.zones.find((z) => z.name === 'Přehrada Morávka')!;
   const plan: Array<[PickupKind, { x: number; y: number }]> = [
     ['bat', below('Škola', 3)],
     ['pistol', behind('Hospoda')],
     ['shotgun', behind('Pila')],
-    ['smg', { x: 34, y: dam.y + 1 }],
+    ['smg', map.spots.smg],
     ['vest', below('Obecní úřad')],
     ['medkit', below('Zdravotní středisko')],
     ['medkit', below('Obchod', 2)],

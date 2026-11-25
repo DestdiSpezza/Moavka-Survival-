@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TILE } from '../config';
-import { buildMoravka } from './moravka';
+import { buildMoravka } from './realMoravka';
 import { Tile } from './tiles';
 import { parkedVehicles, trafficPaths } from './vehicles';
 

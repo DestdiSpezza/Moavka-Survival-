@@ -36,7 +36,13 @@ export const AREAS: Record<AreaId, AreaDef> = {
   moravka: {
     id: 'moravka', name: 'Morávka', toName: 'Morávky', seed: 1234, phase: 0, goal: { score: 1500, money: 2500 },
     next: 'raskovice', prev: null, playable: true,
-    labels: { 'Cesta na Raškovice': 'Cesta na Raškovice' },
+    labels: {
+      Hospoda: 'Hospoda eRko',
+      Obchod: 'Foop obchod',
+      Garáž: 'Autoúpravy Dan',
+      Chata: 'Safe house',
+      'Cesta na Raškovice': 'Cesta na Raškovice',
+    },
   },
   raskovice: {
     id: 'raskovice', name: 'Raškovice', toName: 'Raškovic', seed: 777, phase: 2.2, goal: { score: 3000, money: 6000 },

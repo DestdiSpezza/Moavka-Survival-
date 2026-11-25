@@ -100,21 +100,21 @@ export class Missions {
       const x = b(name);
       return free(x.x + Math.floor(x.w / 2) + dx, x.y + x.h + 1);
     };
-    const dam = map.zones.find((z) => z.name === 'Přehrada Morávka')!;
+    const s = map.spots;
     const skola = b('Škola');
     // Jardův dům: nejsevernější dům ve vesnici.
     const house = map.buildings.filter((x) => x.name === 'Dům').sort((a, c) => a.y - c.y)[0];
     return {
       giverDrevari: below('Pila', -2),
       giverStamgasti: below('Hospoda', 2),
-      giverEkologove: free(33, dam.y - 2),
+      giverEkologove: free(s.ecoGiver.x, s.ecoGiver.y),
       giverSkola: free(skola.x + 3, skola.y + skola.h + 1),
       pila: below('Pila', 3),
       hospoda: below('Hospoda', -2),
       obchod: below('Obchod'),
-      hriste: free(skola.x + 7, skola.y + skola.h + 1),
-      dam: free(60, dam.y - 2),
-      camp: free(17, 18),
+      hriste: free(s.hriste.x, s.hriste.y),
+      dam: free(s.dam.x, s.dam.y),
+      camp: free(s.camp.x, s.camp.y),
       katr: free(b('Pila').x + b('Pila').w + 2, b('Pila').y + 1),
       jardaHome: free(house.x + 1, house.y + house.h + 1),
       urad: below('Obecní úřad'),

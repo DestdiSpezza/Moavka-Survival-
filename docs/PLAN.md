@@ -168,6 +168,16 @@ Dlouhý běh: `npm run build && npm run soak` přehraje 30 minut herního času 
 
 **Hotovo, když:** za 30 minut bez hráče vznikne aspoň jeden řetězec přes 3 systémy a policie, svědci a provoz spolu viditelně souvisí.
 
+## Mapa Morávky podle skutečné vesnice ✅
+
+![Mapa Morávky](mapa-moravka.jpg)
+
+- Rozložení podle mapy obce (ne na sto procent): křižovatka u **hospody eRko** (hospoda stojí hned západně od ní), silnice na severozápad, na Raškovice (severovýchod), na jihozápad a na jih ke **škole** s hřištěm a oválem.
+- Vlaský potok na západě (most na silnici na severozápad), řeka Morávka na severovýchodě a východě, podél ní silnice s cyklostezkou až k hrázi přehrady. Vznikla smyčka: na jih → po hrázi → podél řeky → zpátky na silnici na Raškovice.
+- Na místech podle mapy: Hasiči, Foop obchod, obecní úřad s parkovištěm a zastávkou, dealer Veseta (prodává „pod pultem“), Autoúpravy Dan (garáž), Školka s pískovištěm, Omyx u řeky, safe house (chata, úkryt) na jihovýchodě, pila Dřevařů za potokem.
+- Silnice a potoky se kreslí hladce i šikmo podle os (asfalt, chodníky s obrubníky, středové čáry, přechody, mosty se zábradlím, polní cesty s kolejemi). Hra dál počítá s dlaždicemi.
+- Mapu staví `src/world/realMoravka.ts` (souřadnice z mapy obce, 16 px mapy na dlaždici); Raškovice zůstávají generované.
+
 ---
 
 ## Styl hry

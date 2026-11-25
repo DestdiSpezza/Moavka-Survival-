@@ -15,7 +15,8 @@ import { isAhead, type Point, steerToward } from '../systems/trafficAi';
 import { type DriveInput, lateralSpeed, surfaceFor, toKmh } from '../systems/vehicleModel';
 import { T } from '../texts/cs';
 import { type AreaDef, type AreaId, AREAS, placeLabel } from '../world/areas';
-import { buildArea, type WorldMap, zoneAt } from '../world/moravka';
+import { type WorldMap, zoneAt } from '../world/moravka';
+import { buildWorld } from '../world/world';
 import { newProgress, type Progress, respectIn, writeSave } from '../systems/save';
 import { isSolid, speedFactor, TILE_COUNT } from '../world/tiles';
 import { CAR_PAINT as CAR_COLORS } from '../art/sprites';
@@ -164,7 +165,7 @@ export class GameScene extends Phaser.Scene {
     this.progress = (this.registry.get('progress') as Progress | undefined) ?? newProgress();
     this.registry.set('progress', this.progress);
     this.area = AREAS[this.progress.area];
-    this.world = buildArea(this.area.seed, this.area.phase);
+    this.world = buildWorld(this.area.id);
     const map = this.make.tilemap({ data: this.world.tiles, tileWidth: TILE, tileHeight: TILE });
     const tileset = map.addTilesetImage('tiles', 'tiles', TILE, TILE, 0, 0)!;
     this.layer = map.createLayer(0, tileset, 0, 0)!;
