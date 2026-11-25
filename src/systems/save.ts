@@ -19,6 +19,8 @@ export interface Progress {
   arsenal: Arsenal;
   /** Herní čas v sekundách od začátku (hodiny). */
   clock: number;
+  /** Splněné kroky tutoriálu. */
+  tutorial: string[];
 }
 
 export const SAVE_KEY = 'survive-moravka-save-v1';
@@ -26,7 +28,7 @@ export const SAVE_KEY = 'survive-moravka-save-v1';
 export function newProgress(): Progress {
   return {
     version: 1, area: 'moravka', unlocked: ['moravka'], money: 500, score: 0, areaScore: {}, respect: {},
-    missionsDone: {}, hideouts: [], health: 100, armor: 0, clock: 0,
+    missionsDone: {}, hideouts: [], health: 100, armor: 0, clock: 0, tutorial: [],
     arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0 } },
   };
 }

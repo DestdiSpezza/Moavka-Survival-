@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
+import { Sound } from '../audio/Sound';
 import { Pedestrian } from '../entities/Pedestrian';
 import { Vehicle } from '../entities/Vehicle';
 import { type Point, rayCircleHit } from '../systems/combat';
@@ -531,6 +532,7 @@ export class Police {
   private copShoot(from: Point, at: Point, spread: number, damage: number, own?: Vehicle): void {
     const base = Math.atan2(at.y - from.y, at.x - from.x);
     const angle = base + (this.game.random() - 0.5) * spread * 2;
+    Sound.shot(damage <= 5 ? 'smg' : 'pistol', this.game.audioVol(from) * 0.7);
     const range = 240;
     const start = { x: from.x + Math.cos(angle) * 9, y: from.y + Math.sin(angle) * 9 };
     let wall = range;

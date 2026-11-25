@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { TILE, WORLD_ZOOM } from '../config';
 import { Player } from '../entities/Player';
 import type { Pedestrian } from '../entities/Pedestrian';
+import { Sound } from '../audio/Sound';
 import { Vehicle } from '../entities/Vehicle';
 import { WEAPONS } from '../systems/combat';
 import { explosionDamageAt, EXPLOSION_RADIUS } from '../systems/damage';
@@ -23,6 +24,7 @@ import { Gangs } from './Gangs';
 import { Economy } from './Economy';
 import { Missions } from './Missions';
 import { Progression } from './Progression';
+import { Tutorial } from './Tutorial';
 import { Police } from './Police';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
@@ -62,7 +64,7 @@ export interface VehicleHud {
   state: string;
 }
 
-type DriveKeys = Record<'up' | 'down' | 'left' | 'right' | 'handbrake' | 'enter', Phaser.Input.Keyboard.Key>;
+type DriveKeys = Record<'up' | 'down' | 'left' | 'right' | 'handbrake' | 'enter' | 'radio' | 'pause', Phaser.Input.Keyboard.Key>;
 
 /** Hlavní herní scéna: mapa, hráč, vozidla, provoz, kamera a minimapa. */
 export class GameScene extends Phaser.Scene {
@@ -77,6 +79,9 @@ export class GameScene extends Phaser.Scene {
   missions!: Missions;
   economy!: Economy;
   progression!: Progression;
+  tutorial!: Tutorial;
+  private night!: Phaser.GameObjects.Rectangle;
+  private headlights = new Map<Vehicle, Phaser.GameObjects.Image>();
   /** Postup celé hry (sdílený mezi oblastmi, ukládá se). */
   progress!: Progress;
   area!: AreaDef;
@@ -112,6 +117,7 @@ export class GameScene extends Phaser.Scene {
     const wPx = this.world.width * TILE;
     const hPx = this.world.height * TILE;
     this.physics.world.setBounds(0, 0, wPx, hPx);
+    this.decorateBuildings();
 
     const labels = this.world.buildings
       .filter((b) => b.name !== 'Dům')
@@ -143,7 +149,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.vehicles);
 
     const kb = this.input.keyboard!;
-    this.keys = kb.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D', handbrake: 'SPACE', enter: 'E' }) as DriveKeys;
+    this.keys = kb.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D', handbrake: 'SPACE', enter: 'E', radio: 'R', pause: 'ESC' }) as DriveKeys;
     this.arrows = kb.createCursorKeys();
 
     const cam = this.cameras.main;
@@ -175,9 +181,59 @@ export class GameScene extends Phaser.Scene {
     this.missions = new Missions(this);
     this.economy = new Economy(this);
     this.progression = new Progression(this);
+    this.tutorial = new Tutorial(this);
     this.applyProgress();
     this.input.setDefaultCursor('none');
+    this.night = this.add.rectangle(0, 0, 10, 10, 0x0a1030, 1).setOrigin(0).setDepth(40).setAlpha(0);
+    this.cameras.getCamera('minimap')?.ignore(this.night);
+    this.headlights = new Map();
     this.scene.launch('UI');
+  }
+
+  /** Stíny budov (střechy vypadají vyvýšené) a komíny na domech. */
+  private decorateBuildings(): void {
+    const g = this.add.graphics().setDepth(1);
+    const rnd = this.random;
+    for (const b of this.world.buildings) {
+      const x = b.x * TILE;
+      const y = b.y * TILE;
+      const w = b.w * TILE;
+      const h = b.h * TILE;
+      g.fillStyle(0x000000, 0.28).fillRect(x + w, y + 5, 5, h).fillRect(x + 5, y + h, w, 5);
+      // Hřeben střechy uprostřed.
+      g.fillStyle(0xffffff, 0.08).fillRect(x, y + Math.floor(h / 2) - 1, w, 2);
+      if (b.name === 'Dům' || b.name === 'Hospoda' || b.name === 'Chata') {
+        const cx = x + 4 + Math.floor(rnd() * (w - 10));
+        const cy = y + 3 + Math.floor(rnd() * (h / 2 - 4));
+        g.fillStyle(0x3a2a22).fillRect(cx, cy, 4, 4);
+        g.fillStyle(0x1a1412).fillRect(cx + 1, cy + 1, 2, 2);
+      }
+    }
+  }
+
+  /** Noc: tmavý závoj přes svět; auta s řidičem svítí reflektory nad ním. */
+  private updateNight(): void {
+    const dark = (this.registry.get('gangs') as { darkness: number } | undefined)?.darkness ?? 0;
+    const view = this.cameras.main.worldView;
+    this.night.setPosition(view.x - 20, view.y - 20).setSize(view.width + 40, view.height + 40).setAlpha(dark);
+    for (const [v, img] of this.headlights) {
+      if (!v.active || v.wrecked || v.driver === 'none' || dark < 0.08) {
+        img.destroy();
+        this.headlights.delete(v);
+      }
+    }
+    if (dark < 0.08) return;
+    for (const v of this.vehicles) {
+      if (v.wrecked || v.driver === 'none' || v.spec.kind === 'kolo') continue;
+      let img = this.headlights.get(v);
+      if (!img) {
+        img = this.add.image(0, 0, 'headlight').setOrigin(0, 0.5).setDepth(41).setBlendMode(Phaser.BlendModes.ADD);
+        this.cameras.getCamera('minimap')?.ignore(img);
+        this.headlights.set(v, img);
+      }
+      const a = v.rotation;
+      img.setPosition(v.x + Math.cos(a) * (v.spec.length / 2), v.y + Math.sin(a) * (v.spec.length / 2)).setRotation(a).setAlpha(Math.min(1, dark * 2));
+    }
   }
 
   /** Nastaví hráče, skupiny a zakázky podle uloženého postupu; příjezd z jiné oblasti. */
@@ -224,6 +280,41 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Hlasitost zvuku podle vzdálenosti od středu kamery (0–1). */
+  audioVol(at: Point): number {
+    const c = this.cameras.main.midPoint;
+    return Math.max(0, 1 - Phaser.Math.Distance.Between(c.x, c.y, at.x, at.y) / 500);
+  }
+
+  /** Motor, siréna blízkých policejních aut a přepínání rádia. */
+  private updateAudio(): void {
+    const v = this.driving;
+    Sound.setEngine(v ? v.speed : null, !!v && (v.spec.kind === 'traktor' || v.spec.kind === 'dodavka' || v.spec.kind === 'zasahovka'));
+    if (v && Phaser.Input.Keyboard.JustDown(this.keys.radio)) this.toast(Sound.radioNextStation());
+    let siren = 0;
+    if (this.police.wanted.level > 0) {
+      for (const o of this.vehicles) if (o.driver === 'police' && !o.wrecked) siren = Math.max(siren, this.audioVol(o));
+    }
+    Sound.setSiren(siren);
+  }
+
+  /** Pauza: zastaví hru a ukáže menu. */
+  openPause(): void {
+    Sound.silence();
+    this.scene.pause();
+    this.scene.pause('UI');
+    this.scene.launch('Pause');
+  }
+
+  /** Návrat z pauzy. */
+  resumeFromPause(): void {
+    // Esc, kterým se pauza zavřela, nesmí hned otevřít další.
+    this.keys.pause.reset();
+    this.scene.resume('UI');
+    this.scene.resume();
+    if (this.driving) Sound.radioStart();
+  }
+
   /** Zapíše stav hry do postupu (před uložením nebo přechodem). */
   private syncProgress(): void {
     const p = this.progress;
@@ -252,6 +343,7 @@ export class GameScene extends Phaser.Scene {
     this.syncProgress();
     this.progress.area = to;
     writeSave(this.progress);
+    Sound.silence();
     this.scene.stop('UI');
     this.scene.restart();
   }
@@ -357,6 +449,10 @@ export class GameScene extends Phaser.Scene {
     this.missions.update(dt);
     this.economy.update();
     this.progression.update(dt);
+    this.tutorial.update(dt);
+    this.updateNight();
+    this.updateAudio();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.pause) && !this.player.dead) this.openPause();
     const a = this.player.arsenal;
     const def = WEAPONS[a.current];
     this.registry.set('player', {
@@ -460,6 +556,8 @@ export class GameScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.enable = false;
     this.player.setVisible(false);
+    Sound.radioStart();
+    if (Sound.stationName) this.toast(`♪ ${Sound.stationName} (R = přepnout)`);
     this.cameras.main.startFollow(v, true, 0.15, 0.15);
     this.cameras.getCamera('minimap')?.startFollow(v);
   }
@@ -467,6 +565,7 @@ export class GameScene extends Phaser.Scene {
   exitVehicle(): void {
     const v = this.driving;
     if (!v) return;
+    Sound.radioStop();
     this.placePlayerBeside(v);
     v.driver = 'none';
     v.resetTexture();
@@ -548,7 +647,10 @@ export class GameScene extends Phaser.Scene {
       t.waited += dt;
       if (t.waited > 1.5 && this.elapsed - t.honkedAt > 3) {
         t.honkedAt = this.elapsed;
-        if (this.inView(v.x, v.y)) this.floatText(v.x, v.y - 12, T.honk, '#ffd23f', 900);
+        if (this.inView(v.x, v.y)) {
+          this.floatText(v.x, v.y - 12, T.honk, '#ffd23f', 900);
+          Sound.horn(this.audioVol(v) * 0.6);
+        }
       }
       // Ať se provoz nezasekne navždy: po chvíli to řidič zkusí objet.
       if (t.waited > 4) {
@@ -617,6 +719,7 @@ export class GameScene extends Phaser.Scene {
 
   /** Výbuch na místě (auto, nálož): efekt, zranění lidí a řetězová reakce aut. */
   explodeAt(x: number, y: number, source?: Vehicle): void {
+    Sound.explosion(this.audioVol({ x, y }));
     const flash = this.add.circle(x, y, EXPLOSION_RADIUS * 0.6, 0xfff0a0, 0.9).setDepth(15).setBlendMode('ADD');
     this.tweens.add({ targets: flash, scale: 1.8, alpha: 0, duration: 380, onComplete: () => flash.destroy() });
     const burst = this.add.particles(x, y, 'puff', {
@@ -660,7 +763,7 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0.5, 1)
       .setScale(1 / WORLD_ZOOM)
       .setStroke('#000', 4)
-      .setDepth(30);
+      .setDepth(45);
     this.cameras.getCamera('minimap')?.ignore(t);
     this.tweens.add({ targets: t, y: y - 10, alpha: 0, delay: ms * 0.6, duration: ms * 0.4, onComplete: () => t.destroy() });
   }

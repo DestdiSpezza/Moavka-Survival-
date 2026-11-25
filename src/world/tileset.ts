@@ -225,6 +225,15 @@ export function generateVehicles(scene: Phaser.Scene): void {
   make('zasahovka-1', 24, 12, (g) => swatVan(g, false, true));
   make('zasahovka-wreck', 24, 12, (g) => swatVan(g, true, false));
 
+  // Kužel světla reflektorů (v noci), čelem doprava.
+  make('headlight', 56, 30, (g) => {
+    for (let i = 0; i < 8; i++) {
+      const len = 56 - i * 6;
+      const spread = 15 - i * 1.6;
+      g.fillStyle(0xfff2c0, 0.08).fillTriangle(0, 15, len, 15 - spread, len, 15 + spread);
+    }
+  });
+
   // Částice: kouř, oheň, jiskry.
   make('puff', 6, 6, (g) => g.fillStyle(0xffffff).fillCircle(3, 3, 3));
   make('spark', 2, 2, (g) => g.fillStyle(0xffffff).fillRect(0, 0, 2, 2));

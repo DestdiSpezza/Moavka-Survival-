@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
+import { Sound } from '../audio/Sound';
 import { pickupWeapon, type WeaponId } from '../systems/combat';
 import {
   canAfford, HIDEOUT_PRICE, repairCost, RESPRAY_MAX_LEVEL, resprayCost, sellPrice, SHOP,
@@ -173,6 +174,7 @@ export class Economy {
   private buy(id: WeaponId | 'vest' | 'medkit', price: number, name: string): void {
     const pl = this.game.player;
     pl.money -= price;
+    Sound.pickup();
     if (id === 'vest') pl.armor = 100;
     else if (id === 'medkit') pl.health = Math.min(100, pl.health + 50);
     else {

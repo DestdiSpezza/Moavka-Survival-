@@ -34,8 +34,8 @@ export class UIScene extends Phaser.Scene {
   private stars: Phaser.GameObjects.Text[] = [];
   private respectBars: Phaser.GameObjects.Rectangle[] = [];
   private respectValues: Phaser.GameObjects.Text[] = [];
+  private respectNames: Phaser.GameObjects.Text[] = [];
   private clockText!: Phaser.GameObjects.Text;
-  private night!: Phaser.GameObjects.Rectangle;
   private scoreText!: Phaser.GameObjects.Text;
   private goalText!: Phaser.GameObjects.Text;
   private boardBox!: Phaser.GameObjects.Container;
@@ -45,6 +45,7 @@ export class UIScene extends Phaser.Scene {
   private missionTitle!: Phaser.GameObjects.Text;
   private missionObjective!: Phaser.GameObjects.Text;
   private arrow!: Phaser.GameObjects.Triangle;
+  private hintText!: Phaser.GameObjects.Text;
   private lastZone = '';
   private wasExhausted = false;
   private wasInForest = false;
@@ -57,7 +58,6 @@ export class UIScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const { x, y, w, h } = MINIMAP;
     // Noc: tmavý závoj pod HUDem (HUD se kreslí až po něm, takže zůstane čitelný).
-    this.night = this.add.rectangle(0, 0, width, height, 0x0a1030, 1).setOrigin(0).setAlpha(0);
     this.add.rectangle(x - 2, y - 2, w + 4, h + 4).setOrigin(0).setStrokeStyle(3, 0xf2e9d0);
     this.zoneText = this.add.text(x, y + h + 10, '', pixelFont(18, '#ffd23f')).setStroke('#000', 4);
 
@@ -86,6 +86,11 @@ export class UIScene extends Phaser.Scene {
     this.missionObjective = this.add.text(width / 2, 92, '', pixelFont(15, '#ffffff')).setOrigin(0.5, 0).setStroke('#000', 4);
     this.arrow = this.add.triangle(0, 0, 0, -9, 18, 0, 0, 9, 0xffd23f).setStrokeStyle(2, 0x000000).setVisible(false);
 
+    // Nápovědy tutoriálu vlevo dole.
+    this.hintText = this.add
+      .text(16, height - 150, '', { ...pixelFont(15, '#ffffff'), wordWrap: { width: 330 }, backgroundColor: '#1a2a1acc', padding: { x: 10, y: 8 } })
+      .setStroke('#000', 3);
+
     // Nabídka zakázek u zadavatele.
     const panel = this.add.rectangle(0, 0, 520, 250, 0x111111, 0.88).setOrigin(0.5, 0).setStrokeStyle(2, 0xf2e9d0);
     this.boardPanel = panel;
@@ -100,11 +105,12 @@ export class UIScene extends Phaser.Scene {
     // Respekt u skupin: středová čárka = 0, doprava plus, doleva mínus.
     this.respectBars = [];
     this.respectValues = [];
+    this.respectNames = [];
     const ry = y + h + 108;
     GROUP_IDS.forEach((id, i) => {
       const spec = GROUPS[id];
       const rowY = ry + i * 20;
-      this.add.text(x, rowY - 3, spec.name, pixelFont(14, spec.css)).setStroke('#000', 4);
+      this.respectNames.push(this.add.text(x, rowY - 3, spec.name, pixelFont(14, spec.css)).setStroke('#000', 4));
       this.add.rectangle(x + 100, rowY, 124, 12, 0x000000, 0.6).setOrigin(0);
       this.add.rectangle(x + 162, rowY - 1, 2, 14, 0xf2e9d0).setOrigin(0.5, 0);
       this.respectBars.push(this.add.rectangle(x + 162, rowY + 2, 0, 8, spec.color).setOrigin(0, 0));
@@ -186,11 +192,15 @@ export class UIScene extends Phaser.Scene {
 
     if (me) this.scoreText.setText(`Skóre ${me.score.toLocaleString('cs-CZ')}`);
     this.updateMissionHud();
+    const hint = this.registry.get('hint') as string | null;
+    this.hintText.setVisible(!!hint && !this.boardBox.visible);
+    if (hint) this.hintText.setText(`💡 ${hint}`).setY(this.scale.height - 95 - this.hintText.height);
 
     const gangs = this.registry.get('gangs') as RespectHud | undefined;
     if (gangs) {
       GROUP_IDS.forEach((id, i) => {
         const r = gangs.respect[id];
+        this.respectNames[i].setText(gangs.names[id]);
         const bar = this.respectBars[i];
         // Záporný respekt roste doleva od středu.
         bar.width = Math.abs(r) * 0.6;
@@ -198,7 +208,6 @@ export class UIScene extends Phaser.Scene {
         this.respectValues[i].setText(`${r > 0 ? '+' : ''}${Math.round(r)}`).setColor(r <= -30 ? '#ff7a6a' : r >= 50 ? '#9fffa0' : '#f2e9d0');
       });
       this.clockText.setText(gangs.clock);
-      this.night.setAlpha(gangs.darkness);
     }
 
     const wanted = this.registry.get('wanted') as { level: number; searching: boolean } | undefined;

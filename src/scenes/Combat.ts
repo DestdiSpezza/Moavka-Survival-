@@ -7,6 +7,7 @@ import {
   pickupWeapon, rayCircleHit, selectWeapon, WEAPON_ORDER, WEAPONS, type Point, type WeaponId,
 } from '../systems/combat';
 import { CALL_POLICE_CHANCE, FLEE_TIME, fleeAngle, hears, PED_RUN, PED_WALK, runOverDamage } from '../systems/crowd';
+import { Sound, type ShotKind } from '../audio/Sound';
 import { EXPLOSION_RADIUS } from '../systems/damage';
 import type { CrimeKind } from '../systems/wanted';
 import { T } from '../texts/cs';
@@ -172,6 +173,8 @@ export class Combat {
         hit = true;
       }
     }
+    Sound.swing();
+    if (hit) Sound.hit();
     // Švih: krátký oblouk před hráčem.
     this.fx.lineStyle(2, 0xffffff, 0.6).beginPath().arc(origin.x, origin.y, def.range, angle - 0.8, angle + 0.8).strokePath();
     if (hit) this.game.cameras.main.shake(60, 0.002);
@@ -183,6 +186,7 @@ export class Combat {
     const start = { x: origin.x + Math.cos(angle) * muzzle, y: origin.y + Math.sin(angle) * muzzle };
     for (const a of pelletAngles(angle, def.pellets, def.spread, this.game.random)) this.fireRay(start, a, def.range, def.damage, own);
     this.fx.fillStyle(0xfff2a0, 0.9).fillCircle(start.x, start.y, 3);
+    Sound.shot(id as ShotKind);
     this.noise(origin, def.noise, 'shooting');
   }
 
@@ -484,6 +488,8 @@ export class Combat {
     if (this.game.driving) this.game.exitVehicle();
     (pl.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     this.game.events.emit('banner', banner);
+    Sound.silence();
+    Sound.jingle(false);
     this.game.events.emit('knockout');
     const cam = this.game.cameras.main;
     cam.fadeOut(1400, rgb[0], rgb[1], rgb[2]);
@@ -532,6 +538,7 @@ export class Combat {
 
   private apply(p: Pickup): void {
     const pl = this.player;
+    Sound.pickup();
     if (p.kind === 'medkit') pl.health = Math.min(100, pl.health + 50);
     else if (p.kind === 'vest') pl.armor = 100;
     else if (p.kind === 'money') pl.money += p.amount;

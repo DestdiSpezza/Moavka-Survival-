@@ -127,13 +127,26 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** jde splnit cíl Morávky a přejít do Raškovic s uloženým postupem.
 
-## Fáze 8: Obsah a vyladění
+## Fáze 8: Obsah a vyladění ✅
 
 - Vlastní grafika místo placeholderů (budovy, auta, postavy v pixel-artu).
 - Zvuky a hudba, rádio v autě.
 - Hlavní menu, nastavení, tutoriál.
 - Vyvážení obtížnosti, výkon, oprava chyb.
 - Volitelně: gamepad, mobilní ovládání.
+
+Hotovo:
+- Raškovice: místní skupiny (Voraři, Rybáři, Chalupáři, Učňáci) se stejným chováním jako v Morávce a 9 vlastních zakázek.
+- Zvuk generovaný v prohlížeči (WebAudio, žádné soubory): střelba, výbuchy, rány, sklo, troubení, motor podle rychlosti, policejní siréna, znělky zakázek.
+- Rádio v autě (R): Rádio Beskydy Punk, Dechovka U Kapra, Rádio Ekobalada, nebo vypnuto.
+- Hlavní menu, nastavení (hlasitosti, tutoriál), přehled ovládání, pauza (Esc).
+- Tutoriál pro novou hru (H skryje).
+- Noc ve světě, reflektory aut, stíny budov a komíny.
+
+Zbývá do budoucna:
+- Ručně kreslený pixel-art místo grafiky kreslené kódem.
+- Krásná a Lysá hora.
+- Členové skupin za volantem, gamepad a ovládání na mobilu.
 
 **Hotovo, když:** se dá hra pustit někomu cizímu a zvládne ji bez vysvětlování.
 

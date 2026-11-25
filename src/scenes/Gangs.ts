@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
+import { Sound } from '../audio/Sound';
 import { Pedestrian } from '../entities/Pedestrian';
 import type { Vehicle } from '../entities/Vehicle';
 import { darkness, formatClock, GAME_MINUTES_PER_SECOND, isEvening, minuteOfDay } from '../systems/clock';
@@ -8,6 +9,7 @@ import {
   applyRespect, attitude, ecoAngryAtVehicle, GROUP_IDS, type GroupId, newRespect, relation, type Respect, type RespectEvent,
 } from '../systems/respect';
 import { lineOfSight } from '../systems/sight';
+import { groupName } from '../world/areas';
 import { GROUPS, inZones, type ProjectileKind, spawnTiles, territory } from '../world/gangs';
 import type { Zone } from '../world/moravka';
 import { blocksBullets } from '../world/tiles';
@@ -41,6 +43,7 @@ interface FireZone {
 
 export interface RespectHud {
   respect: Respect;
+  names: Record<GroupId, string>;
   clock: string;
   darkness: number;
 }
@@ -107,7 +110,7 @@ export class Gangs {
     this.updateProjectiles(dt);
     this.updateFires(dt);
 
-    this.game.registry.set('gangs', { respect: this.respect, clock: formatClock(this.minute), darkness: darkness(this.minute) } satisfies RespectHud);
+    this.game.registry.set('gangs', { respect: this.respect, names: Object.fromEntries(GROUP_IDS.map((g) => [g, groupName(this.game.area.id, g)])) as Record<GroupId, string>, clock: formatClock(this.minute), darkness: darkness(this.minute) } satisfies RespectHud);
   }
 
   // ---------- Členové ----------
@@ -455,9 +458,15 @@ export class Gangs {
 
   private impact(p: Projectile): void {
     const { x, y } = p.sprite;
-    if (p.kind === 'firework') this.blast(x, y, p.damage, p.owner);
-    else if (p.kind === 'molotov') this.ignite(x, y);
-    else if (p.kind === 'bottle') {
+    const vol = this.game.audioVol({ x, y });
+    if (p.kind === 'firework') {
+      Sound.explosion(vol, true);
+      this.blast(x, y, p.damage, p.owner);
+    } else if (p.kind === 'molotov') {
+      Sound.glass(vol);
+      this.ignite(x, y);
+    } else if (p.kind === 'bottle') {
+      Sound.glass(vol);
       const glass = this.game.add.particles(x, y, 'spark', {
         lifespan: 250, speed: { min: 20, max: 60 }, tint: [0x9ad09a, 0xffffff], scale: { start: 1, end: 0 }, emitting: false,
       }).setDepth(12);
@@ -567,7 +576,7 @@ export class Gangs {
     for (const id of GROUP_IDS) {
       const d = Math.round(this.respect[id] - before[id]);
       if (Math.abs(d) < 2) continue;
-      this.game.floatText(pl.x, pl.y - 14 - row * 8, `${d > 0 ? '+' : ''}${d} ${GROUPS[id].name}`, GROUPS[id].css, 1600);
+      this.game.floatText(pl.x, pl.y - 14 - row * 8, `${d > 0 ? '+' : ''}${d} ${groupName(this.game.area.id, id)}`, GROUPS[id].css, 1600);
       row++;
     }
   }

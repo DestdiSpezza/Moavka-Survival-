@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
+import { Sound } from '../audio/Sound';
 import type { Pedestrian } from '../entities/Pedestrian';
 import type { Vehicle } from '../entities/Vehicle';
 import { MISSIONS, type MissionInfo, TIER_NAMES, type Tier } from '../missions/catalog';
@@ -10,6 +11,7 @@ import {
 } from '../missions/steps';
 import type { Point } from '../systems/combat';
 import { GROUP_IDS, type GroupId, relation, type RespectEvent } from '../systems/respect';
+import { groupName } from '../world/areas';
 import { GROUPS, standable } from '../world/gangs';
 import { findFreeTile } from '../world/pickups';
 import { findParkingSpot } from '../world/vehicles';
@@ -115,6 +117,8 @@ export class Missions {
       camp: free(17, 18),
       katr: free(b('Pila').x + b('Pila').w + 2, b('Pila').y + 1),
       jardaHome: free(house.x + 1, house.y + house.h + 1),
+      urad: below('Obecní úřad'),
+      skolaFront: free(skola.x + 2, skola.y + skola.h + 1),
     };
   }
 
@@ -123,7 +127,7 @@ export class Missions {
     const spec = GROUPS[group];
     const ring = this.game.add.circle(0, 0, 9, spec.color, 0.35).setStrokeStyle(2, spec.color);
     const mark = this.game.add.text(0, 0, '!', pixelFont(28, '#ffffff')).setOrigin(0.5).setScale(0.5).setStroke('#000', 5);
-    const label = this.game.add.text(0, -16, spec.name, pixelFont(14, spec.css)).setOrigin(0.5).setScale(0.5).setStroke('#000', 4);
+    const label = this.game.add.text(0, -16, groupName(this.game.area.id, group), pixelFont(14, spec.css)).setOrigin(0.5).setScale(0.5).setStroke('#000', 4);
     const marker = this.game.add.container(at.x, at.y, [ring, mark, label]).setDepth(5);
     this.game.tweens.add({ targets: ring, scale: 1.3, duration: 700, yoyo: true, repeat: -1 });
     this.game.cameras.getCamera('minimap')?.ignore(marker);
@@ -147,7 +151,7 @@ export class Missions {
       return;
     }
     const respect = this.game.gangs.respect[here.group];
-    this.board = { group: here.group, offers: refusesWork(respect) ? [] : offersFor(here.group, respect, this.done) };
+    this.board = { group: here.group, offers: refusesWork(respect) ? [] : offersFor(here.group, respect, this.done, this.game.area.id) };
     this.boardOpen = true;
     this.keys.forEach((k, i) => {
       if (Phaser.Input.Keyboard.JustDown(k) && this.board?.offers[i]) this.start(this.board.offers[i]);
@@ -159,7 +163,7 @@ export class Missions {
     if (this.board && !this.active) {
       const spec = GROUPS[this.board.group];
       reg.set('board', {
-        group: spec.name, css: spec.css, refuse: this.board.offers.length === 0,
+        group: groupName(this.game.area.id, this.board.group), css: spec.css, refuse: this.board.offers.length === 0,
         offers: this.board.offers.map((m) => ({ tier: m.tier, tierName: TIER_NAMES[m.tier], title: m.title, brief: m.brief, done: this.done.has(m.id) })),
       } satisfies BoardHud);
     } else reg.set('board', null);
@@ -236,7 +240,8 @@ export class Missions {
     this.game.gangs.mission(a.info.group, TIER_EVENT[a.info.tier]);
     this.game.saveGame(false);
     this.game.events.emit('banner', 'SPLNĚNO');
-    this.game.toast(`${GROUPS[a.info.group].name} platí ${a.reward.money} Kč. Skóre +${a.reward.score}.`);
+    Sound.jingle(true);
+    this.game.toast(`${groupName(this.game.area.id, a.info.group)} platí ${a.reward.money} Kč. Skóre +${a.reward.score}.`);
   }
 
   private fail(reason: string): void {
@@ -246,6 +251,7 @@ export class Missions {
     // Selhání v důležité (žluté nebo červené) zakázce skupinu naštve.
     if (a.info.tier !== 'green') this.game.gangs.mission(a.info.group, 'missionFailed');
     this.game.events.emit('banner', 'NEVYŠLO TO');
+    Sound.jingle(false);
     this.game.toast(reason);
   }
 
@@ -276,7 +282,7 @@ export class Missions {
       const enemy = [...GROUP_IDS].filter((x) => x !== a.info.group).sort((x, y) => relation(a.info.group, x) - relation(a.info.group, y))[0];
       const spawned = this.spawnNear(enemy, g.driving ?? g.player, 3, 150);
       for (const m of spawned) g.gangs.engage(m, 'player', false);
-      g.toast(`Přepadení! ${GROUPS[enemy].name} o zakázce věděli.`);
+      g.toast(`Přepadení! ${groupName(g.area.id, enemy)} o zakázce věděli.`);
       return;
     }
     g.police.raiseTo(Math.max(1, g.police.wanted.level), g.driving ?? g.player);
@@ -403,6 +409,60 @@ export class Missions {
         return [
           new GotoStep('Běž na školní hřiště', p.hriste, 40),
           new SurviveStep('Ubraň hřiště', 60, p.hriste, (game) => {
+            for (const m of this.spawnNear('stamgasti', p.hriste, 3, 170)) game.gangs.engage(m, 'player', false);
+          }),
+        ];
+      // ---------- Raškovice ----------
+      case 'r-vorari-terenak': {
+        const car = this.parked('terenak', p.dam, 'ekologove');
+        return [new DestroyStep('Znič teréňák Chalupářů u jezu', [car])];
+      }
+      case 'r-vorari-konvoj': {
+        const vans = [g.addTrafficVehicle('dodavka', 2, 2, true), g.addTrafficVehicle('dodavka', 2, 0, true)];
+        g.toast('Dodávky jedou po příčné silnici od západu!');
+        return [new DestroyStep('Znič dodávky cizí pily', vans)];
+      }
+      case 'r-rybari-pruty':
+        return [
+          new PickupStep('Vyzvedni pruty u obchodu', p.obchod, 'pickup-bat'),
+          new GotoStep('Dones pruty do hospody U Kapra', p.hospoda),
+        ];
+      case 'r-rybari-lojza': {
+        const lojza = g.gangs.spawnAt('stamgasti', p.hospoda.x + 10, p.hospoda.y, 1);
+        lojza.scripted = true;
+        this.label(lojza, 'Lojza s kaprem', GROUPS.stamgasti.css);
+        let car: Vehicle | null = null;
+        return [
+          new PickupPassengerStep('Přijeď autem pro Lojzu k hospodě', lojza, (v) => {
+            car = v;
+            g.toast('Lojza: Opatrně, kapr je ještě živej. Teda… byl.');
+          }),
+          new DropPassengerStep('Odvez Lojzu na obecní úřad a zastav', () => car!, p.urad, (game) => {
+            game.toast('Lojza: Pane starosto, tady je ten kapr… kde je kapr?');
+          }),
+        ];
+      }
+      case 'r-chalupari-skutr': {
+        const scooter = g.vehicles.find((v) => v.spec.kind === 'skutr' && v.owner === 'skola' && !v.wrecked && v.driver === 'none') ?? this.parked('skutr', p.hriste, 'skola');
+        return [new DestroyStep('Znič skútr Učňáků', [scooter])];
+      }
+      case 'r-chalupari-zdenek': {
+        const { boss, guards } = this.boss('skola', p.skolaFront, 'Mistr Zdeněk', 4);
+        return [new KillStep('Zlikviduj mistra Zdeňka u učiliště', [boss], guards)];
+      }
+      case 'r-ucnaci-dodavka': {
+        const van = this.parked('dodavka', p.obchod, null);
+        return [
+          new EnterVehicleStep('Ukradni dodávku u obchodu', () => van),
+          new DeliverVehicleStep('Přivez dodávku k učilišti', () => van, p.hriste),
+        ];
+      }
+      case 'r-ucnaci-honicka':
+        return [new EvadeStep('Setřes policii (2 hvězdy)', 2)];
+      case 'r-ucnaci-obrana':
+        return [
+          new GotoStep('Běž k učilišti', p.hriste, 40),
+          new SurviveStep('Ubraň dílny', 50, p.hriste, (game) => {
             for (const m of this.spawnNear('stamgasti', p.hriste, 3, 170)) game.gangs.engage(m, 'player', false);
           }),
         ];

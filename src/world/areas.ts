@@ -1,5 +1,8 @@
 /** Oblasti hry. Postup: Morávka → Raškovice → Krásná → Lysá hora. */
 
+import type { GroupId } from '../systems/respect';
+import { GROUPS } from './gangs';
+
 export type AreaId = 'moravka' | 'raskovice' | 'krasna' | 'lysa';
 
 export interface AreaGoal {
@@ -25,6 +28,8 @@ export interface AreaDef {
   playable: boolean;
   /** Místní názvy budov a míst (klíč = role v generátoru mapy). */
   labels: Record<string, string>;
+  /** Místní skupiny: stejné chování, jiné jméno (Raškovice mají Voraře místo Dřevařů…). */
+  groupNames?: Partial<Record<GroupId, string>>;
 }
 
 export const AREAS: Record<AreaId, AreaDef> = {
@@ -43,7 +48,9 @@ export const AREAS: Record<AreaId, AreaDef> = {
       'Přehrada Morávka': 'Jez a koupaliště',
       'Cesta na Raškovice': 'Cesta na Krásnou',
       Náves: 'Náves Raškovice',
+      Škola: 'Učiliště',
     },
+    groupNames: { drevari: 'Voraři', stamgasti: 'Rybáři', ekologove: 'Chalupáři', skola: 'Učňáci' },
   },
   krasna: {
     id: 'krasna', name: 'Krásná', toName: 'Krásné', seed: 4242, phase: 4.1, goal: { score: 6000, money: 12000 },
@@ -54,6 +61,11 @@ export const AREAS: Record<AreaId, AreaDef> = {
     next: null, prev: 'krasna', playable: false, labels: {},
   },
 };
+
+/** Jméno skupiny v dané oblasti. */
+export function groupName(area: AreaId, g: GroupId): string {
+  return AREAS[area].groupNames?.[g] ?? GROUPS[g].name;
+}
 
 /** Místní název budovy nebo zóny v dané oblasti. */
 export function placeLabel(area: AreaId, role: string): string {

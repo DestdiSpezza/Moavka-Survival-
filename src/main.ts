@@ -4,6 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import { TitleScene } from './scenes/TitleScene';
 import { UIScene } from './scenes/UIScene';
+import { ControlsScene, PauseScene, SettingsScene } from './scenes/OverlayScenes';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -14,7 +15,7 @@ const game = new Phaser.Game({
   backgroundColor: '#111111',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { debug: false } },
-  scene: [BootScene, TitleScene, GameScene, UIScene],
+  scene: [BootScene, TitleScene, GameScene, UIScene, PauseScene, SettingsScene, ControlsScene],
 });
 
 // Přístup ke hře z konzole prohlížeče a z automatických testů.

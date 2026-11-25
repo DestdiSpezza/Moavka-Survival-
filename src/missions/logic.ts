@@ -1,4 +1,5 @@
 import { missionTiers, type GroupId } from '../systems/respect';
+import type { AreaId } from '../world/areas';
 import { MISSIONS, type MissionInfo, type Tier } from './catalog';
 
 export interface Reward {
@@ -22,10 +23,10 @@ export function rewardFor(tier: Tier, rnd: () => number): Reward {
  * Nabídka zakázek u skupiny: na každou odemčenou barvu jedna zakázka.
  * Přednost mají ty, které hráč ještě nesplnil; hotové se dají opakovat.
  */
-export function offersFor(group: GroupId, respect: number, done: Set<string>): MissionInfo[] {
+export function offersFor(group: GroupId, respect: number, done: Set<string>, area: AreaId = 'moravka'): MissionInfo[] {
   const out: MissionInfo[] = [];
   for (const tier of missionTiers(respect)) {
-    const pool = MISSIONS.filter((m) => m.group === group && m.tier === tier);
+    const pool = MISSIONS.filter((m) => m.area === area && m.group === group && m.tier === tier);
     if (!pool.length) continue;
     out.push(pool.find((m) => !done.has(m.id)) ?? pool[0]);
   }

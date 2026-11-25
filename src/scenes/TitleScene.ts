@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
+import { Sound } from '../audio/Sound';
 import { TILE } from '../config';
+import { newProgress, type Progress, readSave } from '../systems/save';
 import { T } from '../texts/cs';
-import { pixelFont } from './BootScene';
 import { AREAS } from '../world/areas';
-import { newProgress, readSave } from '../systems/save';
+import { pixelFont } from './BootScene';
+import { createMenu, type MenuItem } from './menu';
 
-/** Úvodní obrazovka. */
+/** Hlavní menu: nová hra, pokračovat, nastavení, ovládání. */
 export class TitleScene extends Phaser.Scene {
   constructor() {
     super('Title');
@@ -14,25 +16,36 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     this.add.tileSprite(0, 0, width, height, 'tile-grass').setOrigin(0).setTileScale(2);
-    this.add.tileSprite(0, height / 2 - TILE * 2, width, TILE * 4, 'tile-road').setOrigin(0).setTileScale(2);
+    this.add.tileSprite(0, 150 - TILE * 2, width, TILE * 4, 'tile-road').setOrigin(0).setTileScale(2);
+    this.add.rectangle(0, 0, width, height, 0x000000, 0.35).setOrigin(0);
 
-    this.add.text(width / 2, height / 2 - 100, T.title, pixelFont(48, '#ffd23f')).setOrigin(0.5);
-    this.add.text(width / 2, height / 2 - 56, T.subtitle, pixelFont(16)).setOrigin(0.5);
-    this.add.text(width / 2, height - 32, T.controls, pixelFont(16, '#c8c0a8')).setOrigin(0.5);
-
-    const start = this.add.text(width / 2, height / 2 + 80, `${T.pressStart}: nová hra`, pixelFont(16)).setOrigin(0.5);
-    this.tweens.add({ targets: start, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
+    const title = this.add.text(width / 2, 110, T.title, pixelFont(56, '#ffd23f')).setOrigin(0.5).setStroke('#2a1d12', 8);
+    this.tweens.add({ targets: title, angle: { from: -1.5, to: 1.5 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.add.text(width / 2, 160, T.subtitle, pixelFont(18)).setOrigin(0.5).setStroke('#000', 4);
 
     const save = readSave();
+    const items: MenuItem[] = [{ label: () => 'Nová hra', action: () => this.begin(newProgress()) }];
     if (save) {
-      const info = `C: pokračovat (${AREAS[save.area].name}, ${save.money.toLocaleString('cs-CZ')} Kč, skóre ${save.score.toLocaleString('cs-CZ')})`;
-      this.add.text(width / 2, height / 2 + 110, info, pixelFont(16, '#9fffa0')).setOrigin(0.5).setStroke('#000', 4);
-      this.input.keyboard?.once('keydown-C', () => this.begin(save));
+      items.push({
+        label: () => `Pokračovat (${AREAS[save.area].name}, ${save.money.toLocaleString('cs-CZ')} Kč)`,
+        action: () => this.begin(save),
+      });
     }
-    this.input.keyboard?.once('keydown-SPACE', () => this.begin(newProgress()));
+    items.push(
+      { label: () => 'Nastavení', action: () => this.overlay('Settings') },
+      { label: () => 'Ovládání', action: () => this.overlay('Controls') },
+    );
+    createMenu(this, width / 2, 250, items, 40);
+    this.add.text(width / 2, height - 28, 'W/S vybrat · Enter potvrdit · Morávka, Beskydy, 2026', pixelFont(14, '#c8c0a8')).setOrigin(0.5).setStroke('#000', 4);
   }
 
-  private begin(progress: ReturnType<typeof newProgress>): void {
+  private overlay(key: string): void {
+    this.scene.pause();
+    this.scene.launch(key, { from: 'Title' });
+  }
+
+  private begin(progress: Progress): void {
+    Sound.unlock();
     this.registry.set('progress', progress);
     this.registry.set('arrival', null);
     this.scene.start('Game');

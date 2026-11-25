@@ -5,15 +5,20 @@ import { MISSIONS } from './catalog';
 import { COMPLICATION_CHANCE, offersFor, refusesWork, rewardFor, rollComplication } from './logic';
 
 describe('katalog zakázek', () => {
-  it('má aspoň 10 zakázek a pokrývá všech 11 typů', () => {
-    expect(MISSIONS.length).toBeGreaterThanOrEqual(10);
-    const types = new Set(MISSIONS.map((m) => m.type));
-    expect(types.size).toBe(11);
+  it('Morávka má aspoň 10 zakázek a pokrývá všech 11 typů', () => {
+    const m = MISSIONS.filter((x) => x.area === 'moravka');
+    expect(m.length).toBeGreaterThanOrEqual(10);
+    expect(new Set(m.map((x) => x.type)).size).toBe(11);
   });
 
-  it('každá skupina má zelenou zakázku a všechny barvy jsou zastoupené', () => {
-    for (const g of GROUP_IDS) expect(MISSIONS.some((m) => m.group === g && m.tier === 'green'), g).toBe(true);
-    for (const t of ['green', 'yellow', 'red']) expect(MISSIONS.some((m) => m.tier === t)).toBe(true);
+  it.each(['moravka', 'raskovice'] as const)('%s: každá skupina má zelenou zakázku, všechny barvy zastoupené', (area) => {
+    const m = MISSIONS.filter((x) => x.area === area);
+    for (const g of GROUP_IDS) expect(m.some((x) => x.group === g && x.tier === 'green'), g).toBe(true);
+    for (const t of ['green', 'yellow', 'red']) expect(m.some((x) => x.tier === t)).toBe(true);
+  });
+
+  it('nabídka v Raškovicích je raškovická', () => {
+    for (const o of offersFor('skola', 80, new Set(), 'raskovice')) expect(o.area).toBe('raskovice');
   });
 
   it('id jsou unikátní', () => {
