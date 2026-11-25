@@ -6,6 +6,7 @@ import { pixelFont } from './BootScene';
 import { GROUP_IDS } from '../systems/respect';
 import { GROUPS } from '../world/gangs';
 import type { RespectHud } from './Gangs';
+import type { AnnounceHud } from './Announcer';
 import type { MenuHud } from './Economy';
 import type { BoardHud, MissionHud } from './Missions';
 import type { GoalHud } from './Progression';
@@ -32,6 +33,9 @@ export class UIScene extends Phaser.Scene {
   private crosshair!: Phaser.GameObjects.Graphics;
   private deathText!: Phaser.GameObjects.Text;
   private stars: Phaser.GameObjects.Text[] = [];
+  private wantedText!: Phaser.GameObjects.Text;
+  private announceText!: Phaser.GameObjects.Text;
+  private debugText!: Phaser.GameObjects.Text;
   private respectBars: Phaser.GameObjects.Rectangle[] = [];
   private respectValues: Phaser.GameObjects.Text[] = [];
   private respectNames: Phaser.GameObjects.Text[] = [];
@@ -122,6 +126,18 @@ export class UIScene extends Phaser.Scene {
       this.respectValues.push(this.add.text(x + 230, rowY - 3, '0', pixelFont(14)).setStroke('#000', 3));
     });
     this.clockText = this.add.text(width / 2, 46, '', pixelFont(16, '#f2e9d0')).setOrigin(0.5, 0).setStroke('#000', 3);
+    // Co policie ví (vpravo od hvězdiček).
+    this.wantedText = this.add.text(width / 2 + 82, 22, '', pixelFont(14, '#9fc4ff')).setOrigin(0, 0.5).setStroke('#000', 3);
+    // Obecní rozhlas a rádio: rámeček pod úkolem zakázky.
+    this.announceText = this.add
+      .text(width / 2, 122, '', { ...pixelFont(15, '#ffe9a0'), wordWrap: { width: 400 }, align: 'center', backgroundColor: '#1a1408d8', padding: { x: 12, y: 7 } })
+      .setOrigin(0.5, 0)
+      .setVisible(false);
+    // Ladicí překryv F9: řetězce událostí.
+    this.debugText = this.add
+      .text(width - 16, 190, '', { ...pixelFont(12, '#c8ffc8'), wordWrap: { width: 470 }, backgroundColor: '#000000b0', padding: { x: 8, y: 6 } })
+      .setOrigin(1, 0)
+      .setVisible(false);
 
     // Hvězdičky hledanosti nahoře uprostřed.
     this.stars = [];
@@ -215,7 +231,22 @@ export class UIScene extends Phaser.Scene {
       this.clockText.setText(gangs.clock);
     }
 
-    const wanted = this.registry.get('wanted') as { level: number; searching: boolean } | undefined;
+    const wanted = this.registry.get('wanted') as { level: number; searching: boolean; desc?: string } | undefined;
+    this.wantedText.setText(wanted?.desc ? `Hledají: ${wanted.desc}` : '');
+    const ann = this.registry.get('announce') as AnnounceHud | null | undefined;
+    const gameNow = (this.scene.get('Game') as GameScene).time.now / 1000;
+    if (ann && gameNow < ann.until) {
+      const prefix = ann.channel === 'rozhlas' ? '📢 Obecní rozhlas: ' : '📻 Rádio: ';
+      this.announceText.setText(prefix + ann.text).setVisible(true).setColor(ann.channel === 'rozhlas' ? '#ffe9a0' : '#a0e4ff');
+    } else {
+      this.announceText.setVisible(false);
+    }
+    const dbg = this.registry.get('eventChains') as { lines: string[]; chains3: number; total: number } | undefined;
+    const showDbg = !!this.registry.get('debugEvents') && !!dbg;
+    this.debugText.setVisible(showDbg);
+    if (showDbg && dbg) {
+      this.debugText.setText(`UDÁLOSTI (F9) · záznamů ${dbg.total} · řetězců se 3+ systémy bez hráče: ${dbg.chains3}\n\n${dbg.lines.join('\n')}`);
+    }
     const level = wanted?.level ?? 0;
     // Když tě policie zrovna nevidí, hvězdy blikají.
     const blink = wanted?.searching && Math.floor(this.time.now / 300) % 2 === 0;

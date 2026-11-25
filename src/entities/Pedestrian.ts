@@ -4,7 +4,7 @@ import { animateWalk } from './walk';
 import type { GroupId } from '../systems/respect';
 
 export type PedState = 'idle' | 'wander' | 'flee' | 'fight' | 'dead';
-export type PedRole = 'civil' | 'cop' | 'gang';
+export type PedRole = 'civil' | 'cop' | 'gang' | 'animal';
 
 /** Na koho člen skupiny nebo policista útočí. */
 export type Foe = Pedestrian | 'player' | Phaser.GameObjects.Sprite | null;
@@ -38,6 +38,9 @@ export class Pedestrian extends Phaser.Physics.Arcade.Sprite {
   navIdx = 0;
   navGoal: { x: number; y: number } | null = null;
   navAt = -100;
+  /** Poslední událost, které se postava účastnila (pro řetězení příčin). */
+  lastEventId: number | null = null;
+  lastEventAt = -100;
 
   constructor(scene: Phaser.Scene, x: number, y: number, look: number, tough: boolean, texture?: string, hp?: number) {
     super(scene, x, y, texture ?? `ped-${look}`);

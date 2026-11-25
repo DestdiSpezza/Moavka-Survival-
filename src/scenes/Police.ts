@@ -8,14 +8,18 @@ import { findPath } from '../systems/pathfind';
 import { lineOfSight } from '../systems/sight';
 import { angleDiff, steerToward } from '../systems/trafficAi';
 import type { DriveInput } from '../systems/vehicleModel';
+import { newRoster, PATROLS_AT_REST, returnOfficers, type Roster, takeOfficers, tickRoster } from '../systems/roster';
 import {
   addCrime, arrestFine, type CrimeKind, LEVEL_HEAT, newWanted, responseFor, swapCar, tickWanted, type Wanted,
 } from '../systems/wanted';
+import { describe, describeText, type Description, recognizes } from '../systems/witness';
+import { placeLabel } from '../world/areas';
+import { zoneAt } from '../world/moravka';
+import type { NpcSuspect } from './Witnesses';
 import { T } from '../texts/cs';
 import { findFreeTile } from '../world/pickups';
 import { blocksBullets, isSolid, Tile } from '../world/tiles';
 import { trafficPaths } from '../world/vehicles';
-import type { CrimeEvent } from './Combat';
 import type { GameScene } from './GameScene';
 
 const SIGHT = 230;
@@ -29,7 +33,7 @@ const ARREST_TIME = 1.2;
 /** Stejný druh zločinu se počítá nejvýš jednou za tolik sekund (dávka ze samopalu není 20 zločinů). */
 const CRIME_THROTTLE = 1;
 
-type UnitMode = 'pursuit' | 'deployed' | 'leave';
+type UnitMode = 'patrol' | 'npc' | 'pursuit' | 'deployed' | 'leave';
 
 interface Unit {
   car: Vehicle;
@@ -47,6 +51,10 @@ interface Unit {
   pathIdx: number;
   pathGoal: Point | null;
   pathAt: number;
+  /** Obchůzka: kam hlídka zrovna jede. */
+  patrolTarget: Point | null;
+  /** Honička NPC: koho hlídka stíhá. */
+  npcTarget: NpcSuspect | null;
 }
 
 interface Cop {
@@ -58,6 +66,18 @@ interface Cop {
   nextShot: number;
   burst: number;
   leaving: boolean;
+  /** Zatýkání NPC (řidič, rváč). */
+  npcTarget: NpcSuspect | null;
+  arrestTimer: number;
+}
+
+/** Hlášení zločinu hráče (od policisty nebo svědka). */
+export interface Report {
+  kind: CrimeKind;
+  at: Point;
+  description: Description;
+  /** Viděl to policista (ví přesně, kde hráč je a jak vypadá). */
+  seen: boolean;
 }
 
 interface Roadblock {
@@ -85,6 +105,10 @@ export class Police {
   private lastCar: Vehicle | null = null;
   /** Cena průjezdu dlaždicí pro policejní auta: silnice nejlevnější, u zdí dráž (aby nezadrhávala o rohy). */
   private driveCost: number[][];
+  /** Policisté na stanici (omezený počet, vyřazení se doplňují pomalu). */
+  roster: Roster = newRoster();
+  /** Odkud přijíždějí posily: konce silnic na okraji mapy. */
+  private edgePoints: Array<{ p: Point; angle: number }> = [];
 
   constructor(private game: GameScene) {
     for (const path of trafficPaths(game.world)) {
@@ -105,7 +129,9 @@ export class Police {
     const spot = findFreeTile(game.world, office.x + Math.floor(office.w / 2), office.y + office.h + 1, new Set());
     this.station = { x: spot.tx, y: spot.ty };
 
-    game.events.on('crime', (e: CrimeEvent) => this.onCrime(e));
+    for (const path of trafficPaths(game.world)) {
+      this.edgePoints.push({ p: path[0], angle: Math.atan2(path[1].y - path[0].y, path[1].x - path[0].x) });
+    }
     game.events.on('knockout', () => this.clear());
   }
 
@@ -120,21 +146,84 @@ export class Police {
 
   // ---------- Zločiny a hledanost ----------
 
-  onCrime(e: CrimeEvent): void {
+  /** Hlášení o zločinu hráče: přidá hledanost a popis, jak pachatel vypadá. */
+  report(r: Report): void {
     if (this.game.player.dead) return;
-    const last = this.lastCrime.get(e.kind) ?? -10;
+    const last = this.lastCrime.get(r.kind) ?? -10;
     if (this.now - last < CRIME_THROTTLE) return;
-    this.lastCrime.set(e.kind, this.now);
+    this.lastCrime.set(r.kind, this.now);
     const before = this.wanted.level;
-    this.wanted = addCrime(this.wanted, e.kind, e);
+    const old = this.wanted.description;
+    this.wanted = addCrime(this.wanted, r.kind, r.at);
+    // Policista ví přesně; svědek jen přibližně, starší přesný popis nepřepíše.
+    this.wanted.description = r.seen || !old ? r.description : old;
     if (this.wanted.level > before) this.game.toast(T.radio[this.wanted.level]);
+    const popis = describeText(this.wanted.description, T.village.person);
+    this.game.announcer.say('radio', T.village.radioWanted.replace('{popis}', popis).replace('{místo}', this.placeName(r.at)), 'wanted', 45);
+  }
+
+  /** Hlášení o zločinu NPC: nejbližší volná hlídka vyjede. */
+  reportNpc(suspect: NpcSuspect, what: string, at: Point, cause: number | null): void {
+    const g = this.game;
+    if (this.wanted.level >= 2 || this.units.some((u) => u.mode === 'npc')) {
+      g.announcer.say('radio', T.village.radioBusy, 'busy', 120);
+      return;
+    }
+    const nearest: Unit | undefined = this.units
+      .filter((u) => u.mode === 'patrol' && u.crew > 0)
+      .sort((a, b) => Phaser.Math.Distance.Between(a.car.x, a.car.y, at.x, at.y) - Phaser.Math.Distance.Between(b.car.x, b.car.y, at.x, at.y))[0];
+    const unit = nearest ?? this.spawnUnit(false, 'npc');
+    if (!unit) {
+      g.announcer.say('radio', T.village.radioBusy, 'busy', 120);
+      return;
+    }
+    unit.mode = 'npc';
+    unit.npcTarget = suspect;
+    const id = g.logEvent('dispatch', `hlídka vyjíždí (${what})`, unit.car, ['police'], [cause], [unit.car]);
+    suspect.caseId = id;
+    for (const e of [suspect.vehicle, suspect.ped]) if (e) { e.lastEventId = id; e.lastEventAt = this.now; }
+    g.announcer.say('radio', T.village.radioNpcChase.replace('{kdo}', suspect.label).replace('{místo}', this.placeName(at)), 'npc-chase', 60);
+  }
+
+  /** Podezřelé auto odjelo z vesnice: honička končí. */
+  suspectGone(v: Vehicle): void {
+    for (const u of this.units) {
+      if (u.npcTarget?.vehicle !== v) continue;
+      this.game.announcer.say('radio', T.village.radioNpcEscaped.replace('{kdo}', u.npcTarget.label), 'npc-escaped', 60);
+      this.game.logEvent('npc-escaped', `${u.npcTarget.label}: ujel z vesnice`, v, ['police', 'traffic'], [u.npcTarget.caseId]);
+      u.npcTarget = null;
+      if (u.mode === 'npc') u.mode = 'patrol';
+    }
+    for (const c of this.cops) if (c.npcTarget?.vehicle === v) {
+      c.npcTarget = null;
+      c.leaving = true;
+    }
+  }
+
+  /** Jede po tomhle autě nějaká hlídka? */
+  isSuspect(v: Vehicle): boolean {
+    return this.units.some((u) => u.npcTarget?.vehicle === v) || this.cops.some((c) => c.npcTarget?.vehicle === v);
+  }
+
+  /** Vidí to místo nějaký policista (v autě s posádkou nebo pěšky)? */
+  observes(at: Point, range = SIGHT): boolean {
+    const looks = (p: Point) => {
+      const d = Phaser.Math.Distance.Between(p.x, p.y, at.x, at.y);
+      return d < CLOSE_SIGHT || (d < range && lineOfSight(this.game.world.tiles, TILE, p, at, blocksBullets));
+    };
+    return this.units.some((u) => u.crew > 0 && u.mode !== 'leave' && !u.car.wrecked && looks(u.car)) || this.cops.some((c) => c.ped.active && c.ped.alive && looks(c.ped));
+  }
+
+  private placeName(at: Point): string {
+    const z = zoneAt(this.game.world, Math.floor(at.x / TILE), Math.floor(at.y / TILE));
+    return z === 'Morávka' ? this.game.area.name : placeLabel(this.game.area.id, z);
   }
 
   /** Zvedne hledanost aspoň na danou úroveň (zakázky, komplikace). */
   raiseTo(level: number, at: Point): void {
     if (this.wanted.level >= level) return;
     const heat = LEVEL_HEAT[level];
-    this.wanted = { heat, level, unseen: -10, lastSeen: { x: at.x, y: at.y } };
+    this.wanted = { heat, level, unseen: -10, lastSeen: { x: at.x, y: at.y }, description: describe(this.game.playerAppearance(), !this.game.driving) };
     this.game.toast(T.radio[level]);
   }
 
@@ -155,8 +244,9 @@ export class Police {
   clear(): void {
     this.wanted = newWanted();
     this.arrestTimer = 0;
-    for (const u of this.units) u.mode = 'leave';
-    for (const c of this.cops) c.leaving = true;
+    // Hlídky se vrátí na obchůzku (rozdělí je manageForces), policisté pěšky nastoupí.
+    for (const u of this.units) if (u.mode === 'pursuit') u.mode = 'patrol';
+    for (const c of this.cops) if (!c.npcTarget) c.leaving = true;
   }
 
   update(dt: number): void {
@@ -182,17 +272,33 @@ export class Police {
     for (const rb of this.roadblocks) rb.cops = rb.cops.filter((c) => c.ped.active && c.ped.alive);
     this.checkArrest(dt);
 
-    this.game.registry.set('wanted', { level: this.wanted.level, searching: this.wanted.level > 0 && !this.seen });
+    const desc = this.wanted.description;
+    this.game.registry.set('wanted', {
+      level: this.wanted.level,
+      searching: this.wanted.level > 0 && !this.seen,
+      desc: this.wanted.level > 0 && desc ? describeText(desc, T.village.person) : '',
+    });
   }
 
+  /**
+   * Vidí a pozná policie hráče? Vidět musí (dosah, výhled) a poznat podle popisu:
+   * jiné auto nebo pěšky bez známé osoby → projedou kolem. Zblízka pozná vždycky.
+   */
   private canSeePlayer(): boolean {
     const f = this.focus;
+    const app = this.game.playerAppearance();
     const looks = (p: Point) => {
       const d = Phaser.Math.Distance.Between(p.x, p.y, f.x, f.y);
-      if (d < CLOSE_SIGHT) return true;
-      return d < SIGHT && lineOfSight(this.game.world.tiles, TILE, p, f, blocksBullets);
+      const visible = d < CLOSE_SIGHT || (d < SIGHT && lineOfSight(this.game.world.tiles, TILE, p, f, blocksBullets));
+      return visible && recognizes(this.wanted.description, app, d);
     };
-    return this.units.some((u) => u.crew > 0 && !u.car.wrecked && looks(u.car)) || this.cops.some((c) => c.ped.alive && looks(c.ped));
+    const seen = this.units.some((u) => u.crew > 0 && u.mode !== 'leave' && !u.car.wrecked && looks(u.car)) || this.cops.some((c) => c.ped.alive && looks(c.ped));
+    // Když ho vidí, popis se zpřesní na to, jak vypadá teď.
+    if (seen) {
+      const old = this.wanted.description;
+      this.wanted.description = { vehicle: app.vehicle, personKnown: (old?.personKnown ?? false) || !app.vehicle };
+    }
+    return seen;
   }
 
   // ---------- Nasazení sil ----------
@@ -200,17 +306,42 @@ export class Police {
   private manageForces(): void {
     const level = this.wanted.level;
     const resp = responseFor(level);
-    // Zničené jednotky a ty, co odjely z dohledu, ukliď.
+    const onDuty = this.units.reduce((n, u) => n + u.crew, 0) + this.cops.filter((c) => c.ped.active && c.ped.alive).length;
+    this.roster = tickRoster(this.roster, 1, level, onDuty);
+    // Zničené jednotky a ty, co odjely z dohledu, ukliď (posádka se vrací na stanici).
     for (const u of this.units) {
       if (u.car.wrecked && u.mode !== 'leave') u.mode = 'leave';
-      if (u.mode === 'leave' && !this.game.inView(u.car.x, u.car.y) && !u.car.wrecked) this.removeVehicle(u.car);
+      if (u.mode === 'leave' && !this.game.inView(u.car.x, u.car.y) && !u.car.wrecked) {
+        this.roster = returnOfficers(this.roster, u.crew);
+        this.removeVehicle(u.car);
+      }
     }
     this.units = this.units.filter((u) => u.car.active && !u.car.wrecked);
 
-    const active = this.units.filter((u) => u.mode !== 'leave').length;
-    if (active < resp.cars) {
-      const swatOut = this.units.some((u) => u.swat && u.mode !== 'leave');
-      this.spawnUnit(resp.swat && !swatOut);
+    if (level === 0) {
+      // Klid: dvě hlídky na obchůzce, zbytek jede domů.
+      let patrols = this.units.filter((u) => u.mode === 'patrol' || u.mode === 'npc').length;
+      for (const u of this.units) {
+        if (u.mode !== 'pursuit') continue;
+        if (patrols < PATROLS_AT_REST && !u.swat) {
+          u.mode = 'patrol';
+          patrols++;
+        } else {
+          u.mode = 'leave';
+        }
+      }
+      if (patrols < PATROLS_AT_REST) this.spawnUnit(false, 'patrol');
+    } else {
+      // Pátrání: hlídky z obchůzky se přidají, posily přijedou z okraje mapy.
+      for (const u of this.units) if (u.mode === 'patrol' || (u.mode === 'npc' && level >= 2)) {
+        u.mode = 'pursuit';
+        u.npcTarget = null;
+      }
+      const active = this.units.filter((u) => u.mode === 'pursuit' || u.mode === 'deployed').length;
+      if (active < resp.cars) {
+        const swatOut = this.units.some((u) => u.swat && u.mode !== 'leave');
+        this.spawnUnit(resp.swat && !swatOut, 'pursuit');
+      }
     }
 
     // Zátarasy: postavit před hráčem, zrušit staré a vzdálené.
@@ -242,18 +373,31 @@ export class Police {
     return best;
   }
 
-  private spawnUnit(swat: boolean): void {
-    const spot = this.pickRoadPoint(300, 1100, false);
-    if (!spot) return;
+  /** Nová hlídka přijede z okraje mapy (posily z okresu), jen když jsou volní lidé. */
+  private spawnUnit(swat: boolean, mode: UnitMode): Unit | null {
+    const crew = swat ? 4 : 2;
+    const take = takeOfficers(this.roster, crew);
+    if (!take.ok) return null;
+    const edge = this.edgePoints.filter((e) => !this.game.inView(e.p.x, e.p.y) && this.game.vehicles.every((v) => Phaser.Math.Distance.Between(v.x, v.y, e.p.x, e.p.y) > 30));
+    const spot = edge.length ? edge[Math.floor(this.game.random() * edge.length)] : this.pickRoadPoint(300, 1100, false);
+    if (!spot) return null;
+    this.roster = take.roster;
     const car = this.game.addVehicle(swat ? 'zasahovka' : 'policie', spot.p.x, spot.p.y, spot.angle, 0);
     car.driver = 'police';
-    const crew = swat ? 4 : 2;
-    this.units.push({ car, crew, fullCrew: crew, swat, mode: 'pursuit', stuck: 0, reverseUntil: 0, nextShot: 0, search: null, path: null, pathIdx: 0, pathGoal: null, pathAt: 0 });
+    const unit: Unit = {
+      car, crew, fullCrew: crew, swat, mode, stuck: 0, reverseUntil: 0, nextShot: 0, search: null, path: null, pathIdx: 0, pathGoal: null, pathAt: 0,
+      patrolTarget: null, npcTarget: null,
+    };
+    this.units.push(unit);
+    return unit;
   }
 
   private placeRoadblock(): void {
     const spot = this.pickRoadPoint(260, 650, true);
     if (!spot) return;
+    const take = takeOfficers(this.roster, 2);
+    if (!take.ok) return;
+    this.roster = take.roster;
     const across = spot.angle + Math.PI / 2;
     const cars: Vehicle[] = [];
     for (const side of [-1, 1]) {
@@ -280,7 +424,10 @@ export class Police {
 
   private removeRoadblock(rb: Roadblock): void {
     for (const c of rb.cars) if (!c.wrecked && c.driver === 'none') this.removeVehicle(c);
-    for (const c of rb.cops) if (c.ped.alive) c.ped.destroy();
+    for (const c of rb.cops) if (c.ped.alive) {
+      c.ped.destroy();
+      this.roster = returnOfficers(this.roster, 1);
+    }
     rb.cars = [];
     rb.cops = [];
   }
@@ -299,7 +446,7 @@ export class Police {
     ped.mood = 'fight';
     this.game.cameras.getCamera('minimap')?.ignore(ped);
     this.game.combat.peds.push(ped);
-    const cop: Cop = { ped, unit, post: null, smg: swat, nextShot: this.now + 0.8, burst: 0, leaving: false };
+    const cop: Cop = { ped, unit, post: null, smg: swat, nextShot: this.now + 0.8, burst: 0, leaving: false, npcTarget: null, arrestTimer: 0 };
     this.cops.push(cop);
     return cop;
   }
@@ -316,6 +463,8 @@ export class Police {
     const player = this.game.player;
 
     if (now < u.reverseUntil) return { throttle: -1, steer: 0.7, handbrake: false };
+    if (u.mode === 'patrol') return this.patrolInput(u, dt);
+    if (u.mode === 'npc') return this.npcChaseInput(u, dt);
 
     let target: Point;
     let cruise = resp.cruise;
@@ -361,6 +510,76 @@ export class Police {
     // V zatáčkách trasy zpomalit, ať auto nevyletí do plotu.
     const slow = waypoint !== target ? Math.min(cruise, 140) : cruise;
     return steerToward(v, v.drive.angle, v.speed, waypoint, slow, blocked);
+  }
+
+  /** Obchůzka po vsi: jede od jednoho místa na silnici k dalšímu a dává přednost provozu. */
+  private patrolInput(u: Unit, dt: number): DriveInput {
+    const v = u.car;
+    if (!u.patrolTarget || Phaser.Math.Distance.Between(v.x, v.y, u.patrolTarget.x, u.patrolTarget.y) < 40) {
+      u.patrolTarget = this.roadPoints[Math.floor(this.game.random() * this.roadPoints.length)].p;
+    }
+    const blocked = this.game.obstacleAhead(v);
+    this.unstick(u, dt, 60);
+    const waypoint = this.navigate(u, u.patrolTarget);
+    return steerToward(v, v.drive.angle, v.speed, waypoint, 90, blocked);
+  }
+
+  /** Honička NPC: dojet podezřelého, vytlačit ho, a když stojí, zatknout ho pěšky. */
+  private npcChaseInput(u: Unit, dt: number): DriveInput {
+    const v = u.car;
+    const s = u.npcTarget;
+    const target = s?.vehicle ?? s?.ped;
+    if (!s || !target || !target.active || (s.ped && !s.ped.alive) || (s.vehicle && (s.vehicle.driver !== 'npc' || s.vehicle.wrecked))) {
+      // Podezřelý zmizel (ujel z mapy, auto skončilo ve vraku, nebo už je zadržen).
+      if (s && s.vehicle && s.vehicle.active && s.vehicle.wrecked) {
+        this.game.logEvent('npc-wreck', `${s.label}: vrak, utekl pěšky`, s.vehicle, ['police', 'traffic'], [s.caseId ?? this.game.causeOf(s.vehicle)]);
+      } else if (s && (!target || !target.active)) {
+        this.game.announcer.say('radio', T.village.radioNpcEscaped.replace('{kdo}', s.label), 'npc-escaped', 60);
+      }
+      u.mode = 'patrol';
+      u.npcTarget = null;
+      return { throttle: 0, steer: 0, handbrake: true };
+    }
+    const lead = s.vehicle ? { x: target.x + s.vehicle.drive.vx * 0.4, y: target.y + s.vehicle.drive.vy * 0.4 } : { x: target.x, y: target.y };
+    const dist = Phaser.Math.Distance.Between(v.x, v.y, target.x, target.y);
+    const stopped = s.ped ? true : Math.abs(s.vehicle!.speed) < 20;
+    if (dist < 55 && stopped) {
+      this.deployNpc(u, s);
+      return { throttle: -1, steer: 0, handbrake: true };
+    }
+    this.unstick(u, dt, 30);
+    const waypoint = this.navigate(u, lead);
+    return steerToward(v, v.drive.angle, v.speed, waypoint, 165, false);
+  }
+
+  private unstick(u: Unit, dt: number, minDist: number): void {
+    u.stuck = Math.abs(u.car.speed) < 10 ? u.stuck + dt : 0;
+    if (u.stuck > 2.2 && minDist > 0) {
+      u.stuck = 0;
+      u.reverseUntil = this.now + 0.9;
+      u.path = null;
+    }
+  }
+
+  /** Posádka vystoupí a jde zadržet NPC. */
+  private deployNpc(u: Unit, s: NpcSuspect): void {
+    u.mode = 'deployed';
+    const a = u.car.rotation;
+    for (let i = 0; i < u.crew; i++) {
+      const side = i % 2 ? 1 : -1;
+      const off = u.car.spec.width / 2 + 7;
+      let x = u.car.x + Math.cos(a + (side * Math.PI) / 2) * off;
+      let y = u.car.y + Math.sin(a + (side * Math.PI) / 2) * off;
+      if (isSolid(this.game.tileAt(x, y))) {
+        x = u.car.x;
+        y = u.car.y;
+      }
+      const cop = this.spawnCop(x, y, u.swat, u);
+      cop.npcTarget = s;
+      if (i === 0) this.game.floatText(cop.ped.x, cop.ped.y - 10, pick(T.copShout, this.game.random), '#9fc4ff', 1600);
+    }
+    u.crew = 0;
+    if (s.vehicle) this.game.holdTraffic(s.vehicle, 20);
   }
 
   /**
@@ -434,6 +653,22 @@ export class Police {
     const player = this.game.player;
     const resp = responseFor(this.wanted.level);
 
+    // Zatýkání NPC: dojít k podezřelému a zadržet ho.
+    if (c.npcTarget && !c.leaving) {
+      const s = c.npcTarget;
+      const t = s.ped ?? s.vehicle;
+      const gone = !t || !t.active || (s.ped && !s.ped.alive) || (s.vehicle && s.vehicle.driver !== 'npc');
+      if (gone) {
+        c.npcTarget = null;
+        c.leaving = true;
+        return;
+      }
+      const d = this.walkTo(p, t!, COP_SPEED);
+      c.arrestTimer = d < 20 ? c.arrestTimer + dt : 0;
+      if (c.arrestTimer > 1) this.arrestNpc(c, s);
+      return;
+    }
+
     // Konec akce: vrátit se do auta, nebo odejít mimo obrazovku.
     if (c.leaving || this.wanted.level === 0 || player.dead) {
       c.leaving = true;
@@ -441,7 +676,10 @@ export class Police {
         if (this.walkTo(p, c.unit.car, COP_SPEED * 0.7) < 18) this.reboard(c);
       } else {
         this.walkTo(p, { x: p.x + (p.x - f.x), y: p.y + (p.y - f.y) }, COP_SPEED * 0.6);
-        if (!this.game.inView(p.x, p.y)) p.destroy();
+        if (!this.game.inView(p.x, p.y)) {
+          p.destroy();
+          this.roster = returnOfficers(this.roster, 1);
+        }
       }
       return;
     }
@@ -490,6 +728,24 @@ export class Police {
     void dt;
   }
 
+  /** Zadržení NPC: podezřelý zmizí v policejním autě (řidič vystoupí z auta). */
+  private arrestNpc(c: Cop, s: NpcSuspect): void {
+    const g = this.game;
+    const t = s.ped ?? s.vehicle!;
+    const boar = s.ped?.role === 'animal';
+    g.floatText(c.ped.x, c.ped.y - 10, pick(boar ? T.village.arrestedBoar : T.village.arrested, g.random), '#9fc4ff', 1800);
+    const reply = boar ? T.village.arrestedBoarReply : T.village.arrestedNpc;
+    if (g.inView(t.x, t.y)) g.time.delayedCall(700, () => g.floatText(t.x, t.y - 10, pick(reply, g.random), '#ffffff', 1800));
+    g.logEvent('arrest', `zadržen: ${s.label}`, t, ['police'], [s.caseId ?? g.causeOf(t)]);
+    g.announcer.say('radio', T.village.radioNpcArrest.replace('{kdo}', s.label), 'npc-arrest', 60);
+    if (s.ped) s.ped.destroy();
+    else g.incidents.arrestVehicle(s.vehicle!);
+    for (const o of this.cops) if (o.npcTarget === s) {
+      o.npcTarget = null;
+      o.leaving = true;
+    }
+  }
+
   private nearestThug(cop: Pedestrian): Pedestrian | null {
     let best: Pedestrian | null = null;
     let bestD = 180;
@@ -513,7 +769,10 @@ export class Police {
     const u = c.unit!;
     u.crew++;
     c.ped.destroy();
-    if (u.crew >= u.fullCrew || !this.cops.some((o) => o !== c && o.unit === u && o.ped.alive)) u.mode = c.leaving ? 'leave' : 'pursuit';
+    if (u.crew >= u.fullCrew || !this.cops.some((o) => o !== c && o.unit === u && o.ped.alive)) {
+      u.mode = 'pursuit';
+      u.npcTarget = null;
+    }
   }
 
   private copFire(c: Cop): void {

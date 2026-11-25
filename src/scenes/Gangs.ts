@@ -77,7 +77,7 @@ export class Gangs {
     return this.game.time.now / 1000;
   }
 
-  private get minute(): number {
+  get minute(): number {
     return minuteOfDay(this.elapsed);
   }
 
@@ -268,8 +268,8 @@ export class Gangs {
           m.foeUntil = now + 20;
           m.attacksPolice = true;
           this.shout(m, GROUPS[g].helping, '#9fffa0');
-          // Policie si toho všimne a pošle posily.
-          this.game.events.emit('crime', { x: t.x, y: t.y, kind: 'reported' });
+          // Útok na policii řeší policisté na místě (vidí ho a střílí); hráči to hledanost nepřidá.
+          this.game.logEvent('gang-vs-police', `${GROUPS[g].name} napadli policii`, m, ['gangs', 'police'], [this.game.causeOf(m)], [m]);
           return;
         }
       }

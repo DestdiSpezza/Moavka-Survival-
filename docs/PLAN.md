@@ -150,6 +150,24 @@ Zbývá do budoucna:
 
 **Hotovo, když:** se dá hra pustit někomu cizímu a zvládne ji bez vysvětlování.
 
+## Fáze 9: Živá vesnice ✅
+
+Z dokumentu Game Update 1 jen to, co má největší přínos a jde udělat bez přestavby mapy. Zbytek je v [TODO.md](../TODO.md).
+
+- **Svědci a popis:** zločin zvedne hledanost, jen když ho vidí policie, nebo ho nahlásí svědek. Svědek telefonuje 5–10 s (hovor jde přerušit: zastrašit zbraní, zranit ho). Popis se může plést (barva, typ auta); policie hráče pozná podle popisu, zblízka vždy. Na HUDu je „Hledají: …“. Skupiny už policii nevolají samy, jdou přes stejné svědky (spojenci mlčí, nepřátelé volají rádi).
+- **Omezený počet policistů:** dvě hlídky na obchůzce, posily přijíždějí z okrajů mapy, policisté se po akci vracejí na stanici a doplňují se.
+- **Policie proti NPC:** nehoda, ujetí od nehody, rvačka, sražený chodec, opilec za volantem. Nejbližší volná hlídka vyjede, dojede podezřelého a zatkne ho. Hráč od 2 hvězdiček má přednost.
+- **Nehody v provozu:** řidiči mají povahu (normální, spěchající, s mobilem, večer opilý) a reakční dobu. Po nárazu vystoupí, hádají se, pak se usmíří, poperou, nebo jeden ujede. Když hráč nabourá auto a ujede, poškozený volá policii.
+- **Divočáci** přebíhají silnici. Řidiči brzdí, auto do divočáka narazí, omráčené prase někdo nahlásí a policie ho zadrží.
+- **Obecní rozhlas a rádio v autě** hlásí skutečné události (nehoda, divočák, opilec, pátrání po hráči, honička hlídky) a mezi tím obecní hlášení.
+- **Deník událostí** s příčinami (divočák → brzda → nehoda → hádka → útěk → svědek → hlídka → zatčení). F9 ukáže řetězce v ladicím překryvu.
+- Provoz se nezasekne: zácpu do kruhu vyřeší přednost, kolem vraku se auto protáhne krokem, na konci trasy auto odjede z vesnice. Vraky, zabavená a opuštěná auta odtáhne odtahovka, když se hráč nedívá; parkoviště se zase zaplní.
+- Výbuch auta po nehodě v provozu už není hráčův zločin.
+
+Dlouhý běh: `npm run build && npm run soak` přehraje 30 minut herního času bez hráče (zrychleně, asi 2 minuty) a spočítá řetězce, které spojí aspoň 3 systémy bez hráče. Poslední běh: 74 řetězců, provoz celou dobu jezdí, žádné vraky navíc.
+
+**Hotovo, když:** za 30 minut bez hráče vznikne aspoň jeden řetězec přes 3 systémy a policie, svědci a provoz spolu viditelně souvisí.
+
 ---
 
 ## Styl hry

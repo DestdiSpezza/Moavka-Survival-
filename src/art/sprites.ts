@@ -433,6 +433,38 @@ export function generateHumanSprites(scene: Phaser.Scene): void {
   sh('cop-swat', { jacket: 0x1a1a1e, pants: 0x1a1a1e, hair: 'helmet', hairColor: 0x2a2a2e, skin: SKIN[1], tool: 'long' });
   for (const [g, look] of Object.entries(GANG_LOOKS)) sh(`gang-${g}`, look);
 
+  // Divočák: tmavé štětinaté tělo, světlejší rypák s kly, nožky při běhu.
+  const boar = new Painter(FW * 3, FH, createRng(13));
+  for (let f = 0; f < 3; f++) {
+    const cx = f * FW + 8;
+    const step = f === 1 ? 1 : f === 2 ? -1 : 0;
+    boar.ellipse(cx + 1, 10, 7, 4, 0x000000, 0.3);
+    for (const [lx, side] of [[-4, -1], [4, 1]] as const) {
+      boar.rect(cx + lx + step * 2 * side, 3, 2, 2, 0x2a1e16);
+      boar.rect(cx + lx - step * 2 * side, 11, 2, 2, 0x2a1e16);
+    }
+    boar.ellipse(cx, 8, 7, 4, 0x3a2a1e);
+    boar.ellipse(cx - 1, 7, 6, 3, 0x5a4230);
+    boar.rect(cx - 6, 7, 11, 1, 0x2a1e16);
+    boar.noise(cx - 6, 5, 12, 6, [0x6a5038, 0x2a1e16], 0.25);
+    boar.rect(cx + 6, 6, 4, 4, 0x7a5a42);
+    boar.px(cx + 9, 7, 0x2a1a12);
+    boar.px(cx + 9, 8, 0x2a1a12);
+    boar.px(cx + 8, 5, 0xf2eee0);
+    boar.px(cx + 8, 10, 0xf2eee0);
+    boar.px(cx + 5, 5, 0x1a1410);
+    boar.px(cx + 5, 10, 0x1a1410);
+    boar.px(cx - 7, 8, 0x3a2a1e);
+  }
+  add(scene, 'boar', boar, { w: FW, n: 3 });
+  const deadBoar = new Painter(FW, FH, createRng(14));
+  deadBoar.ellipse(10, 9, 9, 5, 0x6a0a0a, 0.7);
+  deadBoar.ellipse(9, 8, 7, 4, 0x3a2a1e);
+  deadBoar.rect(3, 4, 2, 3, 0x2a1e16);
+  deadBoar.rect(10, 12, 2, 3, 0x2a1e16);
+  deadBoar.rect(15, 6, 4, 4, 0x7a5a42);
+  add(scene, 'boar-dead', deadBoar);
+
   // Mrtvola: tělo rozhozené na zemi v kaluži krve.
   const c = new Painter(FW, FH, createRng(11));
   c.ellipse(10, 9, 8, 5, 0x6a0a0a, 0.75);

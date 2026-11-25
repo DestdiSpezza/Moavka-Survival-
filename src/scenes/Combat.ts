@@ -6,7 +6,7 @@ import {
   absorbDamage, canFire, consumeAmmo, cycleWeapon, deathPenalty, inMeleeArc, pelletAngles, PERSON_EXPLOSION_DAMAGE,
   pickupWeapon, rayCircleHit, selectWeapon, WEAPON_ORDER, WEAPONS, type Point, type WeaponId,
 } from '../systems/combat';
-import { CALL_POLICE_CHANCE, FLEE_TIME, fleeAngle, hears, PED_RUN, PED_WALK, runOverDamage } from '../systems/crowd';
+import { FLEE_TIME, fleeAngle, hears, PED_RUN, PED_WALK, runOverDamage } from '../systems/crowd';
 import { Sound, type ShotKind } from '../audio/Sound';
 import { EXPLOSION_RADIUS } from '../systems/damage';
 import type { CrimeKind } from '../systems/wanted';
@@ -43,6 +43,10 @@ export interface CrimeEvent {
   x: number;
   y: number;
   kind: CrimeKind;
+  /** Auto, které hráč kradl (svědek ho popíše). */
+  vehicle?: Vehicle;
+  /** Svědek, který určitě zavolá (poškozený řidič). */
+  witness?: Pedestrian;
 }
 
 type WeaponKeys = Record<'one' | 'two' | 'three' | 'four' | 'five' | 'cycle', Phaser.Input.Keyboard.Key>;
@@ -282,7 +286,8 @@ export class Combat {
     const now = this.time;
     const rnd = this.game.random;
     for (const p of this.peds) {
-      if (!p.alive || p.role !== 'civil') continue;
+      // Postavy řízené nehodou (hádající se řidiči) mají vlastní chování.
+      if (!p.alive || p.role !== 'civil' || p.scripted) continue;
       const body = p.body as Phaser.Physics.Arcade.Body;
       if (p.mood === 'flee') {
         if (now > p.until) p.mood = 'idle';
@@ -337,14 +342,9 @@ export class Combat {
     p.mood = 'flee';
     p.until = now + FLEE_TIME + this.game.random() * 2;
     p.heading = fleeAngle(p, threat, this.game.random);
-    if (wasCalm && this.game.inView(p.x, p.y)) {
-      const rnd = this.game.random;
-      if (rnd() < CALL_POLICE_CHANCE) {
-        this.game.floatText(p.x, p.y - 10, pick(T.callPolice, rnd), '#9fc4ff', 2200);
-        this.crime(p, 'reported');
-      } else if (rnd() < 0.4) {
-        this.game.floatText(p.x, p.y - 10, pick(T.panic, rnd), '#ffffff', 1600);
-      }
+    // Volat policii se rozhodují svědci (Witnesses); panika jen křičí a utíká.
+    if (wasCalm && this.game.inView(p.x, p.y) && this.game.random() < 0.35) {
+      this.game.floatText(p.x, p.y - 10, pick(T.panic, this.game.random), '#ffffff', 1600);
     }
   }
 
@@ -355,14 +355,17 @@ export class Combat {
     this.blood.explode(4, p.x, p.y);
     if (damage >= 8) this.game.stampDecal(`blood-${Math.floor(this.game.random() * 3)}`, p.x + (this.game.random() - 0.5) * 6, p.y + (this.game.random() - 0.5) * 6, this.game.random() * 360, 0.8);
     const cop = p.role === 'cop';
+    const animal = p.role === 'animal';
     const attacker = from instanceof Pedestrian ? from : null;
     if (p.hp <= 0) {
       this.killPed(p);
       this.game.events.emit('pedHurt', { ped: p, killed: true, byPlayer, attacker } satisfies PedHurtEvent);
-      this.noise(p, 140, byPlayer ? (cop ? 'copMurder' : 'murder') : null);
+      // Zastřelit divočáka není vražda (jen hluk, který vyděsí lidi).
+      this.noise(p, 140, byPlayer && !animal ? (cop ? 'copMurder' : 'murder') : null);
       return;
     }
     this.game.events.emit('pedHurt', { ped: p, killed: false, byPlayer, attacker } satisfies PedHurtEvent);
+    if (animal) return;
     if (p.role === 'gang') {
       if (byPlayer) this.crime(p, 'assault');
       return;
@@ -410,7 +413,7 @@ export class Combat {
 
   private killPed(p: Pedestrian): void {
     p.mood = 'dead';
-    p.setTexture('corpse').setDepth(3);
+    p.setTexture(p.role === 'animal' ? 'boar-dead' : 'corpse').setDepth(3);
     const body = p.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(0, 0);
     body.enable = false;
@@ -418,6 +421,8 @@ export class Combat {
       // Policista upustí služební zbraň.
       this.addPickup(p.texture.key === 'cop-swat' ? 'smg' : 'pistol', p.x + 6, p.y + 4, 0, false);
       p.setTexture('corpse');
+    } else if (p.role === 'animal') {
+      // Divočák nemá peníze.
     } else if (p.role === 'gang' || this.game.random() < 0.6) {
       const amount = p.role === 'gang' ? 40 + Math.floor(this.game.random() * 120) : 10 + Math.floor(this.game.random() * 70);
       this.addPickup('money', p.x + 6, p.y + 4, amount, false);
@@ -433,7 +438,21 @@ export class Combat {
       return;
     }
     // Přejetí policejním autem ani provozem není hráčův zločin.
+    const wasAlive = p.alive;
     this.hurtPed(p, dmg, v, v === this.game.driving);
+    if (p.role === 'animal') {
+      // Divočák je těžký: poničí auto a řidič zastaví.
+      v.damage(14);
+      const hitId = this.game.logEvent('boar-hit', 'auto srazilo divočáka', p, v === this.game.driving ? ['animals', 'player'] : ['animals', 'traffic'], [this.game.causeOf(p), this.game.causeOf(v)], [v, p]);
+      if (v.driver === 'npc') {
+        this.game.holdTraffic(v, 3);
+        // Omráčené prase na silnici: někdo zavolá policii, ať s ním něco udělá.
+        if (p.alive) this.game.witnesses.npcCrime('boar', p, { ped: p, label: 'divočáka' }, hitId);
+      }
+      if (this.game.inView(v.x, v.y)) this.game.floatText(v.x, v.y - 12, T.village.boarHit[0], '#ffffff', 1800);
+    } else if (wasAlive && v.driver === 'npc' && p.role === 'civil') {
+      this.game.incidents.onRunOver(v, p);
+    }
     if (p.alive) {
       const body = p.body as Phaser.Physics.Arcade.Body;
       body.setVelocity(v.drive.vx * 0.8, v.drive.vy * 0.8);
@@ -443,13 +462,13 @@ export class Combat {
   // ---------- Výbuchy ----------
 
   /** Výbuch auta zraní lidi okolo, hráče taky. */
-  explosionAt(x: number, y: number): void {
+  explosionAt(x: number, y: number, byPlayer = true): void {
     const hurt = (d: number) => (d >= EXPLOSION_RADIUS ? 0 : PERSON_EXPLOSION_DAMAGE * (1 - d / EXPLOSION_RADIUS));
     for (const p of this.peds) {
-      if (p.alive) this.hurtPed(p, hurt(Phaser.Math.Distance.Between(x, y, p.x, p.y)) || 0, { x, y });
+      if (p.alive) this.hurtPed(p, hurt(Phaser.Math.Distance.Between(x, y, p.x, p.y)) || 0, { x, y }, byPlayer);
     }
     if (!this.game.driving) this.damagePlayer(hurt(Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y)));
-    this.noise({ x, y }, 320, 'shooting');
+    this.noise({ x, y }, 320, byPlayer ? 'shooting' : null);
   }
 
   // ---------- Hráč: zdraví a smrt ----------

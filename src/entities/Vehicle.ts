@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { damageState, type DamageState, FIRE_BURN_FRACTION, impactDamage } from '../systems/damage';
 import { type DriveInput, type DriveState, forwardSpeed, stepDrive, type Surface } from '../systems/vehicleModel';
 import type { GroupId } from '../systems/respect';
+import { type ColorId, DEFAULT_COLOR, PAINT_COLORS } from '../systems/witness';
+import { CAR_PAINT } from '../art/sprites';
 import { isPoliceKind, VEHICLE_TYPES, type VehicleKind, type VehicleType } from '../world/vehicles';
 
 export type Driver = 'none' | 'npc' | 'player' | 'police';
@@ -21,6 +23,11 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
   owner: GroupId | null = null;
   /** Kdy ho naposledy poškodil hráč (herní čas v s); podle toho se pozná, kdo ho zničil. */
   playerHitAt = -100;
+  /** Barva laku (podle ní svědci popisují auto). */
+  paint: ColorId;
+  /** Poslední událost, které se auto účastnilo (pro řetězení příčin). */
+  lastEventId: number | null = null;
+  lastEventAt = -100;
   hp: number;
   state: DamageState = 'ok';
   drive: DriveState;
@@ -39,6 +46,7 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     const key = kind === 'osobak' ? `osobak-${variant}` : `${kind}-0`;
     super(scene, x, y, key);
     this.variant = variant;
+    this.paint = kind === 'osobak' ? PAINT_COLORS[variant % PAINT_COLORS.length] : DEFAULT_COLOR[kind];
     this.spec = VEHICLE_TYPES[kind];
     this.hp = this.spec.maxHp;
     this.drive = { angle, vx: 0, vy: 0 };
@@ -99,6 +107,24 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     if (this.isPolice && (this.driver === 'player' || this.driver === 'police')) {
       this.sirenTimer += dt;
       this.setTexture(`${this.spec.kind}-${Math.floor(this.sirenTimer * 4) % 2}`);
+    }
+  }
+
+  /** Rychlost, kterou auto mělo před posledními kolizemi (síla nárazu). */
+  get lastVelocity(): { x: number; y: number } {
+    return { x: this.lastVx, y: this.lastVy };
+  }
+
+  /** Přelakování: osobák dostane jiný lak, ostatní jen tónování. */
+  repaint(color: ColorId): void {
+    this.paint = color;
+    if (this.spec.kind === 'osobak') {
+      this.variant = PAINT_COLORS.indexOf(color);
+      this.resetTexture();
+    } else {
+      // Ostatní vozy mají jednu kresbu, lak se jen přibarví.
+      const i = PAINT_COLORS.indexOf(color);
+      this.setTint(i >= 0 ? CAR_PAINT[i] : 0xffffff);
     }
   }
 

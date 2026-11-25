@@ -15,6 +15,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   score = 0;
   arsenal: Arsenal = newArsenal();
   dead = false;
+  /** Poslední událost, které se hráč účastnil (pro řetězení příčin). */
+  lastEventId: number | null = null;
+  lastEventAt = -100;
   private keys: Keys;
   private arrows: Phaser.Types.Input.Keyboard.CursorKeys;
 

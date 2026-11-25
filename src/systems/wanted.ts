@@ -1,4 +1,5 @@
 import type { Point } from './combat';
+import type { Description } from './witness';
 
 /** Hledanost: trestné činy zvyšují „žár“, ten určuje úroveň 0–5. */
 
@@ -11,7 +12,8 @@ export type CrimeKind =
   | 'rammedCop'
   | 'copAssault'
   | 'copMurder'
-  | 'policeTheft';
+  | 'policeTheft'
+  | 'hitAndRun';
 
 export const CRIME_HEAT: Record<CrimeKind, number> = {
   theft: 8,
@@ -23,6 +25,7 @@ export const CRIME_HEAT: Record<CrimeKind, number> = {
   copAssault: 45,
   copMurder: 110,
   policeTheft: 60,
+  hitAndRun: 12,
 };
 
 /** Kolik žáru je potřeba na úroveň (index = úroveň). */
@@ -43,10 +46,12 @@ export interface Wanted {
   unseen: number;
   /** Kde ho policie viděla naposledy (nebo kde se stal zločin). */
   lastSeen: Point | null;
+  /** Co policie ví o tom, jak pachatel vypadá (null = nic). */
+  description: Description | null;
 }
 
 export function newWanted(): Wanted {
-  return { heat: 0, level: 0, unseen: 0, lastSeen: null };
+  return { heat: 0, level: 0, unseen: 0, lastSeen: null, description: null };
 }
 
 /** Po nahlášení zločinu má policie čas dojet, než začne běžet odpočet útěku. */
@@ -55,7 +60,7 @@ export const CRIME_GRACE = 10;
 /** Zločin: přidá žár, úroveň jen roste a policie ví, kde se to stalo. */
 export function addCrime(w: Wanted, kind: CrimeKind, at: Point): Wanted {
   const heat = Math.min(MAX_HEAT, w.heat + CRIME_HEAT[kind]);
-  return { heat, level: Math.max(w.level, levelFor(heat)), unseen: Math.min(w.unseen, -CRIME_GRACE), lastSeen: { x: at.x, y: at.y } };
+  return { ...w, heat, level: Math.max(w.level, levelFor(heat)), unseen: Math.min(w.unseen, -CRIME_GRACE), lastSeen: { x: at.x, y: at.y } };
 }
 
 /** Jak dlouho musí hráč zůstat mimo dohled, aby se policie vzdala. */

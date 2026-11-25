@@ -19,7 +19,7 @@ import { buildArea, type WorldMap, zoneAt } from '../world/moravka';
 import { newProgress, type Progress, respectIn, writeSave } from '../systems/save';
 import { isSolid, speedFactor, TILE_COUNT } from '../world/tiles';
 import { CAR_PAINT as CAR_COLORS } from '../art/sprites';
-import { parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicles';
+import { type ParkedVehicle, parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicles';
 import { pixelFont } from './BootScene';
 import { Combat } from './Combat';
 import { Gangs } from './Gangs';
@@ -27,11 +27,23 @@ import { Economy } from './Economy';
 import { Missions } from './Missions';
 import { Progression } from './Progression';
 import { Tutorial } from './Tutorial';
+import { Animals } from './Animals';
+import { Announcer } from './Announcer';
+import { Incidents } from './Incidents';
+import { Witnesses } from './Witnesses';
+import { EventLog, SYSTEM_NAMES, type SystemTag, validCause } from '../systems/eventLog';
+import { CRASH_SPEED, type Driver, drunkDriver, HARD_BRAKE, reactToObstacle, rollDriver } from '../systems/drivers';
+import { isEvening } from '../systems/clock';
+import type { Appearance } from '../systems/witness';
 import { Police } from './Police';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
 const ENTER_RANGE = 26;
 const TRAFFIC_COUNT = 7;
+/** Po kolika sekundách odtáhnout vrak (jen když ho hráč nevidí). */
+const WRECK_TOW_AFTER = 90;
+/** Rychlost, kterou se auto protahuje kolem překážky (pod hranicí nárazu). */
+const CREEP_SPEED = 32;
 const CRUISE = 90;
 
 interface Traffic {
@@ -47,6 +59,26 @@ interface Traffic {
   /** Jak dlouho auto stojí, i když by jet mělo (zaseklé o roh). */
   stuck: number;
   reverseUntil: number;
+  /** Řidič: typ, rychlost, reakční doba. */
+  driver: Driver;
+  /** Odkdy řidič vidí překážku před sebou (reakční doba). */
+  seenSince: number;
+  /** Stojí (hádka, nehoda, zatýkání) do tohoto času. */
+  hold: number;
+  /** Ujíždí (od nehody, před policií). */
+  flee: boolean;
+  prevSpeed: number;
+  lastBrakeLog: number;
+  /** Co má řidič před sebou (pro řetězení příčin: divočák → brzda). */
+  obstacle: { lastEventId: number | null; lastEventAt: number } | null;
+  /** Opilce už policie viděla. */
+  drunkSeen?: boolean;
+  /** Auto, kvůli kterému teď stojí (k rozpoznání zácpy, kde čeká každý na každého). */
+  blocker: Vehicle | null;
+  /** Jak dlouho auto stojí v koloně (dlouhá zácpa mimo dohled se rozpustí). */
+  jam: number;
+  /** Na konci trasy mizí z dohledu. */
+  leaving?: boolean;
 }
 
 export interface PlayerHud {
@@ -82,6 +114,19 @@ export class GameScene extends Phaser.Scene {
   economy!: Economy;
   progression!: Progression;
   tutorial!: Tutorial;
+  witnesses!: Witnesses;
+  incidents!: Incidents;
+  animals!: Animals;
+  announcer!: Announcer;
+  /** Deník událostí světa (řetězce příčin, ladicí překryv F9, automatické testy). */
+  eventLog = new EventLog();
+  private debugKey!: Phaser.Input.Keyboard.Key;
+  private debugTimer = 0;
+  private trafficRefill = 0;
+  /** Auta k odtažení (vraky, zabavená a opuštěná auta) a kdy nejdřív. */
+  private towQueue = new Map<Vehicle, number>();
+  /** Parkovací místa ze startu a auto, které na nich teď stojí. */
+  private parkedSpots: Array<{ spot: ParkedVehicle; car: Vehicle }> = [];
   private night!: Phaser.GameObjects.Rectangle;
   private water!: Phaser.GameObjects.TileSprite;
   private decals!: Phaser.GameObjects.RenderTexture;
@@ -110,6 +155,9 @@ export class GameScene extends Phaser.Scene {
     // Při přechodu do jiné oblasti se scéna spouští znovu: staré posluchače pryč.
     for (const ev of ['crime', 'knockout', 'pedHurt', 'toast', 'banner']) this.events.removeAllListeners(ev);
     this.vehicles = [];
+    this.eventLog = new EventLog();
+    this.trafficRefill = 0;
+    this.towQueue = new Map();
     this.chimneySmoke = null;
     this.traffic.clear();
     this.driving = null;
@@ -184,6 +232,13 @@ export class GameScene extends Phaser.Scene {
         other.playerHitAt = this.time.now / 1000;
         if (other.isPolice) this.events.emit('crime', { x: this.driving!.x, y: this.driving!.y, kind: 'rammedCop' });
       }
+      // Síla nárazu: rozdíl rychlostí před srážkou.
+      const la = va.lastVelocity;
+      const lb = vb.lastVelocity;
+      const impact = Math.hypot(la.x - lb.x, la.y - lb.y);
+      if (impact < CRASH_SPEED) return;
+      if (va.driver === 'npc' && vb.driver === 'npc') this.incidents.onCrash(va, vb, impact);
+      else if (other && other.driver === 'npc') this.incidents.onPlayerCrash(other, impact);
     });
     this.physics.add.collider(this.player, this.vehicles);
 
@@ -222,12 +277,40 @@ export class GameScene extends Phaser.Scene {
     this.economy = new Economy(this);
     this.progression = new Progression(this);
     this.tutorial = new Tutorial(this);
+    this.announcer = new Announcer(this);
+    this.witnesses = new Witnesses(this);
+    this.incidents = new Incidents(this);
+    this.animals = new Animals(this);
+    this.debugKey = this.input.keyboard!.addKey('F9');
     this.applyProgress();
     this.input.setDefaultCursor('none');
     this.night = this.add.rectangle(0, 0, 10, 10, 0x0a1030, 1).setOrigin(0).setDepth(40).setAlpha(0);
     this.cameras.getCamera('minimap')?.ignore(this.night);
     this.headlights = new Map();
     this.scene.launch('UI');
+  }
+
+  /** Ladicí překryv (F9): poslední řetězce událostí a počet řetězců bez hráče. */
+  private updateDebugOverlay(dt: number): void {
+    if (Phaser.Input.Keyboard.JustDown(this.debugKey)) this.registry.set('debugEvents', !this.registry.get('debugEvents'));
+    this.debugTimer += dt;
+    if (!this.registry.get('debugEvents') || this.debugTimer < 1) return;
+    this.debugTimer = 0;
+    const lines = this.eventLog
+      .leaves()
+      .slice(-40)
+      .map((e) => this.eventLog.chain(e.id))
+      .filter((c) => c.length >= 2)
+      .slice(-7)
+      .map((c) => {
+        const systems = [...new Set(c.flatMap((e) => e.systems))].map((s) => SYSTEM_NAMES[s]).join(', ');
+        return `${c.map((e) => e.text).join(' → ')}  [${systems}]`;
+      });
+    this.registry.set('eventChains', {
+      lines,
+      chains3: this.eventLog.countChains(3, true),
+      total: this.eventLog.all.length,
+    });
   }
 
   /** Otisk na zem (krev, smyk, spálenina). */
@@ -401,10 +484,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnVehicles(): void {
-    for (const p of parkedVehicles(this.world)) {
-      const v = this.addVehicle(p.kind, p.x, p.y, p.angle, Math.floor(this.random() * CAR_COLORS.length));
-      v.owner = p.owner;
-    }
+    this.parkedSpots = parkedVehicles(this.world).map((spot) => ({ spot, car: this.parkCar(spot) }));
     this.paths = trafficPaths(this.world);
     const kinds: VehicleKind[] = ['osobak', 'osobak', 'dodavka', 'osobak', 'traktor', 'osobak', 'osobak'];
     for (let i = 0; i < TRAFFIC_COUNT; i++) {
@@ -414,7 +494,7 @@ export class GameScene extends Phaser.Scene {
       const to = path[idx + 1];
       const v = this.addVehicle(kinds[i], from.x, from.y, Math.atan2(to.y - from.y, to.x - from.x), i % CAR_COLORS.length);
       v.driver = 'npc';
-      this.traffic.set(v, { path, idx: idx + 1, cruise: Math.min(CRUISE, v.spec.params.maxSpeed * 0.85), waited: 0, ignoreUntil: 0, honkedAt: -10, stuck: 0, reverseUntil: 0 });
+      this.traffic.set(v, this.newTraffic(v, path, idx + 1, rollDriver(this.random, false), false));
     }
   }
 
@@ -425,8 +505,146 @@ export class GameScene extends Phaser.Scene {
     const to = path[idx + 1];
     const v = this.addVehicle(kind, from.x, from.y, Math.atan2(to.y - from.y, to.x - from.x), 0);
     v.driver = 'npc';
-    this.traffic.set(v, { path, idx: idx + 1, cruise: Math.min(CRUISE, v.spec.params.maxSpeed * 0.85), waited: 0, ignoreUntil: 0, honkedAt: -10, stuck: 0, reverseUntil: 0, noRespawn });
+    this.traffic.set(v, { ...this.newTraffic(v, path, idx + 1, rollDriver(this.random, false), false), noRespawn, driver: { trait: 'normal', cruise: CRUISE, reaction: 0.15, swerve: 0 } });
     return v;
+  }
+
+  private newTraffic(v: Vehicle, path: Point[], idx: number, driver: Driver, noRespawn: boolean): Traffic {
+    return {
+      path, idx, cruise: Math.min(driver.cruise, v.spec.params.maxSpeed * 0.85), waited: 0, ignoreUntil: 0, honkedAt: -10, stuck: 0, reverseUntil: 0,
+      noRespawn, driver, seenSince: 0, hold: 0, flee: false, prevSpeed: 0, lastBrakeLog: -100, obstacle: null, blocker: null, jam: 0,
+    };
+  }
+
+  // ---------- Události a řetězení příčin ----------
+
+  /** Platná příčina z posledního záznamu entity (auto, postava, hráč). */
+  causeOf(e: { lastEventId: number | null; lastEventAt: number } | null | undefined): number | null {
+    if (!e) return null;
+    return validCause(e.lastEventId, e.lastEventAt, this.time.now / 1000);
+  }
+
+  /**
+   * Zapíše událost do deníku. Příčinou je první platná z `causes`;
+   * entity v `attach` si událost zapamatují jako svou poslední.
+   */
+  logEvent(kind: string, text: string, at: Point, systems: SystemTag[], causes: Array<number | null | undefined> = [], attach: Array<{ lastEventId: number | null; lastEventAt: number }> = []): number {
+    const now = this.time.now / 1000;
+    const cause = causes.find((c): c is number => typeof c === 'number') ?? null;
+    const id = this.eventLog.add({ t: now, kind, text, x: at.x, y: at.y, systems, cause });
+    for (const e of attach) {
+      e.lastEventId = id;
+      e.lastEventAt = now;
+    }
+    return id;
+  }
+
+  /** Jak hráč právě vypadá (pro svědky a policii). */
+  playerAppearance(): Appearance {
+    const v = this.driving;
+    return { vehicle: v ? { kind: v.spec.kind, color: v.paint } : null };
+  }
+
+  isSolidAt(x: number, y: number): boolean {
+    return isSolid(this.tileAt(x, y));
+  }
+
+  // ---------- Provoz: rozhraní pro nehody a policii ----------
+
+  /** Auto v provozu zastaví (hádka, nehoda) na daný počet sekund. */
+  holdTraffic(v: Vehicle, seconds: number): void {
+    const t = this.traffic.get(v);
+    if (t) t.hold = this.elapsed + seconds;
+  }
+
+  /** Auto pokračuje (flee = ujíždí; empty = řidič nevrátil, auto zůstane stát prázdné). */
+  releaseTraffic(v: Vehicle, flee: boolean, empty = false): void {
+    if (empty) {
+      this.removeFromTraffic(v);
+      v.driver = 'none';
+      this.scheduleTow(v, 60);
+      return;
+    }
+    const t = this.traffic.get(v);
+    if (!t) return;
+    t.hold = 0;
+    t.flee = flee;
+    if (flee) t.cruise = Math.min(165, v.spec.params.maxSpeed * 0.9);
+  }
+
+  isFleeing(v: Vehicle): boolean {
+    return !!this.traffic.get(v)?.flee;
+  }
+
+  removeFromTraffic(v: Vehicle): void {
+    this.traffic.delete(v);
+  }
+
+  /** Opilci v provozu, které policie ještě neviděla. */
+  drunkDrivers(): Vehicle[] {
+    return [...this.traffic.entries()].filter(([v, t]) => t.driver.trait === 'drunk' && !t.drunkSeen && !v.wrecked).map(([v]) => v);
+  }
+
+  markDrunkSeen(v: Vehicle): void {
+    const t = this.traffic.get(v);
+    if (t) t.drunkSeen = true;
+  }
+
+  /** Opilý řidič vyrazí (mimo dohled hráče) od začátku některé trasy. */
+  addDrunkDriver(): Vehicle | null {
+    if (this.traffic.size >= TRAFFIC_COUNT + 2) return null;
+    return this.spawnTrafficCar('osobak', 4, drunkDriver(this.random));
+  }
+
+  /** Nové auto v provozu na začátku některé trasy mimo dohled hráče. */
+  private spawnTrafficCar(kind: VehicleKind, variant: number, driver: Driver): Vehicle | null {
+    const free = this.paths.filter((path) => !this.inView(path[0].x, path[0].y) && this.vehicles.every((o) => Phaser.Math.Distance.Between(o.x, o.y, path[0].x, path[0].y) > 40));
+    if (!free.length) return null;
+    const path = free[Math.floor(this.random() * free.length)];
+    const v = this.addVehicle(kind, path[0].x, path[0].y, Math.atan2(path[1].y - path[0].y, path[1].x - path[0].x), variant);
+    v.driver = 'npc';
+    this.traffic.set(v, this.newTraffic(v, path, 1, driver, false));
+    return v;
+  }
+
+  private parkCar(p: ParkedVehicle): Vehicle {
+    const v = this.addVehicle(p.kind, p.x, p.y, p.angle, Math.floor(this.random() * CAR_COLORS.length));
+    v.owner = p.owner;
+    return v;
+  }
+
+  /** Prázdné parkovací místo (auto odtáhli nebo ho někdo ukradl) mimo dohled zase zaplní nové auto. */
+  private refillParking(): void {
+    for (const slot of this.parkedSpots) {
+      const { spot, car } = slot;
+      if (car.active && !car.wrecked && Phaser.Math.Distance.Between(car.x, car.y, spot.x, spot.y) < 40) continue;
+      if (this.inView(spot.x, spot.y) || this.vehicles.some((o) => Phaser.Math.Distance.Between(o.x, o.y, spot.x, spot.y) < 24)) continue;
+      slot.car = this.parkCar(spot);
+      return;
+    }
+  }
+
+  /** Doplnění provozu: auta zadržená policií, ukradená nebo ve vraku nahradí nová. */
+  private refillTraffic(): void {
+    const regular = [...this.traffic.entries()].filter(([, t]) => !t.noRespawn);
+    if (regular.length > TRAFFIC_COUNT) {
+      // Opilci a náhradní auta navíc: jedno klidné mimo dohled zmizí.
+      const spare = regular.find(([v, t]) => !this.inView(v.x, v.y) && !t.flee && this.elapsed > t.hold && !this.incidents.involves(v) && !this.police.isSuspect(v));
+      if (spare) this.removeVehicle(spare[0]);
+      return;
+    }
+    if (regular.length === TRAFFIC_COUNT) return;
+    const kinds: VehicleKind[] = ['osobak', 'osobak', 'osobak', 'dodavka', 'traktor'];
+    const kind = kinds[Math.floor(this.random() * kinds.length)];
+    this.spawnTrafficCar(kind, Math.floor(this.random() * CAR_COLORS.length), rollDriver(this.random, isEvening(this.gangs.minute)));
+  }
+
+  /** Překážka v pruhu před autem (vozidla, chodci, hráč) – pro hlídky na obchůzce. */
+  obstacleAhead(v: Vehicle, range = 34): boolean {
+    for (const o of this.vehicles) if (o !== v && isAhead(v, v.drive.angle, o, range, 9)) return true;
+    if (!this.driving && !this.player.dead && isAhead(v, v.drive.angle, this.player, range, 9)) return true;
+    for (const p of this.combat.peds) if (p.alive && Math.abs(p.x - v.x) < 40 && Math.abs(p.y - v.y) < 40 && isAhead(v, v.drive.angle, p, range, 9)) return true;
+    return false;
   }
 
   /** Dojelo auto zakázky na konec trasy? */
@@ -444,6 +662,13 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, 0.05);
     this.elapsed += dt;
+    this.trafficRefill += dt;
+    if (this.trafficRefill > 6) {
+      this.trafficRefill = 0;
+      this.refillTraffic();
+      this.towVehicles();
+      this.refillParking();
+    }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.enter) && !this.player.dead) {
       if (this.driving) this.exitVehicle();
@@ -460,6 +685,7 @@ export class GameScene extends Phaser.Scene {
       else if (v.driver === 'police') input = this.police.driveInput(v, dt);
       else input = { throttle: 0, steer: 0, handbrake: true };
       v.tick(input, surface, dt);
+      if (v.driver === 'npc') this.detectHardBraking(v, dt);
     }
 
     if (this.driving) {
@@ -495,6 +721,11 @@ export class GameScene extends Phaser.Scene {
     this.economy.update();
     this.progression.update(dt);
     this.tutorial.update(dt);
+    this.witnesses.update();
+    this.incidents.update(dt);
+    this.animals.update(dt);
+    this.announcer.update();
+    this.updateDebugOverlay(dt);
     this.updateNight();
     this.paintSkids();
     // Voda pomalu plyne a třpytí se.
@@ -589,7 +820,7 @@ export class GameScene extends Phaser.Scene {
     const v = this.nearestVehicle();
     if (!v) return;
     if (v.driver === 'npc') this.yankDriver(v);
-    else if (!v.stolen) this.events.emit('crime', { x: v.x, y: v.y, kind: v.isPolice ? 'policeTheft' : 'theft' });
+    else if (!v.stolen) this.events.emit('crime', { x: v.x, y: v.y, kind: v.isPolice ? 'policeTheft' : 'theft', vehicle: v });
     if (v.isPolice && !v.stolen) this.toast(T.stolePolice);
     if (!v.stolen) this.gangs.onSteal(v);
     v.stolen = true;
@@ -650,7 +881,7 @@ export class GameScene extends Phaser.Scene {
   private yankDriver(v: Vehicle): void {
     const lines = T.yanked;
     this.spawnFleeingDriver(v.x, v.y, lines[Math.floor(this.random() * lines.length)]);
-    this.events.emit('crime', { x: v.x, y: v.y, kind: 'assault' });
+    this.events.emit('crime', { x: v.x, y: v.y, kind: 'assault', vehicle: v });
   }
 
   private spawnFleeingDriver(x: number, y: number, line: string): void {
@@ -669,6 +900,8 @@ export class GameScene extends Phaser.Scene {
   private trafficInput(v: Vehicle, dt: number): DriveInput {
     const t = this.traffic.get(v);
     if (!t) return { throttle: 0, steer: 0, handbrake: true };
+    // Stojí kvůli nehodě nebo hádce.
+    if (this.elapsed < t.hold) return { throttle: Math.abs(v.speed) > 5 ? -1 : 0, steer: 0, handbrake: true };
 
     let target = t.path[t.idx];
     if (target && Phaser.Math.Distance.Between(v.x, v.y, target.x, target.y) < 14) {
@@ -680,17 +913,42 @@ export class GameScene extends Phaser.Scene {
         t.arrived = true;
         return { throttle: -1, steer: 0, handbrake: true };
       }
-      // Konec trasy: když to hráč nevidí, auto „odjede“ a objeví se jinde.
+      // Konec trasy: auto „odjede“ z vesnice a objeví se jinde (na očích hráče se rozplyne).
       if (!this.inView(v.x, v.y)) this.respawnTraffic(v, t);
+      else if (!t.leaving) {
+        t.leaving = true;
+        this.tweens.add({ targets: v, alpha: 0, duration: 600, onComplete: () => {
+          if (!v.active || this.traffic.get(v) !== t) return;
+          this.respawnTraffic(v, t);
+          v.setAlpha(1);
+        } });
+      }
       return { throttle: -1, steer: 0, handbrake: false };
     }
 
     let blocked = false;
+    // Kdo ujíždí, brzdí pozdě (ale přece jen brzdí, jinak by ujel jen do prvního auta).
     if (this.elapsed > t.ignoreUntil) {
-      const obstacles: Point[] = this.vehicles.filter((o) => o !== v);
+      // Dívá se tím dál, čím rychleji jede; pozornému řidiči to na zastavení stačí.
+      const look = 34 + Math.max(0, v.speed) * 0.35;
+      const obstacles: Array<Point & { lastEventId: number | null; lastEventAt: number }> = this.vehicles.filter((o) => o !== v);
       if (!this.driving && !this.player.dead) obstacles.push(this.player);
-      for (const p of this.combat.peds) if (p.alive && Math.abs(p.x - v.x) < 40 && Math.abs(p.y - v.y) < 40) obstacles.push(p);
-      blocked = obstacles.some((o) => isAhead(v, v.drive.angle, o, 34, 9));
+      for (const p of this.combat.peds) if (p.alive && Math.abs(p.x - v.x) < look + 6 && Math.abs(p.y - v.y) < look + 6) obstacles.push(p);
+      const ahead = obstacles.find((o) => isAhead(v, v.drive.angle, o, look, 9)) ?? null;
+      // Řidič brzdí až po své reakční době (mobil, opilost → náraz zezadu).
+      const r = reactToObstacle(!!ahead, t.seenSince, this.elapsed, t.flee ? Math.max(0.5, t.driver.reaction) : t.driver.reaction);
+      t.seenSince = r.seenSince;
+      blocked = r.brake;
+      if (ahead) t.obstacle = ahead;
+      t.blocker = blocked && ahead instanceof Vehicle ? ahead : null;
+      // Zácpa do kruhu (křižovatka, kde čeká každý na každého): jede ten s nejvyšším pořadím.
+      if (blocked && t.blocker && this.yieldCycleWinner(v)) {
+        blocked = false;
+        t.blocker = null;
+        t.ignoreUntil = this.elapsed + 0.8;
+      }
+    } else {
+      t.blocker = null;
     }
     if (blocked) {
       t.waited += dt;
@@ -702,8 +960,9 @@ export class GameScene extends Phaser.Scene {
         }
       }
       // Ať se provoz nezasekne navždy: po chvíli to řidič zkusí objet.
+      // Auto stojící u nehody řidič neobjede: čeká a troubí.
       if (t.waited > 4) {
-        t.ignoreUntil = this.elapsed + 1.5;
+        if (!this.isStaticBlocker(t.blocker)) t.ignoreUntil = this.elapsed + 1.5;
         t.waited = 0;
       }
     } else {
@@ -712,16 +971,70 @@ export class GameScene extends Phaser.Scene {
 
     // Zaseklé auto: chvíli couvá s protočeným volantem; mimo dohled se rovnou přesune.
     if (this.elapsed < t.reverseUntil) return { throttle: -1, steer: -0.6, handbrake: false };
+    t.jam = Math.abs(v.speed) < 8 ? t.jam + dt : 0;
+    if (t.jam > 15 && !this.inView(v.x, v.y)) {
+      this.respawnTraffic(v, t);
+      return { throttle: 0, steer: 0, handbrake: true };
+    }
     t.stuck = !blocked && Math.abs(v.speed) < 8 ? t.stuck + dt : 0;
     if (t.stuck > 2.5) {
       t.stuck = 0;
       if (!this.inView(v.x, v.y)) this.respawnTraffic(v, t);
       else t.reverseUntil = this.elapsed + 0.8;
     }
-    return steerToward(v, v.drive.angle, v.speed, target, t.cruise, blocked);
+    // Když se protahuje kolem překážky, jede krokem (ťuknutí není nehoda).
+    const creeping = this.elapsed < t.ignoreUntil && !t.flee;
+    const input = steerToward(v, v.drive.angle, v.speed, target, creeping ? CREEP_SPEED : t.cruise, blocked);
+    // Opilec kličkuje.
+    if (t.driver.swerve > 0) input.steer = Math.max(-1, Math.min(1, input.steer + Math.sin(this.elapsed * 1.4 + v.x * 0.01) * t.driver.swerve));
+    return input;
+  }
+
+  /** Kdo řídí (pro deník událostí): typ řidiče v provozu, policie, hráč. */
+  driverLabel(v: Vehicle): string {
+    return this.traffic.get(v)?.driver.trait ?? (v === this.driving ? 'hráč' : v.driver);
+  }
+
+  /**
+   * Auto zastavené u nehody nebo hádky: kolem něj se nikdo necpe, řidiči čekají a troubí.
+   * (Vrak nebo prázdné auto se krokem odstrčí, to je pod hranicí nárazu.)
+   */
+  private isStaticBlocker(b: Vehicle | null): boolean {
+    if (!b || b.wrecked || b.driver === 'none') return false;
+    const bt = this.traffic.get(b);
+    return !!bt && this.elapsed < bt.hold;
+  }
+
+  /** Stojí auto v kruhu čekajících (A čeká na B, B na A…) a má v něm přednost? */
+  private yieldCycleWinner(v: Vehicle): boolean {
+    const rank = (x: Vehicle) => this.vehicles.indexOf(x);
+    let best = rank(v);
+    let cur = this.traffic.get(v)?.blocker ?? null;
+    for (let i = 0; i < 8 && cur; i++) {
+      if (cur === v) return rank(v) === best;
+      best = Math.max(best, rank(cur));
+      cur = this.traffic.get(cur)?.blocker ?? null;
+    }
+    return false;
+  }
+
+  /** Prudké brzdění v provozu se zapíše jako událost (příčina: co měl řidič před sebou). */
+  private detectHardBraking(v: Vehicle, dt: number): void {
+    const t = this.traffic.get(v);
+    if (!t) return;
+    const speed = Math.abs(v.speed);
+    const decel = (t.prevSpeed - speed) / Math.max(dt, 0.001);
+    if (decel > HARD_BRAKE && t.prevSpeed > 50 && this.elapsed - t.lastBrakeLog > 3) {
+      t.lastBrakeLog = this.elapsed;
+      const playerAhead = (t.obstacle as unknown) === this.player || t.obstacle === this.driving;
+      this.logEvent('brake', `prudké brzdění (${t.driver.trait})`, v, playerAhead ? ['traffic', 'player'] : ['traffic'], [this.causeOf(t.obstacle)], [v]);
+    }
+    t.prevSpeed = speed;
   }
 
   private respawnTraffic(v: Vehicle, t: Traffic): void {
+    // Kdo odjel z vesnice, tomu policie už nestačí.
+    this.police.suspectGone(v);
     const candidates = this.paths.filter((p) => {
       const s = p[0];
       return !this.inView(s.x, s.y) && this.vehicles.every((o) => o === v || Phaser.Math.Distance.Between(o.x, o.y, s.x, s.y) > 40);
@@ -732,7 +1045,9 @@ export class GameScene extends Phaser.Scene {
     (v.body as Phaser.Physics.Arcade.Body).reset(path[0].x, path[0].y);
     v.drive = { angle, vx: 0, vy: 0 };
     v.setRotation(angle);
-    Object.assign(t, { path, idx: 1, waited: 0, ignoreUntil: 0, stuck: 0, reverseUntil: 0 });
+    const driver = rollDriver(this.random, isEvening(this.gangs.minute));
+    Object.assign(t, { path, idx: 1, waited: 0, ignoreUntil: 0, stuck: 0, reverseUntil: 0, driver, cruise: Math.min(driver.cruise, v.spec.params.maxSpeed * 0.85), hold: 0, flee: false, seenSince: 0, drunkSeen: false, obstacle: null, blocker: null, jam: 0, leaving: false });
+    v.lastEventId = null;
   }
 
   inView(x: number, y: number): boolean {
@@ -750,7 +1065,34 @@ export class GameScene extends Phaser.Scene {
       v.driver = 'none';
       this.spawnFleeingDriver(v.x, v.y, T.driverBails);
     }
-    if (to === 'wrecked') this.explode(v);
+    if (to === 'wrecked') {
+      this.scheduleTow(v, WRECK_TOW_AFTER);
+      this.explode(v);
+    }
+  }
+
+  /** Auto odtáhne odtahovka nejdřív za `after` sekund, a jen když se hráč nedívá. */
+  scheduleTow(v: Vehicle, after: number): void {
+    this.towQueue.set(v, this.elapsed + after);
+  }
+
+  /** Vraky, zabavená a opuštěná auta mizí mimo dohled (jinak by z vesnice bylo vrakoviště). */
+  private towVehicles(): void {
+    for (const [v, due] of this.towQueue) {
+      // Kdo si opuštěné auto vzal (hráč, řidič), tomu ho nikdo neodtáhne.
+      if (!v.active || (!v.wrecked && (v.driver !== 'none' || v === this.driving))) this.towQueue.delete(v);
+      else if (this.elapsed >= due && !this.inView(v.x, v.y)) {
+        this.towQueue.delete(v);
+        this.removeVehicle(v);
+      } else if (this.elapsed >= due + 120) {
+        // Hráč se dívá pořád: vrak se po dlouhé době rozplyne (jinak by navždy blokoval silnici).
+        this.towQueue.delete(v);
+        this.tweens.add({ targets: v, alpha: 0, duration: 1200, onComplete: () => {
+          if (v.active && v !== this.driving) this.removeVehicle(v);
+          else v.setAlpha(1);
+        } });
+      }
+    }
   }
 
   private explode(v: Vehicle): void {
@@ -762,12 +1104,16 @@ export class GameScene extends Phaser.Scene {
     if (wasInside) this.exitVehicle();
     v.driver = 'none';
     this.traffic.delete(v);
-    this.explodeAt(x, y, v);
+    this.logEvent('explosion', 'auto vybouchlo', v, byPlayer ? ['traffic', 'player'] : ['traffic'], [this.causeOf(v)]);
+    this.explodeAt(x, y, v, byPlayer);
     if (wasInside && !this.player.dead) this.toast(T.explodedInside);
   }
 
-  /** Výbuch na místě (auto, nálož): efekt, zranění lidí a řetězová reakce aut. */
-  explodeAt(x: number, y: number, source?: Vehicle): void {
+  /**
+   * Výbuch na místě (auto, nálož): efekt, zranění lidí a řetězová reakce aut.
+   * byPlayer: výbuch způsobil hráč (jinak to není jeho zločin, třeba vrak po nehodě v provozu).
+   */
+  explodeAt(x: number, y: number, source?: Vehicle, byPlayer = true): void {
     Sound.explosion(this.audioVol({ x, y }));
     if (!this.anims.exists('boom')) {
       this.anims.create({ key: 'boom', frames: this.anims.generateFrameNumbers('fireball', { start: 0, end: 5 }), frameRate: 14 });
@@ -793,13 +1139,16 @@ export class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     if (Phaser.Math.Distance.Between(cam.midPoint.x, cam.midPoint.y, x, y) < 300) cam.shake(250, 0.006);
 
-    this.combat.explosionAt(x, y);
+    this.combat.explosionAt(x, y, byPlayer);
 
     // Řetězová reakce: výbuch poškodí auta okolo (zpožděně, ať to bouchá postupně).
     this.time.delayedCall(120, () => {
       for (const o of this.vehicles) {
         if (o === source || o.wrecked) continue;
-        o.damage(explosionDamageAt(Phaser.Math.Distance.Between(x, y, o.x, o.y)));
+        const dmg = explosionDamageAt(Phaser.Math.Distance.Between(x, y, o.x, o.y));
+        // Kdo odpálil první auto, ten má na svědomí i další v řadě.
+        if (byPlayer && dmg > 0) o.playerHitAt = this.time.now / 1000;
+        o.damage(dmg);
       }
     });
   }

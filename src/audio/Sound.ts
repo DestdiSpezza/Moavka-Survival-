@@ -137,6 +137,11 @@ class SoundEngine {
     notes.forEach((s, i) => this.tone(noteFreq(s), 0.18, 0.3, success ? 'square' : 'sawtooth', i * 0.13));
   }
 
+  /** Gong obecního rozhlasu (tři tóny dolů). */
+  gong(): void {
+    [7, 4, 0].forEach((s, i) => this.tone(noteFreq(s - 5), 0.5, 0.18, 'triangle', i * 0.32));
+  }
+
   blip(): void {
     this.tone(880, 0.06, 0.25, 'square');
   }

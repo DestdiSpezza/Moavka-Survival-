@@ -6,6 +6,7 @@ import {
   canAfford, HIDEOUT_PRICE, repairCost, RESPRAY_MAX_LEVEL, resprayCost, sellPrice, SHOP,
 } from '../systems/economy';
 import { newWanted } from '../systems/wanted';
+import { PAINT_COLORS } from '../systems/witness';
 import { findFreeTile } from '../world/pickups';
 import { pixelFont } from './BootScene';
 import type { GameScene } from './GameScene';
@@ -156,7 +157,9 @@ export class Economy {
   private respray(cost: number): void {
     const g = this.game;
     g.player.money -= cost;
-    g.driving!.setTint(Phaser.Display.Color.RandomRGB(80, 230).color);
+    const v = g.driving!;
+    const others = PAINT_COLORS.filter((c) => c !== v.paint);
+    v.repaint(others[Math.floor(Math.random() * others.length)]);
     g.police.clear();
     g.police.wanted = newWanted();
     g.toast('Přelakováno. Fízlové hledají úplně jiné auto.');
