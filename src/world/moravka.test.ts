@@ -48,11 +48,18 @@ describe('mapa Morávky', () => {
       }
       return false;
     };
-    for (const name of ['Hospoda', 'Pila', 'Škola', 'Obchod', 'Kostel', 'Obecní úřad']) {
+    for (const name of ['Hospoda', 'Pila', 'Škola', 'Obchod', 'Kostel', 'Obecní úřad', 'Zdravotní středisko']) {
       expect(nextTo(name), name).toBe(true);
     }
     expect(r[DAM_Y].some(Boolean), 'hráz').toBe(true);
     expect(r[0].some(Boolean), 'sever').toBe(true);
+  });
+
+  it('místo probuzení před zdravotním střediskem je průchozí a dosažitelné', () => {
+    const r = reachable(map, map.spawn.x, map.spawn.y);
+    expect(isSolid(map.tiles[map.hospital.y][map.hospital.x])).toBe(false);
+    expect(r[map.hospital.y][map.hospital.x]).toBe(true);
+    expect(zoneAt(map, map.hospital.x, map.hospital.y)).toBe('Zdravotní středisko');
   });
 
   it('řeka je souvislá: přejít jde jen po mostě nebo po hrázi', () => {

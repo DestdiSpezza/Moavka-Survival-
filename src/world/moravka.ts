@@ -33,6 +33,8 @@ export interface WorldMap {
   buildings: Building[];
   zones: Zone[];
   spawn: { x: number; y: number };
+  /** Kde se hráč probudí po smrti (před zdravotním střediskem). */
+  hospital: { x: number; y: number };
 }
 
 /** Osa řeky: x souřadnice středu koryta v daném řádku. */
@@ -121,6 +123,7 @@ export function buildMoravka(seed = 1234): WorldMap {
   building('Obchod', roadE + 10, CROSS_ROAD_Y - 6, 6, 4, Tile.RoofRed);
   building('Obecní úřad', roadE, CROSS_ROAD_Y + 4, 7, 5, Tile.RoofGray);
   building('Kostel', roadE + 10, CROSS_ROAD_Y + 4, 5, 9, Tile.RoofGray);
+  building('Zdravotní středisko', roadE + 18, CROSS_ROAD_Y + 4, 8, 5, Tile.RoofRed);
   // Škola s hřištěm.
   building('Škola', roadE + 22, CROSS_ROAD_Y - 10, 10, 7, Tile.RoofRed);
   fill(roadE + 22, CROSS_ROAD_Y - 3, 10, 2, Tile.Dirt);
@@ -153,6 +156,7 @@ export function buildMoravka(seed = 1234): WorldMap {
   const zones: Zone[] = [
     { name: 'Hospoda', x: roadE - 2, y: CROSS_ROAD_Y - 10, w: 12, h: 10 },
     { name: 'Škola', x: roadE + 20, y: CROSS_ROAD_Y - 12, w: 14, h: 12 },
+    { name: 'Zdravotní středisko', x: roadE + 16, y: CROSS_ROAD_Y + 2, w: 12, h: 9 },
     { name: 'Náves', x: roadE - 6, y: CROSS_ROAD_Y - 10, w: 28, h: 24 },
     { name: 'Pila', x: 16, y: CROSS_ROAD_Y + 2, w: 18, h: 14 },
     { name: 'Přehrada Morávka', x: 0, y: DAM_Y - 2, w: MAP_W, h: MAP_H - DAM_Y + 2 },
@@ -168,6 +172,7 @@ export function buildMoravka(seed = 1234): WorldMap {
     buildings,
     zones,
     spawn: { x: mainRoadX(CROSS_ROAD_Y), y: CROSS_ROAD_Y },
+    hospital: { x: roadE + 22, y: CROSS_ROAD_Y + 3 },
   };
 }
 

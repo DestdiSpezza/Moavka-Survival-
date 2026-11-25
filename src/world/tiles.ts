@@ -25,6 +25,11 @@ export function isSolid(tile: number): boolean {
   return SOLID.has(tile);
 }
 
+/** Zastaví kulku? Přes vodu se střílí, přes stromy, skály a domy ne. */
+export function blocksBullets(tile: number): boolean {
+  return isSolid(tile) && tile !== Tile.Water;
+}
+
 /** Násobitel rychlosti chůze na dané dlaždici (les a hlína zpomalují). */
 export function speedFactor(tile: number): number {
   switch (tile) {

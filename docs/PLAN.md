@@ -51,12 +51,14 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** hráč ukradne auto, projede vesnici, nabourá a auto se dá zničit.
 
-## Fáze 3: Boj a zdraví
+## Fáze 3: Boj a zdraví ✅
 
 - Zbraně: pěsti, pálka, pistole, brokovnice, samopal; střelba ve směru myši, munice.
 - Zdraví a vesta hráče, zdraví NPC.
 - Chodci reagují: utíkají, volají policii.
-- Smrt hráče: probuzení u nemocnice, ztráta části peněz a zbraní.
+- Smrt hráče: probuzení u zdravotního střediska, doktor si vezme 30 % peněz, zbraně propadnou.
+- Zbraně, vesta a lékárničky leží na mapě a po minutě se obnoví; mrtví chodci občas upustí peníze.
+- Drsní chodci se brání pěstmi; panikařící chodci volají policii (událost `crime`, kterou ve fázi 4 převezme policie).
 
 **Hotovo, když:** jde bojovat pěšky i z auta a smrt má jasný a férový následek.
 

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { type Arsenal, newArsenal, WEAPONS } from '../systems/combat';
 import { computeMove, type MoveState, STAMINA_MAX } from '../systems/movement';
 
 type Keys = Record<'up' | 'down' | 'left' | 'right' | 'sprint', Phaser.Input.Keyboard.Key>;
@@ -7,6 +8,11 @@ type Keys = Record<'up' | 'down' | 'left' | 'right' | 'sprint', Phaser.Input.Key
 export class Player extends Phaser.Physics.Arcade.Sprite {
   move: MoveState = { stamina: STAMINA_MAX, exhausted: false };
   sprinting = false;
+  health = 100;
+  armor = 0;
+  money = 500;
+  arsenal: Arsenal = newArsenal();
+  dead = false;
   private keys: Keys;
   private arrows: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -22,6 +28,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const kb = scene.input.keyboard!;
     this.keys = kb.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D', sprint: 'SHIFT' }) as Keys;
     this.arrows = kb.createCursorKeys(); // šipky jako alternativa k WASD
+  }
+
+  /** Textura podle zbraně v ruce. Střed rotace zůstává na ramenou (8 px zleva). */
+  updateLook(): void {
+    const w = WEAPONS[this.arsenal.current];
+    const key = w.id === 'fists' ? 'player' : w.id === 'bat' ? 'player-bat' : w.id === 'pistol' ? 'player-pistol' : 'player-long';
+    if (this.texture.key !== key) {
+      this.setTexture(key);
+      this.setOrigin(8 / this.width, 0.5);
+    }
   }
 
   /** dt v sekundách, terrainFactor podle dlaždice pod hráčem. */

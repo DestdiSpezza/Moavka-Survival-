@@ -3,7 +3,7 @@ import { STAMINA_MAX } from '../systems/movement';
 import { T } from '../texts/cs';
 import { Tile } from '../world/tiles';
 import { pixelFont } from './BootScene';
-import { type GameScene, MINIMAP, type VehicleHud } from './GameScene';
+import { type GameScene, MINIMAP, type PlayerHud, type VehicleHud } from './GameScene';
 
 const HP_COLORS: Record<string, number> = { ok: 0x6fd16a, smoke: 0xe0b23a, fire: 0xe0442a };
 
@@ -18,6 +18,13 @@ export class UIScene extends Phaser.Scene {
   private carName!: Phaser.GameObjects.Text;
   private carSpeed!: Phaser.GameObjects.Text;
   private carHp!: Phaser.GameObjects.Rectangle;
+  private healthBar!: Phaser.GameObjects.Rectangle;
+  private armorBar!: Phaser.GameObjects.Rectangle;
+  private moneyText!: Phaser.GameObjects.Text;
+  private weaponText!: Phaser.GameObjects.Text;
+  private ammoText!: Phaser.GameObjects.Text;
+  private crosshair!: Phaser.GameObjects.Graphics;
+  private deathText!: Phaser.GameObjects.Text;
   private lastZone = '';
   private wasExhausted = false;
   private wasInForest = false;
@@ -33,8 +40,25 @@ export class UIScene extends Phaser.Scene {
     this.zoneText = this.add.text(x, y + h + 10, '', pixelFont(18, '#ffd23f')).setStroke('#000', 4);
 
     this.add.text(x, y + h + 38, T.stamina, pixelFont(14)).setStroke('#000', 4);
-    this.add.rectangle(x + 52, y + h + 41, 124, 12, 0x000000, 0.6).setOrigin(0);
-    this.staminaBar = this.add.rectangle(x + 54, y + h + 43, 120, 8, 0x6fd16a).setOrigin(0);
+    this.add.rectangle(x + 70, y + h + 41, 124, 12, 0x000000, 0.6).setOrigin(0);
+    this.staminaBar = this.add.rectangle(x + 72, y + h + 43, 120, 8, 0x6fd16a).setOrigin(0);
+
+    // Zdraví a vesta pod dechem.
+    const bar = (label: string, row: number, color: number) => {
+      this.add.text(x, y + h + 38 + row * 20, label, pixelFont(14)).setStroke('#000', 4);
+      this.add.rectangle(x + 70, y + h + 41 + row * 20, 124, 12, 0x000000, 0.6).setOrigin(0);
+      return this.add.rectangle(x + 72, y + h + 43 + row * 20, 120, 8, color).setOrigin(0);
+    };
+    this.healthBar = bar(T.health, 1, 0xd94040);
+    this.armorBar = bar(T.armor, 2, 0x4a7ad9);
+
+    // Peníze a zbraň vpravo nahoře.
+    this.moneyText = this.add.text(width - 16, 16, '', pixelFont(24, '#6fd16a')).setOrigin(1, 0).setStroke('#000', 5);
+    this.weaponText = this.add.text(width - 16, 50, '', pixelFont(18, '#f2e9d0')).setOrigin(1, 0).setStroke('#000', 4);
+    this.ammoText = this.add.text(width - 16, 74, '', pixelFont(16, '#ffd23f')).setOrigin(1, 0).setStroke('#000', 4);
+
+    this.crosshair = this.add.graphics().setDepth(100);
+    this.deathText = this.add.text(width / 2, height / 2 - 40, T.died, pixelFont(64, '#d94040')).setOrigin(0.5).setStroke('#000', 8).setVisible(false);
 
     // Panel vozidla vpravo dole.
     const px = width - 220;
@@ -51,7 +75,14 @@ export class UIScene extends Phaser.Scene {
 
     const game = this.scene.get('Game');
     game.events.on('toast', (text: string) => this.say(text));
-    this.events.once('shutdown', () => game.events.off('toast'));
+    game.events.on('died', () => {
+      this.deathText.setVisible(true).setAlpha(0);
+      this.tweens.add({ targets: this.deathText, alpha: 1, duration: 500, hold: 900, yoyo: true, onComplete: () => this.deathText.setVisible(false) });
+    });
+    this.events.once('shutdown', () => {
+      game.events.off('toast');
+      game.events.off('died');
+    });
   }
 
   update(): void {
@@ -84,6 +115,22 @@ export class UIScene extends Phaser.Scene {
       this.carHp.fillColor = HP_COLORS[car.state] ?? 0x6fd16a;
     }
     this.promptText.setText((this.registry.get('prompt') as string) ?? '');
+
+    const me = this.registry.get('player') as PlayerHud | undefined;
+    if (me) {
+      this.healthBar.width = 120 * (me.health / 100);
+      this.armorBar.width = 120 * (me.armor / 100);
+      this.moneyText.setText(`${me.money.toLocaleString('cs-CZ')} ${T.currency}`);
+      this.weaponText.setText(me.weapon);
+      this.ammoText.setText(me.ammo === null ? '' : String(me.ammo));
+    }
+
+    // Zaměřovač místo kurzoru.
+    const ptr = this.input.activePointer;
+    this.crosshair.clear().lineStyle(2, 0x000000, 0.8);
+    this.crosshair.strokeCircle(ptr.x, ptr.y, 7);
+    this.crosshair.lineStyle(1, 0xffffff, 1).strokeCircle(ptr.x, ptr.y, 7);
+    this.crosshair.fillStyle(0xffffff).fillRect(ptr.x - 1, ptr.y - 1, 2, 2);
   }
 
   private say(text: string): void {

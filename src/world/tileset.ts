@@ -211,3 +211,73 @@ function shade(color: number, f: number): number {
   const b = Math.round((color & 0xff) * f);
   return (r << 16) | (gg << 8) | b;
 }
+
+/** Barvy bund a vlasů chodců. Poslední dva jsou „drsoni“, kteří se brání. */
+export const PED_LOOKS: Array<[number, number]> = [
+  [0x4a6a8a, 0x5a3a22],
+  [0x8a4a6a, 0x2a1a10],
+  [0xc8a040, 0x9a9a9a],
+  [0x5a7a3a, 0xd8c070],
+  [0x6a3a2a, 0x1a1a1a],
+  [0x2a2a2a, 0x3a2a1a],
+];
+export const TOUGH_LOOKS = new Set([4, 5]);
+
+/** Hráč s různými zbraněmi v ruce, chodci, mrtvola a ikony věcí k sebrání. */
+export function generateCombat(scene: Phaser.Scene): void {
+  PED_LOOKS.forEach(([jacket, hair], i) => generatePedestrian(scene, `ped-${i}`, jacket, hair));
+
+  const make = (key: string, w: number, h: number, draw: (g: G) => void) => {
+    const g = scene.make.graphics({ x: 0, y: 0 }, false);
+    draw(g);
+    g.generateTexture(key, w, h);
+    g.destroy();
+  };
+  const playerBase = (g: G) => {
+    g.fillStyle(0x000000, 0.35).fillEllipse(8, 9, 12, 11);
+    g.fillStyle(0x1c1c1f).fillEllipse(7, 8, 9, 12);
+    g.fillStyle(0xd93f6a).fillRect(4, 3, 2, 2).fillRect(4, 11, 2, 2);
+  };
+  const head = (g: G) => {
+    g.fillStyle(0xe8c39a).fillCircle(8, 8, 3);
+    g.fillStyle(0x3fbf4a).fillRect(6, 7, 4, 2);
+  };
+  make('player-bat', 22, 16, (g) => {
+    playerBase(g);
+    g.fillStyle(0xe0b48a).fillRect(10, 6, 3, 2);
+    g.fillStyle(0xb88a4a).fillRect(12, 6, 9, 2);
+    head(g);
+  });
+  make('player-pistol', 22, 16, (g) => {
+    playerBase(g);
+    g.fillStyle(0xe0b48a).fillRect(10, 7, 5, 2);
+    g.fillStyle(0x222222).fillRect(14, 7, 4, 2);
+    head(g);
+  });
+  make('player-long', 22, 16, (g) => {
+    playerBase(g);
+    g.fillStyle(0xe0b48a).fillRect(10, 6, 4, 3);
+    g.fillStyle(0x2a2a2a).fillRect(12, 7, 9, 2);
+    g.fillStyle(0x6a4a2a).fillRect(10, 7, 3, 2);
+    head(g);
+  });
+
+  make('corpse', 16, 16, (g) => {
+    g.fillStyle(0x7a1010, 0.8).fillEllipse(9, 9, 14, 10);
+    g.fillStyle(0x3a3a3a).fillEllipse(7, 8, 11, 6);
+    g.fillStyle(0xe8c39a).fillCircle(12, 8, 2);
+  });
+
+  const icon = (key: string, draw: (g: G) => void) =>
+    make(key, 12, 12, (g) => {
+      g.fillStyle(0x000000, 0.45).fillCircle(6, 6, 6);
+      draw(g);
+    });
+  icon('pickup-bat', (g) => g.fillStyle(0xc89a5a).fillRect(2, 5, 8, 2).fillRect(8, 4, 3, 4));
+  icon('pickup-pistol', (g) => g.fillStyle(0xdddddd).fillRect(3, 4, 7, 2).fillRect(3, 6, 2, 3));
+  icon('pickup-shotgun', (g) => g.fillStyle(0xdddddd).fillRect(1, 5, 10, 2).fillStyle(0x9a6a3a).fillRect(1, 5, 3, 3));
+  icon('pickup-smg', (g) => g.fillStyle(0xdddddd).fillRect(2, 4, 8, 2).fillRect(5, 6, 2, 3).fillRect(2, 6, 2, 2));
+  icon('pickup-vest', (g) => g.fillStyle(0x3a5aa0).fillRect(3, 2, 6, 8).fillStyle(0x6a8ad0).fillRect(5, 3, 2, 6));
+  icon('pickup-medkit', (g) => g.fillStyle(0xf2f2f2).fillRect(2, 3, 8, 6).fillStyle(0xd02020).fillRect(5, 4, 2, 4).fillRect(4, 5, 4, 2));
+  icon('pickup-money', (g) => g.fillStyle(0x6fd16a).fillRect(2, 4, 8, 4).fillStyle(0x3a8a3a).fillCircle(6, 6, 1));
+}

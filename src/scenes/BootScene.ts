@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import { T } from '../texts/cs';
-import { generatePedestrian, generatePlayer, generateTileset, generateVehicles } from '../world/tileset';
+import { generateCombat, generatePedestrian, generatePlayer, generateTileset, generateVehicles } from '../world/tileset';
 
 /**
  * Načítání assetů. Zatím žádné obrázky nemáme, takže dočasnou pixelovou
@@ -25,6 +25,7 @@ export class BootScene extends Phaser.Scene {
     generatePlayer(this, 'player');
     generateVehicles(this);
     generatePedestrian(this, 'driver', 0x4a6a8a, 0x5a3a22);
+    generateCombat(this);
     this.scene.start('Title');
   }
 }

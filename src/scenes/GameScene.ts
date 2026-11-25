@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { TILE, WORLD_ZOOM } from '../config';
 import { Player } from '../entities/Player';
 import { Vehicle } from '../entities/Vehicle';
+import { WEAPONS } from '../systems/combat';
 import { explosionDamageAt, EXPLOSION_RADIUS } from '../systems/damage';
 import { createRng } from '../systems/rng';
 import { isAhead, type Point, steerToward } from '../systems/trafficAi';
@@ -12,6 +13,7 @@ import { isSolid, speedFactor, TILE_COUNT } from '../world/tiles';
 import { CAR_COLORS } from '../world/tileset';
 import { parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicles';
 import { pixelFont } from './BootScene';
+import { Combat } from './Combat';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
 const ENTER_RANGE = 26;
@@ -30,6 +32,15 @@ interface Traffic {
   reverseUntil: number;
 }
 
+export interface PlayerHud {
+  health: number;
+  armor: number;
+  money: number;
+  weapon: string;
+  /** null = zbraň bez munice (pěsti, pálka). */
+  ammo: number | null;
+}
+
 export interface VehicleHud {
   name: string;
   kmh: number;
@@ -46,13 +57,15 @@ export class GameScene extends Phaser.Scene {
   vehicles: Vehicle[] = [];
   /** Auto, které hráč právě řídí. */
   driving: Vehicle | null = null;
+  combat!: Combat;
+  layer!: Phaser.Tilemaps.TilemapLayer;
+  /** Deterministická náhoda pro celou scénu. */
+  readonly random = createRng(99);
 
-  private layer!: Phaser.Tilemaps.TilemapLayer;
   private traffic = new Map<Vehicle, Traffic>();
   private paths: Point[][] = [];
   private keys!: DriveKeys;
   private arrows!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private rnd = createRng(99);
   private elapsed = 0;
 
   constructor() {
@@ -118,12 +131,14 @@ export class GameScene extends Phaser.Scene {
       dot.setPosition(target.x, target.y);
     });
 
+    this.combat = new Combat(this);
+    this.input.setDefaultCursor('none');
     this.scene.launch('UI');
   }
 
   private spawnVehicles(): void {
     for (const p of parkedVehicles(this.world)) {
-      this.addVehicle(p.kind, p.x, p.y, p.angle, Math.floor(this.rnd() * CAR_COLORS.length));
+      this.addVehicle(p.kind, p.x, p.y, p.angle, Math.floor(this.random() * CAR_COLORS.length));
     }
     this.paths = trafficPaths();
     const kinds: VehicleKind[] = ['osobak', 'osobak', 'dodavka', 'osobak', 'traktor', 'osobak', 'osobak'];
@@ -149,7 +164,7 @@ export class GameScene extends Phaser.Scene {
     const dt = Math.min(deltaMs / 1000, 0.05);
     this.elapsed += dt;
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.enter) && !this.player.dead) {
       if (this.driving) this.exitVehicle();
       else this.tryEnterVehicle();
     }
@@ -167,6 +182,10 @@ export class GameScene extends Phaser.Scene {
 
     if (this.driving) {
       this.player.setPosition(this.driving.x, this.driving.y);
+      // V hořícím autě se peče i řidič.
+      if (this.driving.state === 'fire') this.combat.damagePlayer(10 * dt);
+    } else if (this.player.dead) {
+      (this.player.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     } else {
       const tile = this.tileAt(this.player.x, this.player.y);
       this.player.tick(dt, speedFactor(tile), this.input.activePointer);
@@ -184,10 +203,20 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('zone', zoneAt(this.world, tx, ty));
     this.registry.set('tile', this.driving ? -1 : this.world.tiles[ty]?.[tx]);
     this.registry.set('vehicle', this.driving ? this.vehicleHud(this.driving) : null);
-    this.registry.set('prompt', this.driving ? '' : this.enterPrompt());
+    this.registry.set('prompt', this.driving || this.player.dead ? '' : this.enterPrompt());
+    this.combat.update(dt);
+    const a = this.player.arsenal;
+    const def = WEAPONS[a.current];
+    this.registry.set('player', {
+      health: this.player.health,
+      armor: this.player.armor,
+      money: this.player.money,
+      weapon: def.name,
+      ammo: def.melee ? null : a.ammo[a.current],
+    } satisfies PlayerHud);
   }
 
-  private tileAt(x: number, y: number): number {
+  tileAt(x: number, y: number): number {
     return this.world.tiles[Math.floor(y / TILE)]?.[Math.floor(x / TILE)] ?? 0;
   }
 
@@ -238,7 +267,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.getCamera('minimap')?.startFollow(v);
   }
 
-  private exitVehicle(): void {
+  exitVehicle(): void {
     const v = this.driving;
     if (!v) return;
     this.placePlayerBeside(v);
@@ -275,14 +304,15 @@ export class GameScene extends Phaser.Scene {
 
   private yankDriver(v: Vehicle): void {
     const lines = T.yanked;
-    this.spawnFleeingDriver(v.x, v.y, lines[Math.floor(this.rnd() * lines.length)]);
+    this.spawnFleeingDriver(v.x, v.y, lines[Math.floor(this.random() * lines.length)]);
+    this.events.emit('crime', { x: v.x, y: v.y, kind: 'assault' });
   }
 
   private spawnFleeingDriver(x: number, y: number, line: string): void {
     const d = this.physics.add.sprite(x, y, 'driver').setDepth(10);
     (d.body as Phaser.Physics.Arcade.Body).setCircle(5, 3, 3);
     this.physics.add.collider(d, this.layer);
-    const away = Phaser.Math.Angle.Between(this.player.x, this.player.y, x, y) + (this.rnd() - 0.5) * 0.8;
+    const away = Phaser.Math.Angle.Between(this.player.x, this.player.y, x, y) + (this.random() - 0.5) * 0.8;
     d.setRotation(away);
     this.physics.velocityFromRotation(away, 85, (d.body as Phaser.Physics.Arcade.Body).velocity);
     this.floatText(x, y - 10, line, '#ffffff', 2600);
@@ -309,7 +339,8 @@ export class GameScene extends Phaser.Scene {
     let blocked = false;
     if (this.elapsed > t.ignoreUntil) {
       const obstacles: Point[] = this.vehicles.filter((o) => o !== v);
-      if (!this.driving) obstacles.push(this.player);
+      if (!this.driving && !this.player.dead) obstacles.push(this.player);
+      for (const p of this.combat.peds) if (p.alive && Math.abs(p.x - v.x) < 40 && Math.abs(p.y - v.y) < 40) obstacles.push(p);
       blocked = obstacles.some((o) => isAhead(v, v.drive.angle, o, 34, 9));
     }
     if (blocked) {
@@ -344,7 +375,7 @@ export class GameScene extends Phaser.Scene {
       return !this.inView(s.x, s.y) && this.vehicles.every((o) => o === v || Phaser.Math.Distance.Between(o.x, o.y, s.x, s.y) > 40);
     });
     if (!candidates.length) return;
-    const path = candidates[Math.floor(this.rnd() * candidates.length)];
+    const path = candidates[Math.floor(this.random() * candidates.length)];
     const angle = Math.atan2(path[1].y - path[0].y, path[1].x - path[0].x);
     (v.body as Phaser.Physics.Arcade.Body).reset(path[0].x, path[0].y);
     v.drive = { angle, vx: 0, vy: 0 };
@@ -352,7 +383,7 @@ export class GameScene extends Phaser.Scene {
     Object.assign(t, { path, idx: 1, waited: 0, ignoreUntil: 0, stuck: 0, reverseUntil: 0 });
   }
 
-  private inView(x: number, y: number): boolean {
+  inView(x: number, y: number): boolean {
     return Phaser.Geom.Rectangle.Contains(Phaser.Geom.Rectangle.Inflate(Phaser.Geom.Rectangle.Clone(this.cameras.main.worldView), 40, 40), x, y);
   }
 
@@ -372,10 +403,8 @@ export class GameScene extends Phaser.Scene {
 
   private explode(v: Vehicle): void {
     const { x, y } = v;
-    if (v === this.driving) {
-      this.exitVehicle();
-      this.toast(T.explodedInside);
-    }
+    const wasInside = v === this.driving;
+    if (wasInside) this.exitVehicle();
     v.driver = 'none';
     this.traffic.delete(v);
 
@@ -394,6 +423,9 @@ export class GameScene extends Phaser.Scene {
 
     const cam = this.cameras.main;
     if (Phaser.Math.Distance.Between(cam.midPoint.x, cam.midPoint.y, x, y) < 300) cam.shake(250, 0.006);
+
+    this.combat.explosionAt(x, y);
+    if (wasInside && !this.player.dead) this.toast(T.explodedInside);
 
     // Řetězová reakce: výbuch poškodí auta okolo (zpožděně, ať to bouchá postupně).
     this.time.delayedCall(120, () => {
@@ -414,7 +446,7 @@ export class GameScene extends Phaser.Scene {
     this.events.emit('toast', text);
   }
 
-  private floatText(x: number, y: number, text: string, color: string, ms: number): void {
+  floatText(x: number, y: number, text: string, color: string, ms: number): void {
     const t = this.add
       .text(x, y, text, pixelFont(14, color))
       .setOrigin(0.5, 1)
