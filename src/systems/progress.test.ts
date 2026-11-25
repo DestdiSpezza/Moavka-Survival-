@@ -47,11 +47,23 @@ describe('ukládání', () => {
   it('poškozená data nevadí', () => {
     expect(deserialize('{nesmysl')).toBeNull();
     expect(deserialize('{"version":2}')).toBeNull();
+    expect(deserialize('{"version":3,"money":1,"area":"moravka","arsenal":{}}')).toBeNull();
     expect(deserialize(null)).toBeNull();
   });
-  it('starší uložení bez nových polí dostane výchozí hodnoty', () => {
-    const p = deserialize(JSON.stringify({ version: 1, area: 'moravka', money: 10, arsenal: newProgress().arsenal }));
+  it('uložení z doby zakázek (verze 1) se převede na příběh: Akt 1 bez úvodní scény, peníze zůstanou', () => {
+    const p = deserialize(JSON.stringify({ version: 1, area: 'moravka', money: 10, arsenal: newProgress().arsenal, missionsDone: { moravka: ['drevari-pila'] } }));
+    expect(p?.version).toBe(2);
     expect(p?.hideouts).toEqual([]);
     expect(p?.score).toBe(0);
+    expect(p?.money).toBe(10);
+    expect(p?.story).toMatchObject({ act: 1, mission: 'a1-hospoda', introDone: true });
+    expect(p?.hero.gender).toBe('m');
+    expect('missionsDone' in (p ?? {})).toBe(false);
+  });
+
+  it('nová hra si pamatuje hrdinku a jméno a začne úvodní scénou', () => {
+    const p = newProgress({ gender: 'f', name: 'Jarmila' });
+    expect(deserialize(serialize(p))?.hero).toEqual({ gender: 'f', name: 'Jarmila' });
+    expect(p.story).toMatchObject({ act: 1, mission: 'a1-prijezd', introDone: false });
   });
 });

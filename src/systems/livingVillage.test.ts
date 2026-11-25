@@ -5,6 +5,7 @@ import { EventLog, validCause } from './eventLog';
 import { createRng } from './rng';
 import { newRoster, REGEN_SECONDS, returnOfficers, takeOfficers, tickRoster } from './roster';
 import { T } from '../texts/cs';
+import { fillText } from '../texts/gender';
 import { callChance, describe as describeOf, describeText, mistaken, recognizes, vehicleText, vehicleGenitive } from './witness';
 
 describe('deník událostí', () => {
@@ -146,8 +147,11 @@ describe('hlášky policie', () => {
 
   it('vysílačka se po dosazení oblasti obejde bez zástupných znaků a sedí i na Raškovice', () => {
     for (const area of ['Morávky', 'Raškovic']) {
-      for (const line of T.radio) expect(line.replace('{oblast}', area)).not.toMatch(/[{}]/);
+      for (const gender of ['m', 'f'] as const) {
+        for (const line of T.radio) expect(fillText(line.replace('{oblast}', area), { gender, name: 'X' })).not.toMatch(/[{}]/);
+      }
     }
+    expect(fillText(T.radio[1], { gender: 'f', name: 'X' })).toContain('nějaká punkačka');
     expect(T.radio[1].replace('{oblast}', 'Raškovic')).toContain('do Raškovic');
   });
 

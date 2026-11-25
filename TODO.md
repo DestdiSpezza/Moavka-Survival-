@@ -5,13 +5,16 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 
 ## Příběh (plán v docs/PRIBEH.md, rozhodnutí v ADR.md, postavy v NPC.md)
 
-- [ ] **Fáze P1: Akt 1 – Příjezd** (zrušení zakázek, autobus a úvodní scéna, NPC na zastávce, mise do hospody, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti).
+- [x] **Fáze P1: Akt 1 – Příjezd** (zrušení zakázek, autobus a úvodní scéna, NPC na zastávce, mise do hospody, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti).
 - [ ] Fáze P2: výhody a nevýhody Štamgastů jako mechaniky (Metějka odpuzuje policii, Vysoký Denny opravuje a přelakuje, Omyx a touha hulit, Zjebal řídí náklaďák a musí domů, Denny sochař si půjčuje, Prchard určuje cenu piva, Kibi a ženy, Vesta pomáhá s kecama, Plotková naviguje a chce panáky).
 - [ ] Fáze P2: následky volby „s nikým se bavit nechci“ (těžší start, ADR-006).
+- [ ] Fáze P2: Denny sochař musí dostat pár ran pěstí, než odejde (ADR-015); v eRku se zatím nebojuje.
+- [ ] Skloňování jména hrdiny v oslovení (5. pád). Teď se jméno v dialozích píše tak, jak ho hráč zadal (např. „Co to bude, Jarmila?“).
+- [ ] Rozhovor s Kobylou a Dennym venku má zatím jen pár vět; rozšířit, až bude jasné, co po hráči chtějí.
 - [ ] Nové vozidlo náklaďák (pro Zjebala) a autobus jako běžné vozidlo s jízdním řádem.
 - [ ] Kulečník a šipky v eRku jako minihry (Metějka neumí kulečník).
 - [ ] Rvačky v hospodě (zatím se uvnitř nebojuje, ADR-004).
-- [ ] Interiéry dalších budov (Veseta, obecní úřad, Autoúpravy Dan).
+- [ ] Interiéry dalších budov (Vesta, obecní úřad, Autoúpravy Dan).
 - [ ] Další akty: obsah dodá zadání (fáze P3 a dál).
 
 ## Mapa (podmínka pro velkou část zbytku)

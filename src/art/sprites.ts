@@ -204,6 +204,45 @@ function bicycle(look: CarLook): Painter {
 }
 
 /** Stín vozidla (podle obrysu, poloprůhledný). */
+/**
+ * Autobus shora (čelem doprava): bílá karoserie s modrým pruhem, okna po stranách,
+ * klimatizace a poklopy na střeše; dveře vpravo (dole ve sprite), otevřené svítí.
+ */
+function bus(open: boolean): Painter {
+  const L = 46;
+  const W = 16;
+  const p = new Painter(L, W, createRng(5));
+  wheels(p, [6, 34], W, 5);
+  body(p, 1, 1, L - 2, W - 2, 0xe8e6dc, false);
+  // Okna po obou stranách (pruh těsně u okraje střechy).
+  for (let x = 4; x < L - 7; x += 5) {
+    p.rect(x, 2, 4, 1, 0x3a5a7a);
+    p.rect(x, W - 3, 4, 1, 0x3a5a7a);
+  }
+  // Modrý pruh přes střechu a čelní sklo.
+  p.rect(3, 6, L - 10, 1, 0x2f5fa8);
+  p.rect(3, 9, L - 10, 1, 0x2f5fa8);
+  glass(p, L - 5, 2, 3, W - 4, false);
+  p.rect(L - 2, 4, 1, W - 8, 0xf2f0e8);
+  // Klimatizace a poklopy.
+  p.rect(16, 5, 9, 6, 0xb8b8b0);
+  p.frame(16, 5, 9, 6, 0x8a8a84);
+  p.rect(18, 7, 5, 2, 0x6a6a66);
+  p.rect(6, 6, 4, 4, 0xc8c8c0);
+  p.rect(31, 6, 4, 4, 0xc8c8c0);
+  // Zadní motor a zpětná zrcátka.
+  p.rect(1, 4, 2, W - 8, 0x4a4a4a);
+  p.px(L - 4, 0, 0x2a2a2a);
+  p.px(L - 4, W - 1, 0x2a2a2a);
+  // Dveře vpravo (dole): přední a zadní.
+  for (const x of [11, L - 12]) {
+    p.rect(x, W - 2, 5, 2, open ? 0xffe8a0 : 0x6a6a64);
+    if (open) p.rect(x + 1, W - 1, 3, 1, 0xfff6d0);
+  }
+  lights(p, L, W, false);
+  return p;
+}
+
 function carShadow(len: number, w: number): Painter {
   const p = new Painter(len, w, createRng(7));
   p.rect(1, 0, len - 2, w, 0x000000, 0.45);
@@ -230,6 +269,9 @@ export function generateVehicleSprites(scene: Phaser.Scene): void {
   add(scene, 'skutr-wreck', scooter({ body: 0, wreck: true }));
   add(scene, 'kolo-0', bicycle({ body: 0, wreck: false }));
   add(scene, 'kolo-wreck', bicycle({ body: 0, wreck: true }));
+  add(scene, 'autobus', bus(false));
+  add(scene, 'autobus-open', bus(true));
+  add(scene, 'shadow-autobus', carShadow(46, 16));
   const sizes: Record<string, [number, number]> = {
     osobak: [24, 12], policie: [24, 12], dodavka: [28, 13], zasahovka: [28, 13], terenak: [26, 13], traktor: [22, 14], skutr: [14, 7], kolo: [14, 6],
   };
@@ -238,7 +280,7 @@ export function generateVehicleSprites(scene: Phaser.Scene): void {
 
 // ================= Postavy =================
 
-export type Hair = 'short' | 'long' | 'bald' | 'mohawk' | 'cap' | 'helmet' | 'beanie' | 'gray';
+export type Hair = 'short' | 'long' | 'bald' | 'mohawk' | 'cap' | 'helmet' | 'beanie' | 'gray' | 'ponytail' | 'punkf';
 export type Tool = 'none' | 'bat' | 'pistol' | 'long' | 'axe' | 'bottle' | 'sling' | 'knife';
 
 export interface HumanLook {
@@ -354,6 +396,20 @@ function hair(p: Painter, cx: number, cy: number, look: HumanLook): void {
     case 'bald':
       p.px(cx - 1, cy - 1, shade(look.skin, 1.3));
       break;
+    case 'ponytail':
+      // Vlasy sčesané dozadu a ohon (Slečna Kobyla).
+      p.rect(cx - 2, cy - 2, 3, 5, c);
+      p.rect(cx - 6, cy, 4, 1, c);
+      p.px(cx - 7, cy, shade(c, 0.75));
+      p.px(cx - 1, cy - 1, shade(c, 1.35));
+      break;
+    case 'punkf':
+      // Číro a delší vlasy vzadu (hrdinka).
+      p.rect(cx - 3, cy, 6, 1, c);
+      p.rect(cx - 3, cy - 1, 5, 1, shade(c, 1.35));
+      p.rect(cx - 5, cy - 1, 2, 3, c);
+      p.px(cx - 5, cy + 2, shade(c, 0.7));
+      break;
   }
 }
 
@@ -414,6 +470,19 @@ export const CIVILIANS: HumanLook[] = [
   { jacket: 0x2a2a2a, pants: 0x1a1a2a, hair: 'beanie', hairColor: 0x3a3a4a, skin: SKIN[1], tool: 'none' },
 ];
 
+/** Postavy příběhu: každá jinak, ať se v hospodě poznají. */
+const NPC_LOOKS: Record<string, HumanLook> = {
+  kobyla: { jacket: 0x8a6a9a, pants: 0x4a3a5a, hair: 'ponytail', hairColor: 0x7a4a22, skin: SKIN[2], tool: 'none' },
+  prchard: { jacket: 0xe8e4da, pants: 0x2a2a2a, hair: 'bald', hairColor: 0, skin: SKIN[1], tool: 'none', pattern: 'belly' },
+  plotkova: { jacket: 0xc83a4a, pants: 0x1a1a1a, hair: 'long', hairColor: 0xe8c070, skin: SKIN[2], tool: 'bottle' },
+  vesta: { jacket: 0x2a3a6a, pants: 0x2a2a3a, hair: 'short', hairColor: 0x2a1a10, skin: SKIN[0], tool: 'none' },
+  metejka: { jacket: 0xd8a020, pants: 0x3a3a4a, hair: 'short', hairColor: 0x1a1a1a, skin: SKIN[0], tool: 'none' },
+  zjebal: { jacket: 0x2a2a2e, pants: 0x4a5a3a, hair: 'bald', hairColor: 0, skin: SKIN[2], tool: 'bottle' },
+  dennyVysoky: { jacket: 0x3a5a8a, pants: 0x3a5a8a, hair: 'cap', hairColor: 0x8a2a1a, skin: SKIN[1], tool: 'none' },
+  dennySochar: { jacket: 0x7a6a5a, pants: 0x5a4a3a, hair: 'long', hairColor: 0x5a5a5a, skin: SKIN[3], tool: 'none', pattern: 'patches' },
+  kibi: { jacket: 0xe86ab0, pants: 0x1a1a3a, hair: 'short', hairColor: 0xd8c070, skin: SKIN[0], tool: 'none', pattern: 'stripes' },
+};
+
 const GANG_LOOKS: Record<string, HumanLook> = {
   drevari: { jacket: 0xb03a2a, pants: 0x2a3a5a, hair: 'beanie', hairColor: 0x7a2a1a, skin: SKIN[1], tool: 'axe', pattern: 'plaid' },
   stamgasti: { jacket: 0xe8e0c0, pants: 0x4a4a4a, hair: 'gray', hairColor: 0x9a9a9a, skin: SKIN[3], tool: 'bottle', pattern: 'belly' },
@@ -432,6 +501,14 @@ export function generateHumanSprites(scene: Phaser.Scene): void {
   sh('cop', { jacket: 0x2a4a9a, pants: 0x1a2a5a, hair: 'cap', hairColor: 0x1a2a5a, skin: SKIN[0], tool: 'pistol' });
   sh('cop-swat', { jacket: 0x1a1a1e, pants: 0x1a1a1e, hair: 'helmet', hairColor: 0x2a2a2e, skin: SKIN[1], tool: 'long' });
   for (const [g, look] of Object.entries(GANG_LOOKS)) sh(`gang-${g}`, look);
+  // Hrdinka: stejný punk, číro s delšími vlasy vzadu.
+  const HEROINE: HumanLook = { ...PLAYER_LOOK, hair: 'punkf', jacket: 0x2a1c24 };
+  sh('player-f', HEROINE);
+  sh('player-f-bat', { ...HEROINE, tool: 'bat' });
+  sh('player-f-pistol', { ...HEROINE, tool: 'pistol' });
+  sh('player-f-long', { ...HEROINE, tool: 'long' });
+  // Postavy příběhu (NPC.md).
+  for (const [id, look] of Object.entries(NPC_LOOKS)) sh(`npc-${id}`, look);
   // Dealer Omyx: zelená mikina s pruhy, čepice.
   sh('dealer', { jacket: 0x2f6a2a, pants: 0x3a3a3a, hair: 'beanie', hairColor: 0xd8b030, skin: SKIN[1], tool: 'none', pattern: 'stripes' });
 

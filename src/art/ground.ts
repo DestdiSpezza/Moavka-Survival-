@@ -451,7 +451,7 @@ export function paintBuilding(p: Painter, b: Building, seed: number): void {
       p.px(x + w - 10, y + 7, 0xff8a8a);
       facade(p, x, y + h - face, w, face, 0xc8402e, 'garage', v);
       return;
-    case 'Veseta':
+    case 'Vesta':
       pitched(p, x, y, w, h - face, roof, v, false);
       facade(p, x, y + h - face, w, face, 0xe0d4b8, 'shop', v);
       awning(p, x + 3, y + h, w - 6);

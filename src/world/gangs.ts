@@ -27,25 +27,25 @@ export const GROUPS: Record<GroupId, GroupSpec> = {
   drevari: {
     id: 'drevari', name: 'Dřevaři', color: 0xb03a2a, css: '#e0583f', members: 5, hp: 120, speed: 58,
     melee: { damage: 13, range: 18, cooldown: 1.5 }, ranged: null, fleeAt: 0,
-    spotted: ['To je on! Na pilu s ním!', 'Seš na našem dříví, čírko!', 'Vem sekeru, Franto!'],
+    spotted: ['{To je on! Na pilu s ním!|To je ona! Na pilu s ní!}', 'Seš na našem dříví, čírko!', 'Vem sekeru, Franto!'],
     helping: ['Nech ho bejt, ten je náš!', 'Sekera už se těší!'],
   },
   stamgasti: {
     id: 'stamgasti', name: 'Štamgasti', color: 0xd8b030, css: '#f0c840', members: 5, hp: 70, speed: 55,
     melee: { damage: 8, range: 16, cooldown: 1.3 }, ranged: { kind: 'bottle', damage: 12, range: 140, cooldown: 1.8 }, fleeAt: 0,
-    spotted: ['To je on! Ten, co nezaplatil útratu!', 'Hospodo, podrž mi pivo!', 'Ty seš ten punkáč!'],
+    spotted: ['{To je on! Ten, co nezaplatil útratu!|To je ona! Ta, co nezaplatila útratu!}', 'Hospodo, podrž mi pivo!', '{Ty seš ten punkáč!|Ty seš ta punkačka!}'],
     helping: ['Na zdraví, fízlové!', 'Za našeho kámoše!'],
   },
   ekologove: {
     id: 'ekologove', name: 'Biomatky', color: 0x3aa04a, css: '#5ad06a', members: 6, hp: 50, speed: 75,
     melee: null, ranged: { kind: 'rock', damage: 8, range: 170, cooldown: 1.3 }, fleeAt: 0.3,
-    spotted: ['To je on! Vrah stromů!', 'Smrdíš benzínem!', 'Za Beskydy!'],
+    spotted: ['{To je on! Vrah stromů!|To je ona! Vražedkyně stromů!}', 'Smrdíš benzínem!', 'Za Beskydy!'],
     helping: ['Policejní auta smrdí taky!', 'Za svobodu a les!'],
   },
   skola: {
     id: 'skola', name: 'Omladina', color: 0x9a4ad0, css: '#c07af0', members: 6, hp: 45, speed: 98,
     melee: { damage: 8, range: 16, cooldown: 0.8 }, ranged: { kind: 'firework', damage: 15, range: 130, cooldown: 3.2 }, fleeAt: 0.4,
-    spotted: ['To je on! Kluci, sem!', 'Ty vole, to je ten týpek!', 'Dej mobil, punkáči!'],
+    spotted: ['{To je on!|To je ona!} Kluci, sem!', '{Ty vole, to je ten týpek!|Ty vole, to je ta holka!}', 'Dej mobil, {punkáči|punkačko}!'],
     helping: ['Fízlové, chytněte si nás!', 'Kluci, petardy!'],
   },
 };

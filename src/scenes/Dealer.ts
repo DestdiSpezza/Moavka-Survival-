@@ -30,7 +30,6 @@ export class Dealer {
 
   constructor(private game: GameScene) {
     game.registry.set('stoned', 0);
-    if (this.spot) this.spawn();
   }
 
   private get now(): number {
@@ -87,14 +86,22 @@ export class Dealer {
   update(dt: number): void {
     const g = this.game;
     const now = this.now;
+    const at = this.spot;
+    // Přes den stojí u řeky, večer (a při festivalu) sedí v eRku (ADR-010).
+    const atRiver = !!at && !g.story.inPub('omyx');
+    if (at && !this.ped && atRiver && !g.inView(at.x, at.y)) this.spawn();
+    if (this.ped?.active && this.ped.alive && !atRiver && !g.inView(this.ped.x, this.ped.y)) {
+      this.ped.destroy();
+      this.ped = null;
+      this.label?.setVisible(false);
+    }
     const p = this.ped;
     if (p && (!p.active || !p.alive)) {
       if (!this.respawnAt) this.respawnAt = now + RESPAWN_SECONDS;
       this.label?.setVisible(false);
-      const at = this.spot!;
-      if (now > this.respawnAt && !g.inView(at.x, at.y)) this.spawn();
+      if (now > this.respawnAt && atRiver && !g.inView(at!.x, at!.y)) this.spawn();
     } else if (p) {
-      this.label?.setVisible(true).setPosition(Math.round(p.x), Math.round(p.y - 13));
+      this.label?.setVisible(true).setText(g.story.knows('omyx') ? OMYX.name.toUpperCase() : '???').setPosition(Math.round(p.x), Math.round(p.y - 13));
       const pl = g.player;
       const d = Phaser.Math.Distance.Between(p.x, p.y, pl.x, pl.y);
       const body = p.body as Phaser.Physics.Arcade.Body;

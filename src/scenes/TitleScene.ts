@@ -3,7 +3,7 @@ import { Sound } from '../audio/Sound';
 import { paintGround } from '../art/ground';
 import { paintWater } from '../art/water';
 import { buildWorld } from '../world/world';
-import { newProgress, type Progress, readSave } from '../systems/save';
+import { type Progress, readSave } from '../systems/save';
 import { T } from '../texts/cs';
 import { AREAS } from '../world/areas';
 import { pixelFont } from './BootScene';
@@ -49,10 +49,10 @@ export class TitleScene extends Phaser.Scene {
     this.add.text(width / 2, 160, T.subtitle, pixelFont(18)).setOrigin(0.5).setStroke('#000', 4);
 
     const save = readSave();
-    const items: MenuItem[] = [{ label: () => 'Nová hra', action: () => this.begin(newProgress()) }];
+    const items: MenuItem[] = [{ label: () => 'Nová hra', action: () => this.newGame() }];
     if (save) {
       items.push({
-        label: () => `Pokračovat (${AREAS[save.area].name}, ${save.money.toLocaleString('cs-CZ')} Kč)`,
+        label: () => `Pokračovat (${save.hero.name}, Akt ${save.story.act}, ${AREAS[save.area].name}, ${save.money.toLocaleString('cs-CZ')} Kč)`,
         action: () => this.begin(save),
       });
     }
@@ -67,6 +67,12 @@ export class TitleScene extends Phaser.Scene {
   private overlay(key: string): void {
     this.scene.pause();
     this.scene.launch(key, { from: 'Title' });
+  }
+
+  /** Nová hra: nejdřív hrdina, nebo hrdinka, a jméno. */
+  private newGame(): void {
+    Sound.unlock();
+    this.scene.start('Hero');
   }
 
   private begin(progress: Progress): void {

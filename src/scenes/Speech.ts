@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { WORLD_ZOOM } from '../config';
+import { fillText } from '../texts/gender';
 import { pixelFont } from './BootScene';
 import type { GameScene } from './GameScene';
 
@@ -38,7 +39,7 @@ export class Speech {
     for (const b of this.bubbles) if (b.who === who) b.until = 0;
     const scale = 1 / WORLD_ZOOM;
     const label = g.add
-      .text(0, 0, text, { ...pixelFont(13, '#1a1a1e'), wordWrap: { width: 190 }, align: 'center' })
+      .text(0, 0, fillText(text), { ...pixelFont(13, '#1a1a1e'), wordWrap: { width: 190 }, align: 'center' })
       .setOrigin(0.5, 1)
       .setScale(scale);
     const w = label.displayWidth + 6;

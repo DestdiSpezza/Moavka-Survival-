@@ -37,7 +37,7 @@ export class Tutorial {
     s.sprinted ||= g.player.sprinting;
     s.inCar ||= !!g.driving;
     s.armed ||= g.player.arsenal.owned.length > 1;
-    s.missionStarted ||= !!g.missions.active;
+    s.missionStarted ||= g.story.has('enteredPub');
     s.wanted = g.police.wanted.level;
 
     this.shownFor += dt;

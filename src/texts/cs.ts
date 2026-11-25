@@ -18,15 +18,15 @@ export const T = {
     'Zavolám na tebe fízly!',
     'Aspoň mi vrať tu klobásu ze sedačky!',
   ],
-  stolePolice: 'Ukradls policajtům auto. To si zapamatují.',
+  stolePolice: '{Ukradls|Ukradlas} policajtům auto. To si zapamatují.',
   smoke: 'Z motoru se kouří. To bude drahé.',
   fire: 'HOŘÍ! Vypadni z toho auta!',
-  explodedInside: 'Bum. Přežils to. Zázrak, nebo pivo?',
+  explodedInside: 'Bum. {Přežils|Přežilas} to. Zázrak, nebo pivo?',
   honk: 'TÚÚÚ!',
   health: 'Zdraví',
-  armor: 'Vesta',
+  armor: 'Nepr. vesta',
   currency: 'Kč',
-  noAmmo: 'Došly náboje. Zkus to pěstí, punkáči.',
+  noAmmo: 'Došly náboje. Zkus to pěstí, {punkáči|punkačko}.',
   picked: {
     fists: '',
     bat: 'Pálka. Klasika ze školního hřiště.',
@@ -35,24 +35,24 @@ export const T = {
     smg: 'Samopal u hráze. Kdo ho tu asi zapomněl…',
     vest: 'Neprůstřelná vesta. Obecní úřad šetří na špatných místech.',
     medkit: 'Lékárnička. Obvaz a půl litru slivovice.',
-    money: 'Sebral jsi peníze.',
+    money: '{Sebral|Sebrala} jsi peníze.',
   },
   /** Co křičí chodci, když začne střelba nebo bitka. */
   panic: ['Ježišmarjá!', 'Pomóóóc!', 'Utíkej, Mařeno!', 'To snad ne!', 'Já tu nebyl!'],
-  toughAngry: ['Ty seš mrtvej, punkáči!', 'Pojď sem, ty čírko!', 'To si vypiješ!'],
+  toughAngry: ['{Ty seš mrtvej, punkáči!|Ty seš mrtvá, punkačko!}', 'Pojď sem, ty čírko!', 'To si vypiješ!'],
   died: 'ZMAR',
-  busted: 'ZATČEN',
+  busted: '{ZATČEN|ZATČENA}',
   bustedInfo: 'Noc na služebně. Pokuta {fine} Kč a zbraně zabavené.',
   /** Policejní vysílačka při zvýšení hledanosti (index = úroveň). */
   radio: [
     '',
-    'Vysílačka: Hlídka do {oblast}, nějaký punkáč tam řádí.',
+    'Vysílačka: Hlídka do {oblast}, {nějaký punkáč|nějaká punkačka} tam řádí.',
     'Vysílačka: Posíláme další auta. Kafe počká.',
     'Vysílačka: Uzavíráme silnice. Zátarasy!',
     'Vysílačka: Vyjíždí zásahovka z Frýdku. Konečně akce.',
     'Vysílačka: Všechny jednotky do {oblast}. I ten důchodce se služebním kolem.',
   ],
-  radioLost: 'Vysílačka: Ztratili jsme ho. Asi zalezl do lesa ke klíšťatům.',
+  radioLost: 'Vysílačka: Ztratili jsme {ho|ji}. Asi {zalezl|zalezla} do lesa ke klíšťatům.',
   radioSwap: 'Vysílačka: Hledáme… ehm, jaké to mělo auto?',
   /** Na hráče (punkáč s čírem). */
   copShout: ['Stůj, policie!', 'Na zem!', 'Ruce vzhůru, čírko!', 'Máš to spočítaný!'],
@@ -62,16 +62,16 @@ export const T = {
   copShoutPed: ['Stůj, policie!', 'Klid, pane, policie!', 'Ruce za hlavu a nehádat se!'],
   /** Na omráčeného divočáka. */
   copShoutBoar: ['Stůj, prase! Policie!', 'Čuníku, zůstaň, kde jsi!', 'Kolego, máš tu síť?'],
-  wokeUp: 'Probudil ses ve zdravotním středisku. Doktor si vzal {lost} Kč a zbraně ti zabavili.',
+  wokeUp: '{Probudil|Probudila} ses ve zdravotním středisku. Doktor si vzal {lost} Kč a zbraně ti zabavili.',
   stamina: 'Dech',
   /** Hlášky, když hráč vleze do lesa nebo se zadýchá. */
   forest: 'Les. Klíšťata tě vítají.',
-  exhausted: 'Zadýchal ses. Moc piva, málo kardia.',
+  exhausted: '{Zadýchal|Zadýchala} ses. Moc piva, málo kardia.',
   /** Fáze 9: živá vesnice (svědci, nehody, policie proti NPC, divočáci, rozhlas). */
   village: {
-    person: 'punkáč se zeleným čírem',
+    person: '{punkáč|punkačka} se zeleným čírem',
     calling: ['📱 Haló, policie?', '📱 Pane strážmistr, rychle!', '📱 Ano, to jsem zase já, paní Nováková…', '📱 Volám 158, nebo 155? To je fuk!'],
-    reported: ['…a byl to {popis}! Jo, jistě!', '…{popis}, určitě! Teda asi.', '…{popis}, poznala bych ho mezi tisíci!'],
+    reported: ['…a byl to {popis}! Jo, jistě!', '…{popis}, určitě! Teda asi.', '…{popis}, poznala bych {ho|ji} mezi tisíci!'],
     intimidated: ['Já nic, já muzikant!', 'Volám… mámě. Jen mámě!', 'Nikdo nic neviděl!'],
     silenced: 'Hovor s policií náhle skončil.',
     argue: [
@@ -112,6 +112,6 @@ export const T = {
     radioNpcArrest: 'Policie zadržela {kdo}. Další den, další hrdina.',
     radioNpcEscaped: 'Hlídka ztratila z dohledu {kdo}. Zklamaně jde na oběd.',
     radioBusy: 'Policie nemá volnou hlídku. Volejte znovu, až dojedí svačinu.',
-    radioBusyPlayer: 'Policie nemá volnou hlídku, všechny honí toho punkáče. Ostatní zločiny počkají.',
+    radioBusyPlayer: 'Policie nemá volnou hlídku, všechny honí {toho punkáče|tu punkačku}. Ostatní zločiny počkají.',
   },
 } as const;

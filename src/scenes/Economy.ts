@@ -11,7 +11,15 @@ import { findFreeTile } from '../world/pickups';
 import { pixelFont } from './BootScene';
 import type { GameScene } from './GameScene';
 
-type PlaceKind = 'garage' | 'shop' | 'hideout';
+type PlaceKind = 'shop' | 'hideout';
+
+/** Co Vysoký Denny v garáži nabídne za auto, ve kterém hráč sedí. */
+export interface GarageQuote {
+  repair: number;
+  respray: number;
+  resprayOk: boolean;
+  price: number;
+}
 
 interface Place {
   kind: PlaceKind;
@@ -35,11 +43,13 @@ export interface MenuHud {
 const RANGE = 20;
 
 /**
- * Kde utrácet: garáž (oprava, přelakování, prodej auta), obchod „pod pultem“
- * (zbraně, vesta, lékárnička) a chata v lese (koupě, uložení hry, spánek).
+ * Kde utrácet: obchod „pod pultem“ (zbraně, vesta, lékárnička), chata (koupě, uložení,
+ * spánek) a garáž, kterou teď vede Vysoký Denny rozhovorem (Townsfolk).
  */
 export class Economy {
   menuOpen = false;
+  /** Pod pultem prodává Vesta (Morávka), jinde obchod. */
+  private vestaShop = false;
   private places: Place[] = [];
   private keys: Phaser.Input.Keyboard.Key[];
 
@@ -51,10 +61,9 @@ export class Economy {
       const t = findFreeTile(map, b.x + Math.floor(b.w / 2) + dx, b.y + b.h, taken);
       return { x: (t.tx + 0.5) * TILE, y: (t.ty + 0.5) * TILE };
     };
-    this.addPlace('garage', door('Garáž'), '', 0x8a8a9a);
-    // Pod pultem prodává dealer Veseta (v Morávce), jinde se kupuje v obchodě.
-    const dealer = map.buildings.some((x) => x.name === 'Veseta');
-    this.addPlace('shop', dealer ? door('Veseta') : door('Obchod', -2), 'POD PULTEM', 0xd8b030);
+    // Pod pultem prodává Vesta ze Štamgastů (v Morávce), jinde se kupuje v obchodě.
+    this.vestaShop = map.buildings.some((x) => x.name === 'Vesta');
+    this.addPlace('shop', this.vestaShop ? door('Vesta') : door('Obchod', -2), 'POD PULTEM', 0xd8b030);
     this.addPlace('hideout', door('Chata'), '', 0x7a5236);
     const kb = game.input.keyboard!;
     this.keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'].map((k) => kb.addKey(k));
@@ -73,11 +82,11 @@ export class Economy {
   update(): void {
     const g = this.game;
     const focus = g.driving ?? g.player;
-    const here = g.player.dead || g.missions.active
+    const here = g.player.dead || g.story.inputBlocked
       ? undefined
       : this.places.find((p) => Phaser.Math.Distance.Between(focus.x, focus.y, p.at.x, p.at.y) < RANGE + (g.driving ? 10 : 0));
     // Dealer Omyx nemá dveře, stojí venku a obchoduje z ruky.
-    const menu = here ? this.menuFor(here.kind) : !g.player.dead && !g.missions.active && g.dealer.near(focus) ? g.dealer.menu() : null;
+    const menu = here ? this.menuFor(here.kind) : !g.player.dead && !g.story.inputBlocked && g.dealer.near(focus) ? g.dealer.menu() : null;
     this.menuOpen = !!menu;
     if (!menu) {
       g.registry.set('menu', null);
@@ -99,32 +108,11 @@ export class Economy {
   private menuFor(kind: PlaceKind): { title: string; hint: string; options: Option[] } | null {
     const g = this.game;
     const pl = g.player;
-    if (kind === 'garage') {
-      const v = g.driving;
-      if (!v) return { title: 'Garáž', hint: 'Přijeď autem: oprava, přelakování, výkup.', options: [] };
-      const repair = repairCost(v.hp, v.spec.maxHp);
-      const level = g.police.wanted.level;
-      const respray = resprayCost(level);
-      const price = sellPrice(v.spec.kind, v.hp / v.spec.maxHp);
-      return {
-        title: `Garáž: ${v.spec.name}`,
-        hint: g.police.seen ? 'Fízlové koukají, přelakovat teď nejde.' : 'Mechanik se na nic neptá.',
-        options: [
-          { label: repair ? `Opravit (${repair} Kč)` : 'Opravit (není co)', enabled: repair > 0 && canAfford(pl.money, repair), run: () => this.repair(repair) },
-          {
-            label: `Přelakovat a zmizet (${respray} Kč, do ${RESPRAY_MAX_LEVEL} hvězd)`,
-            enabled: level > 0 && level <= RESPRAY_MAX_LEVEL && !g.police.seen && canAfford(pl.money, respray),
-            run: () => this.respray(respray),
-          },
-          { label: `Prodat auto (${price} Kč)`, enabled: !v.wrecked, run: () => this.sell(price) },
-        ],
-      };
-    }
     if (g.driving) return null;
     if (kind === 'shop') {
       return {
-        title: 'Obchod: pod pultem',
-        hint: 'Prodavačka: „Já nic, já muzikant.“',
+        title: this.vestaShop ? 'Vesta: pod pultem' : 'Obchod: pod pultem',
+        hint: this.vestaShop ? 'Vesta: „Účtenku nedávám, to by bylo moc chudý.“' : 'Prodavačka: „Já nic, já muzikant.“',
         options: SHOP.map((item) => ({
           label: `${item.name} (${item.price} Kč)`,
           enabled: canAfford(pl.money, item.price),
@@ -150,14 +138,28 @@ export class Economy {
     };
   }
 
-  private repair(cost: number): void {
+  /** Ceny v garáži za auto, ve kterém hráč sedí. */
+  garageQuote(): GarageQuote | null {
+    const g = this.game;
+    const v = g.driving;
+    if (!v) return null;
+    const level = g.police.wanted.level;
+    return {
+      repair: repairCost(v.hp, v.spec.maxHp),
+      respray: resprayCost(level),
+      resprayOk: level > 0 && level <= RESPRAY_MAX_LEVEL && !g.police.seen,
+      price: sellPrice(v.spec.kind, v.hp / v.spec.maxHp),
+    };
+  }
+
+  repair(cost: number): void {
     const v = this.game.driving!;
     this.game.player.money -= cost;
     v.repair();
     this.game.toast('Opraveno. Mechanik našel v kufru tři ježky.');
   }
 
-  private respray(cost: number): void {
+  respray(cost: number): void {
     const g = this.game;
     g.player.money -= cost;
     const v = g.driving!;
@@ -168,13 +170,13 @@ export class Economy {
     g.toast('Přelakováno. Fízlové hledají úplně jiné auto.');
   }
 
-  private sell(price: number): void {
+  sell(price: number): void {
     const g = this.game;
     const v = g.driving!;
     g.exitVehicle();
     g.removeVehicle(v);
     g.player.money += price;
-    g.toast(`Garáž vykoupila auto za ${price} Kč. Bez papírů, bez otázek.`);
+    g.toast(`Denny vykoupil auto za ${price} Kč. Bez papírů, bez otázek. Hm.`);
   }
 
   private buy(id: WeaponId | 'vest' | 'medkit', price: number, name: string): void {
@@ -205,6 +207,6 @@ export class Economy {
     g.cameras.main.fadeOut(400, 0, 0, 0);
     g.cameras.main.once('camerafadeoutcomplete', () => g.cameras.main.fadeIn(800));
     g.saveGame(false);
-    g.toast('Vyspal ses. Hlava třeští méně než obvykle.');
+    g.toast('{Vyspal|Vyspala} ses. Hlava třeští méně než obvykle.');
   }
 }

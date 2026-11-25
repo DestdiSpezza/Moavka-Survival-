@@ -98,7 +98,9 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** se dá situace „ukradnu auto → policie → vjedu ke spřáteleným → oni střílí na policii“ odehrát sama od sebe, bez skriptu.
 
-## Fáze 6: Mise a zakázky ✅
+## Fáze 6: Mise a zakázky ✅ (nahrazeno příběhem)
+
+> Od fáze P1 zakázky ve hře nejsou: nahradil je příběh po aktech ([PRIBEH.md](PRIBEH.md), ADR-001). Kroky misí, ukazatel cíle a text úkolu v HUDu zůstaly a používá je příběh. Popis níže je historie.
 
 - Místa se zakázkami na mapě (u každé skupiny).
 - Obtížnosti podle respektu: 🟢 zelená (vždy), 🟡 žlutá (respekt od cca +30), 🔴 červená (od cca +60).
@@ -121,7 +123,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 - Návrh oblastí: **Morávka** → **Raškovice** → **Krásná** → **Lysá hora** (každá s vlastními skupinami).
 - Ukládání a načítání hry.
 - Skóre: zakázky, útěk policii (50 × úroveň²), vraky a řetězové reakce, drift, přežití 30 s na 5 hvězdách, zabití.
-- Garáž (oprava, přelakování do 3 hvězd, výkup aut), obchod „pod pultem“ (zbraně, vesta, lékárnička), chata (koupě, uložení, spánek).
+- Garáž (oprava, přelakování do 3 hvězd, výkup aut), obchod „pod pultem“ (zbraně, vesta, lékárnička), chata (koupě, uložení, spánek). Od P1 garáž obsluhuje Vysoký Denny rozhovorem a obchod má Vesta.
 - Cíl Morávky: 1 500 skóre získaných v Morávce a 2 500 Kč. Raškovice: 3 000 a 6 000 Kč.
 - Raškovice mají vlastní údolí (jiné vlnění řeky a silnice, domy, lesy) a místní názvy; respekt a zakázky se počítají pro každou oblast zvlášť.
 - Zatím neřešeno: Raškovice používají stejné čtyři skupiny a stejný katalog zakázek jako Morávka; vlastní skupiny a zakázky, Krásná a Lysá hora přijdou ve fázi 8.
@@ -176,7 +178,7 @@ Dlouhý běh: `npm run build && npm run soak` přehraje 30 minut herního času 
 
 - Rozložení podle mapy obce (ne na sto procent): křižovatka u **hospody eRko** (hospoda stojí hned západně od ní), silnice na severozápad, na Raškovice (severovýchod), na jihozápad a na jih ke **škole** s hřištěm a oválem.
 - Vlaský potok na západě (most na silnici na severozápad), řeka Morávka na severovýchodě a východě, podél ní silnice s cyklostezkou až k hrázi přehrady. Vznikla smyčka: na jih → po hrázi → podél řeky → zpátky na silnici na Raškovice.
-- Na místech podle mapy: Hasiči, Foop obchod, obecní úřad s parkovištěm a zastávkou, dealer Veseta (prodává „pod pultem“), Autoúpravy Dan (garáž), Školka s pískovištěm, dealer Omyx u řeky, safe house (chata, úkryt) na jihovýchodě, pila Dřevařů za potokem.
+- Na místech podle mapy: Hasiči, Foop obchod, obecní úřad s parkovištěm a zastávkou, Vesta (prodává „pod pultem“; dřív Veseta), Autoúpravy Dan (garáž, před ní Vysoký Denny), Školka s pískovištěm, dealer Omyx u řeky, safe house (chata, úkryt) na jihovýchodě, pila Dřevařů za potokem.
 - Silnice a potoky se kreslí hladce i šikmo podle os (asfalt, chodníky s obrubníky, středové čáry, přechody, mosty se zábradlím, polní cesty s kolejemi). Hra dál počítá s dlaždicemi.
 - Mapu staví `src/world/realMoravka.ts` (souřadnice z mapy obce, 16 px mapy na dlaždici); Raškovice zůstávají generované.
 

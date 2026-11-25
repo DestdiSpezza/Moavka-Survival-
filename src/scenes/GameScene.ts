@@ -24,7 +24,9 @@ import { pixelFont } from './BootScene';
 import { Combat } from './Combat';
 import { Gangs } from './Gangs';
 import { Economy } from './Economy';
-import { Missions } from './Missions';
+import { Story } from './Story';
+import { Townsfolk } from './Townsfolk';
+import { fillText, setHero } from '../texts/gender';
 import { Progression } from './Progression';
 import { Tutorial } from './Tutorial';
 import { Animals } from './Animals';
@@ -112,7 +114,8 @@ export class GameScene extends Phaser.Scene {
   combat!: Combat;
   police!: Police;
   gangs!: Gangs;
-  missions!: Missions;
+  story!: Story;
+  townsfolk!: Townsfolk;
   economy!: Economy;
   progression!: Progression;
   tutorial!: Tutorial;
@@ -223,6 +226,8 @@ export class GameScene extends Phaser.Scene {
 
     const { x, y } = this.world.spawn;
     this.player = new Player(this, (x + 0.5) * TILE, (y + 0.5) * TILE);
+    setHero(this.progress.hero);
+    this.player.female = this.progress.hero.gender === 'f';
     this.physics.add.collider(this.player, this.layer);
 
     this.spawnVehicles();
@@ -277,7 +282,6 @@ export class GameScene extends Phaser.Scene {
     this.combat = new Combat(this);
     this.police = new Police(this);
     this.gangs = new Gangs(this);
-    this.missions = new Missions(this);
     this.speech = new Speech(this);
     this.dealer = new Dealer(this);
     this.economy = new Economy(this);
@@ -287,6 +291,8 @@ export class GameScene extends Phaser.Scene {
     this.witnesses = new Witnesses(this);
     this.incidents = new Incidents(this);
     this.animals = new Animals(this);
+    this.townsfolk = new Townsfolk(this);
+    this.story = new Story(this);
     this.debugKey = this.input.keyboard!.addKey('F9');
     this.applyProgress();
     this.input.setDefaultCursor('none');
@@ -382,7 +388,6 @@ export class GameScene extends Phaser.Scene {
     pl.updateLook();
     this.gangs.respect = { ...respectIn(p, this.area.id) };
     this.gangs.elapsed = p.clock;
-    this.missions.done = new Set(p.missionsDone[this.area.id] ?? []);
 
     const arrival = this.registry.get('arrival') as { from: AreaId; vehicle: { kind: VehicleKind; hp: number } | null } | null;
     this.registry.set('arrival', null);
@@ -460,7 +465,6 @@ export class GameScene extends Phaser.Scene {
     p.armor = pl.armor;
     p.arsenal = { ...pl.arsenal, ammo: { ...pl.arsenal.ammo }, owned: [...pl.arsenal.owned] };
     p.respect[this.area.id] = { ...this.gangs.respect };
-    p.missionsDone[this.area.id] = [...this.missions.done];
     p.clock = this.gangs.elapsed;
   }
 
@@ -676,8 +680,11 @@ export class GameScene extends Phaser.Scene {
       this.refillParking();
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.enter) && !this.player.dead) {
-      if (this.driving) this.exitVehicle();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.enter) && !this.player.dead && !this.story.inputBlocked) {
+      const folk = this.townsfolk.nearby();
+      if (this.story.nearPubDoor()) this.story.enterPub();
+      else if (folk) this.townsfolk.talkTo(folk);
+      else if (this.driving) this.exitVehicle();
       else this.tryEnterVehicle();
     }
 
@@ -702,7 +709,7 @@ export class GameScene extends Phaser.Scene {
       (this.player.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     } else {
       const tile = this.tileAt(this.player.x, this.player.y);
-      this.player.tick(dt, speedFactor(tile) * this.dealer.walkFactor, this.input.activePointer);
+      if (!this.story.cutscene) this.player.tick(dt, speedFactor(tile) * this.dealer.walkFactor, this.input.activePointer);
     }
 
     // Za jízdy se kamera trochu oddálí, ať je vidět, kam se řítíš.
@@ -719,11 +726,12 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('zone', zone === 'Morávka' ? this.area.name : placeLabel(this.area.id, zone));
     this.registry.set('tile', this.driving ? -1 : this.world.tiles[ty]?.[tx]);
     this.registry.set('vehicle', this.driving ? this.vehicleHud(this.driving) : null);
-    this.registry.set('prompt', this.driving || this.player.dead ? '' : this.enterPrompt());
+    this.registry.set('prompt', this.driving || this.player.dead || this.story.inputBlocked ? '' : this.story.nearPubDoor() ? 'E: vejít do eRka' : this.townsfolk.nearby() ? 'E: promluvit' : this.enterPrompt());
     this.combat.update(dt);
     this.police.update(dt);
     this.gangs.update(dt);
-    this.missions.update(dt);
+    this.story.update(dt);
+    this.townsfolk.update();
     this.economy.update();
     this.progression.update(dt);
     this.tutorial.update(dt);
@@ -740,7 +748,7 @@ export class GameScene extends Phaser.Scene {
     this.water.tilePositionY += dt * 6;
     this.water.tilePositionX = Math.sin(this.time.now / 1500) * 2;
     this.updateAudio();
-    if (Phaser.Input.Keyboard.JustDown(this.keys.pause) && !this.player.dead) this.openPause();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.pause) && !this.player.dead && !this.story.cutscene) this.openPause();
     const a = this.player.arsenal;
     const def = WEAPONS[a.current];
     this.registry.set('player', {
@@ -1236,12 +1244,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   toast(text: string): void {
-    this.events.emit('toast', text);
+    this.events.emit('toast', fillText(text));
   }
 
   floatText(x: number, y: number, text: string, color: string, ms: number): void {
     const t = this.add
-      .text(x, y, text, pixelFont(14, color))
+      .text(x, y, fillText(text), pixelFont(14, color))
       .setOrigin(0.5, 1)
       .setScale(1 / WORLD_ZOOM)
       .setStroke('#000', 3)

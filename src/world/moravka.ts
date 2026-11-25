@@ -79,6 +79,12 @@ export interface MapSpots {
   hriste: { x: number; y: number };
   /** Kde stojí dealer trávy (Omyx), pokud v oblasti je. */
   dealer?: { x: number; y: number };
+  /** Zastávka před hospodou: kde zastaví autobus (střed pruhu) a kudy jede (směr). */
+  busStop?: { x: number; y: number; dx: number; dy: number };
+  /** Kde stojí Slečna Kobyla (u zastávky). */
+  kobyla?: { x: number; y: number };
+  /** Kde stojí Vysoký Denny, když je u garáže. */
+  denny?: { x: number; y: number };
 }
 
 export interface WorldMap {

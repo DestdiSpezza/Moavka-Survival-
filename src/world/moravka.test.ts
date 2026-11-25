@@ -120,8 +120,8 @@ describe('Morávka podle skutečné vesnice', () => {
     expect(map.decor.some((d) => d.kind === 'oval' && Math.hypot(d.x - s.x, d.y - s.y) < 20)).toBe(true);
   });
 
-  it('obchod, úřad a dealer Veseta jsou jižně od křižovatky, hasiči severovýchodně, dealer Omyx stojí u řeky', () => {
-    for (const name of ['Obchod', 'Obecní úřad', 'Veseta']) expect(b(name).y, name).toBeGreaterThan(cross.y);
+  it('obchod, úřad a Vestův obchod jsou jižně od křižovatky, hasiči severovýchodně, dealer Omyx stojí u řeky', () => {
+    for (const name of ['Obchod', 'Obecní úřad', 'Vesta']) expect(b(name).y, name).toBeGreaterThan(cross.y);
     expect(b('Hasiči').x).toBeGreaterThan(cross.x);
     expect(b('Hasiči').y).toBeLessThan(cross.y);
     const river = map.streams[1].pts;

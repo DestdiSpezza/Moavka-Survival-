@@ -2,9 +2,35 @@ import type { AreaId } from '../world/areas';
 import type { Arsenal } from './combat';
 import { newRespect, type Respect } from './respect';
 
+export type Gender = 'm' | 'f';
+
+/** Hrdina nebo hrdinka a jméno, které si hráč napsal. */
+export interface Hero {
+  gender: Gender;
+  name: string;
+}
+
+/** Kde je hráč v příběhu. */
+export interface StoryState {
+  /** Číslo aktu (1 = Příjezd). */
+  act: number;
+  /** Rozehraná mise ('' = volná hra, další mise zatím není). */
+  mission: string;
+  /** Úvodní scéna s autobusem už proběhla. */
+  introDone: boolean;
+  /** Příznaky z dialogů a misí (refusedTalk, metPlotkova…). */
+  flags: string[];
+  /** Vztahy s postavami (-100 až 100). */
+  rel: Record<string, number>;
+  /** Postavy, jejichž jméno hráč zná. */
+  known: string[];
+  /** Počítadla (panáky s Plotkovou, kolik dlužní Denny sochař…). */
+  counts: Record<string, number>;
+}
+
 /** Uložený postup hry. */
 export interface Progress {
-  version: 1;
+  version: 2;
   area: AreaId;
   unlocked: AreaId[];
   money: number;
@@ -12,7 +38,6 @@ export interface Progress {
   /** Skóre získané v jednotlivých oblastech (cíl oblasti se počítá z něj). */
   areaScore: Partial<Record<AreaId, number>>;
   respect: Partial<Record<AreaId, Respect>>;
-  missionsDone: Partial<Record<AreaId, string[]>>;
   hideouts: AreaId[];
   health: number;
   armor: number;
@@ -21,15 +46,25 @@ export interface Progress {
   clock: number;
   /** Splněné kroky tutoriálu. */
   tutorial: string[];
+  hero: Hero;
+  story: StoryState;
+}
+
+export const DEFAULT_HERO: Hero = { gender: 'm', name: 'Punkáč' };
+
+/** Příběh od začátku: Akt 1, úvodní scéna s autobusem. */
+export function newStory(): StoryState {
+  return { act: 1, mission: 'a1-prijezd', introDone: false, flags: [], rel: {}, known: [], counts: {} };
 }
 
 export const SAVE_KEY = 'survive-moravka-save-v1';
 
-export function newProgress(): Progress {
+export function newProgress(hero: Hero = DEFAULT_HERO): Progress {
   return {
-    version: 1, area: 'moravka', unlocked: ['moravka'], money: 500, score: 0, areaScore: {}, respect: {},
-    missionsDone: {}, hideouts: [], health: 100, armor: 0, clock: 0, tutorial: [],
+    version: 2, area: 'moravka', unlocked: ['moravka'], money: 500, score: 0, areaScore: {}, respect: {},
+    hideouts: [], health: 100, armor: 0, clock: 0, tutorial: [],
     arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0 } },
+    hero: { ...hero }, story: newStory(),
   };
 }
 
@@ -41,13 +76,21 @@ export function serialize(p: Progress): string {
   return JSON.stringify(p);
 }
 
-/** Načte uložený postup; poškozená nebo cizí data vrátí null (hra začne znovu). */
+/**
+ * Načte uložený postup; poškozená nebo cizí data vrátí null (hra začne znovu).
+ * Uložení z doby zakázek (verze 1) se převede: příběh začne Aktem 1 bez úvodní scény
+ * (hráč stojí ve vesnici a jde do hospody), peníze a výbava zůstanou.
+ */
 export function deserialize(text: string | null): Progress | null {
   if (!text) return null;
   try {
-    const data = JSON.parse(text) as Partial<Progress>;
-    if (data.version !== 1 || typeof data.money !== 'number' || typeof data.area !== 'string' || !data.arsenal) return null;
-    return { ...newProgress(), ...data } as Progress;
+    const data = JSON.parse(text) as Omit<Partial<Progress>, 'version'> & { version?: number; missionsDone?: unknown };
+    if ((data.version !== 1 && data.version !== 2) || typeof data.money !== 'number' || typeof data.area !== 'string' || !data.arsenal) return null;
+    const { missionsDone: _old, ...rest } = data;
+    void _old;
+    const base = newProgress(data.hero ?? DEFAULT_HERO);
+    if (data.version === 1) return { ...base, ...rest, version: 2, hero: { ...DEFAULT_HERO }, story: { ...newStory(), mission: 'a1-hospoda', introDone: true } } as Progress;
+    return { ...base, ...rest, story: { ...newStory(), ...data.story } } as Progress;
   } catch {
     return null;
   }

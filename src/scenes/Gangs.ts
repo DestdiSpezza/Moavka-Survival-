@@ -608,7 +608,7 @@ export class Gangs {
     if (v.owner && byPlayer) this.change(v.owner, 'destroyProperty', '', 0);
   }
 
-  /** Splněná nebo nesplněná zakázka (fáze 6). */
+  /** Splněná nebo nesplněná mise pro skupinu (respekt; pro příběhové mise). */
   mission(g: GroupId, event: RespectEvent): void {
     this.change(g, event, '', 0);
   }

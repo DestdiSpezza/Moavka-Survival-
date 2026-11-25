@@ -15,6 +15,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   score = 0;
   arsenal: Arsenal = newArsenal();
   dead = false;
+  /** Hrdinka (jiná postavička). */
+  female = false;
   /** Poslední událost, které se hráč účastnil (pro řetězení příčin). */
   lastEventId: number | null = null;
   lastEventAt = -100;
@@ -46,7 +48,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** Textura podle zbraně v ruce. Střed rotace zůstává na ramenou (8 px zleva). */
   updateLook(): void {
     const w = WEAPONS[this.arsenal.current];
-    const key = w.id === 'fists' ? 'player' : w.id === 'bat' ? 'player-bat' : w.id === 'pistol' ? 'player-pistol' : 'player-long';
+    const base = this.female ? 'player-f' : 'player';
+    const key = w.id === 'fists' ? base : w.id === 'bat' ? `${base}-bat` : w.id === 'pistol' ? `${base}-pistol` : `${base}-long`;
     if (this.texture.key !== key) this.setTexture(key);
     this.setOrigin(8 / 24, 0.5);
   }

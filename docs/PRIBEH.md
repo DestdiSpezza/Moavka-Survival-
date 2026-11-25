@@ -32,8 +32,8 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 
 | Fáze | Obsah | Stav |
 |---|---|---|
-| **P1** | **Akt 1: Příjezd** – zrušení zakázek, příběhový systém, autobus a úvodní scéna, NPC na zastávce, mise „Do hospody“, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti | **teď** |
-| P2 | Štamgasti v praxi: výhody a nevýhody postav jako mechaniky, vztahy s NPC, následky volby „s nikým se nebavím“ (těžší start) | čeká na P1 |
+| **P1** | **Akt 1: Příjezd** – zrušení zakázek, příběhový systém, autobus a úvodní scéna, NPC na zastávce, mise „Do hospody“, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti | **hotovo, čeká na schválení** |
+| P2 | Štamgasti v praxi: výhody a nevýhody postav jako mechaniky, vztahy s NPC, následky volby „s nikým se nebavím“ (těžší start), Denny sochař a pár ran (ADR-015) | další na řadě |
 | P3 | Akt 1 pokračuje: další mise aktu (obsah dodáš ty), konec aktu, přechod do Aktu 2 | čeká na příběh |
 | P4+ | Další akty (Raškovice, Krásná, Lysá hora), každý jako samostatná fáze | čeká na příběh |
 | průběžně | Ladění, testy hraním, ukládání, dokumentace | – |
@@ -122,6 +122,16 @@ Plotková se představí („Plotková. Neříkej mi Plotičko, to smí jen Kibi
 
 ### 11. Po dialogu
 - Text „Akt 1 pokračuje…“ a volná hra s dosavadními mechanikami, dokud nepřidáme další mise (fáze P3).
+
+### Jak to dopadlo (P1 hotová)
+- Nová hra: volba hrdina / hrdinka, jméno (max. 14 znaků), telefon s příspěvkem `erko_moravka` o festivalu (`HeroScene`).
+- Úvod (`Intro`): autobus jede od Raškovic, zastaví před eRkem, otevře dveře, hráč vystoupí, autobus odjede. Během úvodu jsou černé pruhy, titulek „AKT 1: PŘÍJEZD“ a žádné HUD. Mezerník nebo Esc přeskočí na rozhovor se Slečnou Kobylou.
+- Mise „Do hospody“: ukazatel ke dveřím eRka, E vejde (`PubScene`). Při prvním vstupu Prchard nabídne 3 volby; splněním se mise uzavře a objeví se „Akt 1 pokračuje…“.
+- V eRku: Prchard za barem, Plotková chodí mezi barem a stoly, osm štamgastů na svých místech. Dokud hráč nepromluví s Prchardem, je festival a sedí tam všichni; pak platí rozvrh (Vysoký Denny 13–17, Omyx večer).
+- Venku stojí Slečna Kobyla u zastávky a Vysoký Denny před Autoúpravami Dan. Garáž = rozhovor (oprava nebo lak, výkup, nic).
+- Texty, které oslovují hráče, mají mužský i ženský tvar (`{Ukradls|Ukradlas}`, `src/texts/gender.ts`), včetně policie, skupin, svědků a rádia.
+- Uložení verze 2 (hrdina, příběh, vztahy, koho hráč zná). Stará uložení se převedou: Akt 1 bez úvodu, rovnou mise do hospody, peníze a výbava zůstanou.
+- Testy: data dialogů (3 volby, odkazy, vždy aspoň jedna volba bez podmínky), rozvrh postav, akty, převod uložení, oba tvary všech textů. Hraním ověřeno v prohlížeči: celý průchod Aktem 1, garáž autem i pěšky, Vesta, pokračování ze starého uložení.
 
 ### Hotovo, když
 - Nová hra: autobus přijede k eRku, hráč vystoupí, místní ho pošle do hospody, mise ho dovede ke dveřím.

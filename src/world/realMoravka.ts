@@ -75,7 +75,7 @@ const NAMED: Array<[string, number, number, number, number, number]> = [
   ['Hospoda', 20, 18, 7, 5, Tile.RoofBrown],
   ['Obchod', 26, 29, 6, 4, Tile.RoofRed],
   ['Obecní úřad', 30, 34, 7, 4, Tile.RoofGray],
-  ['Veseta', 33, 40, 5, 3, Tile.RoofRed],
+  ['Vesta', 33, 40, 5, 3, Tile.RoofRed],
   ['Zdravotní středisko', 44, 27, 7, 4, Tile.RoofRed],
   ['Hasiči', 40, 11, 6, 4, Tile.RoofRed],
   ['Kostel', 69, 21, 5, 8, Tile.RoofGray],
@@ -309,6 +309,24 @@ export function buildMoravka(): WorldMap {
     { road: 2, along: 31 },
   ];
 
+  // Zastávka před eRkem: bod na silnici na jihozápad nejblíž dveřím hospody, autobus stojí v pravém pruhu.
+  const pub = buildings.find((b) => b.name === 'Hospoda')!;
+  const door: Pt = [pub.x + pub.w / 2, pub.y + pub.h];
+  let best = { d: Infinity, along: 0 };
+  for (let s = 0; s < polylineLength(SW); s += 0.1) {
+    const q = pointAlong(SW, s);
+    const d = Math.hypot(q.x - door[0], q.y - door[1]);
+    if (d < best.d) best = { d, along: s };
+  }
+  const stop = pointAlong(SW, best.along);
+  // Vpravo ve směru jízdy (osa y dolů): (-dy, dx).
+  const rx = -stop.dy;
+  const ry = stop.dx;
+  const busStop = { x: stop.x + rx * 0.62, y: stop.y + ry * 0.62, dx: stop.dx, dy: stop.dy };
+  const shelter = { x: stop.x + rx * 2.1 + stop.dx * 1.4, y: stop.y + ry * 2.1 + stop.dy * 1.4 };
+  const kobyla = { x: stop.x + rx * 2.4 - stop.dx * 1.2, y: stop.y + ry * 2.4 - stop.dy * 1.2 };
+  const garage = buildings.find((b) => b.name === 'Garáž')!;
+
   return {
     width: W,
     height: H,
@@ -333,12 +351,16 @@ export function buildMoravka(): WorldMap {
       damParking: { x: 64, y: 67 },
       hriste: { x: 74, y: 50 },
       dealer: { x: OMYX[0], y: OMYX[1] },
+      busStop,
+      kobyla,
+      denny: { x: garage.x + garage.w / 2 + 2, y: garage.y + garage.h + 1 },
     },
     // Biomatky se drží kolem školky.
     ecoSpawn: [zones.find((z) => z.name === 'Školka')!],
     busStops: [
       { x: 40 * TILE + 3, y: 34 * TILE + 2 },
       { x: 45 * TILE + 3, y: 37 * TILE + 2 },
+      { x: Math.round(shelter.x * TILE) - 5, y: Math.round(shelter.y * TILE) - 12 },
     ],
     crosswalks,
     decor,

@@ -8,8 +8,8 @@ import { GROUPS } from '../world/gangs';
 import type { RespectHud } from './Gangs';
 import type { AnnounceHud } from './Announcer';
 import type { MenuHud } from './Economy';
-import type { BoardHud, MissionHud } from './Missions';
-import type { GoalHud } from './Progression';
+import type { MissionHud } from './Story';
+import { fillText } from '../texts/gender';
 import { type GameScene, MINIMAP, type PlayerHud, type VehicleHud } from './GameScene';
 
 const HP_COLORS: Record<string, number> = { ok: 0x6fd16a, smoke: 0xe0b23a, fire: 0xe0442a };
@@ -49,6 +49,12 @@ export class UIScene extends Phaser.Scene {
   private boardBody!: Phaser.GameObjects.Text;
   private missionTitle!: Phaser.GameObjects.Text;
   private missionObjective!: Phaser.GameObjects.Text;
+  /** Filmové pruhy, titulek aktu a nápověda k přeskočení (úvodní scéna). */
+  private letterbox!: Phaser.GameObjects.Rectangle[];
+  private actTitle!: Phaser.GameObjects.Text;
+  private skipHint!: Phaser.GameObjects.Text;
+  /** Co bylo schované kvůli úvodní scéně (po ní se to zase ukáže). */
+  private cinemaHidden: Set<Phaser.GameObjects.GameObject> | null = null;
   private arrow!: Phaser.GameObjects.Triangle;
   private hintText!: Phaser.GameObjects.Text;
   private lastZone = '';
@@ -96,6 +102,9 @@ export class UIScene extends Phaser.Scene {
     // Zakázka: název a úkol pod hodinami, šipka k cíli na okraji obrazovky.
     this.missionTitle = this.add.text(width / 2, 70, '', pixelFont(16, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 3);
     this.missionObjective = this.add.text(width / 2, 92, '', pixelFont(15, '#ffffff')).setOrigin(0.5, 0).setStroke('#000', 3);
+    this.letterbox = [this.add.rectangle(0, 0, width, 0, 0x000000).setOrigin(0).setDepth(50), this.add.rectangle(0, height, width, 0, 0x000000).setOrigin(0).setDepth(50)];
+    this.actTitle = this.add.text(width / 2, height / 2 - 120, '', pixelFont(44, '#ffd23f')).setOrigin(0.5).setStroke('#2a1d12', 8).setDepth(51).setAlpha(0);
+    this.skipHint = this.add.text(width - 20, height - 16, '', pixelFont(14, '#c8c0a8')).setOrigin(1, 1).setDepth(51);
     this.arrow = this.add.triangle(0, 0, 0, -9, 18, 0, 0, 9, 0xffd23f).setStrokeStyle(2, 0x000000).setVisible(false);
 
     // Nápovědy tutoriálu vlevo dole.
@@ -131,7 +140,7 @@ export class UIScene extends Phaser.Scene {
     this.clockText = this.add.text(width / 2, 46, '', pixelFont(16, '#f2e9d0')).setOrigin(0.5, 0).setStroke('#000', 3);
     // Co policie ví (vpravo od hvězdiček).
     this.wantedText = this.add.text(width / 2 + 82, 22, '', pixelFont(14, '#9fc4ff')).setOrigin(0, 0.5).setStroke('#000', 3);
-    // Obecní rozhlas a rádio: rámeček pod úkolem zakázky.
+    // Obecní rozhlas a rádio: rámeček pod úkolem mise.
     this.announceText = this.add
       .text(width / 2, 122, '', { ...pixelFont(15, '#ffe9a0'), wordWrap: { width: 400 }, align: 'center', backgroundColor: '#1a1408d8', padding: { x: 12, y: 7 } })
       .setOrigin(0.5, 0)
@@ -164,7 +173,7 @@ export class UIScene extends Phaser.Scene {
     const game = this.scene.get('Game');
     game.events.on('toast', (text: string) => this.say(text));
     game.events.on('banner', (text: string) => {
-      this.deathText.setText(text).setColor(text === T.died ? '#d94040' : text === T.busted ? '#6a9aff' : '#ffd23f');
+      this.deathText.setText(fillText(text)).setColor(text === T.died ? '#d94040' : text === T.busted ? '#6a9aff' : '#ffd23f');
       this.deathText.setVisible(true).setAlpha(0);
       this.tweens.add({ targets: this.deathText, alpha: 1, duration: 500, hold: 900, yoyo: true, onComplete: () => this.deathText.setVisible(false) });
     });
@@ -237,7 +246,7 @@ export class UIScene extends Phaser.Scene {
     }
 
     const wanted = this.registry.get('wanted') as { level: number; searching: boolean; desc?: string } | undefined;
-    this.wantedText.setText(wanted?.desc ? `Hledají: ${wanted.desc}` : '');
+    this.wantedText.setText(wanted?.desc ? fillText(`Hledají: ${wanted.desc}`) : '');
     const ann = this.registry.get('announce') as AnnounceHud | null | undefined;
     const gameNow = (this.scene.get('Game') as GameScene).time.now / 1000;
     // Když je otevřená nabídka (obchod, garáž, Omyx), hlášení ji nepřekrývá.
@@ -267,43 +276,52 @@ export class UIScene extends Phaser.Scene {
     this.crosshair.strokeCircle(ptr.x, ptr.y, 7);
     this.crosshair.lineStyle(1, 0xffffff, 1).strokeCircle(ptr.x, ptr.y, 7);
     this.crosshair.fillStyle(0xffffff).fillRect(ptr.x - 1, ptr.y - 1, 2, 2);
+    this.cinema(!!this.registry.get('cutscene'));
+  }
+
+  /** Během úvodní scény je vidět jen obraz, pruhy a titulek, žádné HUD ani minimapa. */
+  private cinema(on: boolean): void {
+    (this.scene.get('Game') as GameScene).cameras.getCamera('minimap')?.setVisible(!on);
+    if (on) {
+      const keep = new Set<Phaser.GameObjects.GameObject>([...this.letterbox, this.actTitle, this.skipHint]);
+      this.cinemaHidden ??= new Set();
+      for (const o of this.children.list) {
+        const v = o as unknown as Phaser.GameObjects.Components.Visible;
+        if (keep.has(o) || !v.visible) continue;
+        v.setVisible(false);
+        this.cinemaHidden.add(o);
+      }
+    } else if (this.cinemaHidden) {
+      for (const o of this.cinemaHidden) if (o.active) (o as unknown as Phaser.GameObjects.Components.Visible).setVisible(true);
+      this.cinemaHidden = null;
+    }
   }
 
   private updateMissionHud(): void {
-    const goal = this.registry.get('goal') as GoalHud | undefined;
-    if (goal) {
-      this.goalText.setText(
-        goal.met
-          ? `${goal.area}: cíl splněn ✓${goal.next ? `\n→ ${goal.next} na severu` : ''}`
-          : `Cíl ${goal.area}:\nskóre ${goal.score.toLocaleString('cs-CZ')} / ${goal.scoreGoal.toLocaleString('cs-CZ')}\npeníze ${goal.money.toLocaleString('cs-CZ')} / ${goal.moneyGoal.toLocaleString('cs-CZ')} Kč`,
-      ).setColor(goal.met ? '#9fffa0' : '#c8c0a8');
-    }
+    const act = this.registry.get('act') as string | undefined;
+    this.goalText.setText(act ?? '').setColor('#ffd23f');
 
-    const board = this.registry.get('board') as BoardHud | null;
     const menu = this.registry.get('menu') as MenuHud | null;
-    this.boardBox.setVisible(!!board || !!menu);
-    if (menu && !board) {
+    this.boardBox.setVisible(!!menu);
+    if (menu) {
       this.boardTitle.setText(menu.title).setColor(menu.css);
       this.boardBody.setText(`${menu.lines.join('\n')}${menu.lines.length ? '\n\n' : ''}${menu.hint}`);
     }
-    if (board) {
-      this.boardTitle.setText(`${board.group}: zakázky`).setColor(board.css);
-      this.boardBody.setText(
-        board.refuse
-          ? 'Táhni. S tebou nemluvíme. (Respekt pod −30)'
-          : board.offers
-              .map((o, i) => `[${i + 1}] ${o.tierName}: ${o.title}${o.done ? ' (už splněno)' : ''}\n    ${o.brief}`)
-              .join('\n\n') + '\n\nVyber klávesou 1–3. Během zakázky ji X vzdá.',
-      );
-    }
+
+    // Úvodní scéna: pruhy nahoře a dole, titulek aktu.
+    const cut = this.registry.get('cutscene') as { title: string; hint: string } | null | undefined;
+    const bar = cut ? 56 : 0;
+    for (const r of this.letterbox) r.setSize(this.scale.width, Phaser.Math.Linear(r.height, bar, 0.12));
+    this.letterbox[1].setY(this.scale.height - this.letterbox[1].height);
+    this.actTitle.setText(cut?.title ?? '').setAlpha(Phaser.Math.Linear(this.actTitle.alpha, cut?.title ? 1 : 0, 0.08));
+    this.skipHint.setText(cut?.hint ?? '');
 
     // Výška panelu podle textu (ať nezakrývá panel auta dole).
     if (this.boardBox.visible) this.boardPanel.setSize(520, this.boardBody.height + 64);
 
-    const m = this.registry.get('mission') as MissionHud | null;
-    const tierColor = { green: '#6fd16a', yellow: '#ffd23f', red: '#ff6a5a' };
-    this.missionTitle.setText(m ? `ZAKÁZKA: ${m.title}` : '').setColor(m ? tierColor[m.tier] : '#ffd23f');
-    this.missionObjective.setText(m?.objective ?? '');
+    const m = cut ? null : (this.registry.get('mission') as MissionHud | null);
+    this.missionTitle.setText(m ? m.title : '').setColor('#ffd23f');
+    this.missionObjective.setText(m ? fillText(m.objective) : '');
 
     // Šipka na okraji obrazovky, když je cíl mimo záběr.
     const game = this.scene.get('Game') as GameScene;

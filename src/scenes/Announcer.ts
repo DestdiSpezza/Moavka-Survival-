@@ -1,4 +1,5 @@
 import { Sound } from '../audio/Sound';
+import { fillText } from '../texts/gender';
 import { AnnouncerQueue, type Channel, ROZHLAS_FILLER } from '../systems/announcer';
 import type { GameScene } from './GameScene';
 
@@ -27,7 +28,7 @@ export class Announcer {
   }
 
   say(channel: Channel, text: string, key: string, cooldown = 90): void {
-    this.queue.push({ channel, text, key }, this.now, cooldown);
+    this.queue.push({ channel, text: fillText(text), key }, this.now, cooldown);
   }
 
   update(): void {

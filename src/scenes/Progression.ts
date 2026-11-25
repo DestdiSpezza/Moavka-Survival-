@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { Vehicle } from '../entities/Vehicle';
 import { driftScore, escapeBonus, isDrifting, SCORE, wreckScore } from '../systems/score';
 import { lateralSpeed } from '../systems/vehicleModel';
-import { AREAS, type AreaId, goalMet } from '../world/areas';
+import { AREAS, type AreaId } from '../world/areas';
 import { pixelFont } from './BootScene';
 import type { PedHurtEvent } from './Combat';
 import type { GameScene } from './GameScene';
@@ -15,18 +15,8 @@ interface Exit {
   marker: Phaser.GameObjects.Container;
 }
 
-export interface GoalHud {
-  area: string;
-  score: number;
-  scoreGoal: number;
-  money: number;
-  moneyGoal: number;
-  met: boolean;
-  next: string | null;
-}
-
 /**
- * Postup: skóre za chaos a styl, cíl oblasti, výjezdy do dalších oblastí.
+ * Postup: skóre za chaos a styl a výjezdy do dalších oblastí (otevírá je příběh, ADR-011).
  */
 export class Progression {
   exits: Exit[] = [];
@@ -36,14 +26,12 @@ export class Progression {
   private atFiveFor = 0;
   private fiveRewarded = false;
   private blockedToastAt = -100;
-  private goalAnnounced: boolean;
 
   constructor(private game: GameScene) {
     const area = game.area;
     const { next, prev } = game.world.exits;
     if (area.next) this.addExit(area.next, next.at, next.arrive, '▲');
     if (area.prev && prev) this.addExit(area.prev, prev.at, prev.arrive, '▼');
-    this.goalAnnounced = this.goalReached();
 
     game.events.on('pedHurt', (e: PedHurtEvent) => {
       if (!e.killed || !e.byPlayer) return;
@@ -67,25 +55,10 @@ export class Progression {
     return this.exits.find((e) => e.to === from)?.arrive ?? null;
   }
 
-  goalReached(): boolean {
-    const g = this.game;
-    return goalMet(g.area.id, g.areaScore, g.player.money);
-  }
-
   update(dt: number): void {
     const g = this.game;
     this.scoreDrift(dt);
     this.scoreWantedFive(dt);
-
-    // Cíl oblasti: oznámit jednou a odemknout další oblast.
-    if (!this.goalAnnounced && this.goalReached()) {
-      this.goalAnnounced = true;
-      const next = g.area.next;
-      if (next && !g.progress.unlocked.includes(next)) g.progress.unlocked.push(next);
-      g.events.emit('banner', `${g.area.name.toUpperCase()} JE TVOJE`);
-      g.toast(next ? `Máš tu jméno. Cesta do ${AREAS[next].toName} je otevřená (na severu).` : 'Dokázal jsi to.');
-      g.saveGame(false);
-    }
 
     const focus = g.driving ?? g.player;
     if (!g.player.dead) {
@@ -96,25 +69,18 @@ export class Progression {
         if (!target.playable) {
           if (now - this.blockedToastAt > 4) g.toast(`${target.name} se teprve staví. Přijde v další fázi.`);
           this.blockedToastAt = now;
-        } else if (g.progress.unlocked.includes(e.to)) {
+        } else if (g.progress.unlocked.includes(e.to) || g.story.areaOpen(e.to)) {
+          if (!g.progress.unlocked.includes(e.to)) g.progress.unlocked.push(e.to);
           g.travel(e.to);
           return;
         } else {
-          if (now - this.blockedToastAt > 4) g.toast(`Do ${target.toName} tě pustí, až tady splníš cíl oblasti.`);
+          // Další oblast otevře až příběh (ADR-011).
+          if (now - this.blockedToastAt > 4) g.toast(`Do ${target.toName} se zatím nejede. Nejdřív festival v eRku.`);
           this.blockedToastAt = now;
         }
       }
     }
 
-    g.registry.set('goal', {
-      area: g.area.name,
-      score: g.areaScore,
-      scoreGoal: g.area.goal.score,
-      money: g.player.money,
-      moneyGoal: g.area.goal.money,
-      met: this.goalAnnounced,
-      next: g.area.next ? AREAS[g.area.next].name : null,
-    } satisfies GoalHud);
   }
 
   /** Drift: body za smyk ve vysoké rychlosti, připíšou se, až smyk skončí. */
@@ -142,7 +108,7 @@ export class Progression {
     this.atFiveFor += dt;
     if (this.atFiveFor > 30 && !this.fiveRewarded) {
       this.fiveRewarded = true;
-      this.game.addScore(SCORE.surviveFive, 'Přežil jsi hon');
+      this.game.addScore(SCORE.surviveFive, '{Přežil|Přežila} jsi hon');
     }
   }
 
