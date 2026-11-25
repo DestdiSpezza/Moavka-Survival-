@@ -11,6 +11,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   health = 100;
   armor = 0;
   money = 500;
+  score = 0;
   arsenal: Arsenal = newArsenal();
   dead = false;
   private keys: Keys;

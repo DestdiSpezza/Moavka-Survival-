@@ -96,13 +96,18 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** se dá situace „ukradnu auto → policie → vjedu ke spřáteleným → oni střílí na policii“ odehrát sama od sebe, bez skriptu.
 
-## Fáze 6: Mise a zakázky
+## Fáze 6: Mise a zakázky ✅
 
 - Místa se zakázkami na mapě (u každé skupiny).
 - Obtížnosti podle respektu: 🟢 zelená (vždy), 🟡 žlutá (respekt od cca +30), 🔴 červená (od cca +60).
 - Typy misí jako šablony: ukradni vozidlo, doprav člověka, zlikviduj bosse, znič vozidlo, dovez zásilku, přepadni konvoj, sabotuj objekt, ukradni náklad, ochraň člena, uteč policii, přežij útok.
 - Komplikace, které se náhodně spustí během mise (majitel volá policii, nepřátelská skupina přepadne, auto se rozbije). Mise se tak nedrží jednoho plánu: „Dovez dodávku z Raškovic“ může skončit honičkou, útěkem do lesa a návratem pro dodávku.
 - Odměny: peníze, respekt, skóre.
+- Zadavatelé: Dřevaři u pily, Štamgasti u hospody, Ekologové na hrázi, Škola na hřišti. Nabídka klávesami 1–3, X zakázku vzdá.
+- 13 zakázek (4 Dřevaři, 3 Štamgasti, 3 Ekologové, 3 Škola) pokrývá všech 11 typů.
+- Komplikace: majitel volá policii, přepadení nepřátelskou skupinou, porucha auta, práskač u policie.
+- Selhání žluté nebo červené zakázky stojí respekt; smrt nebo zatčení zakázku ukončí.
+- Členové skupin a policisté pěšky si hledají cestu kolem domů.
 
 **Hotovo, když:** je v první oblasti aspoň 10 zakázek napříč všemi barvami a skupinami a komplikace se objevují bez ručního skriptování.
 

@@ -122,6 +122,8 @@ export class Combat {
 
   private handleWeaponKeys(): void {
     const k = this.keys;
+    // U zadavatele zakázek vybírají čísla zakázku, ne zbraň.
+    if (this.game.missions?.boardOpen) return;
     const pressed = [k.one, k.two, k.three, k.four, k.five].findIndex((key) => Phaser.Input.Keyboard.JustDown(key));
     if (pressed >= 0) this.setArsenal(selectWeapon(this.player.arsenal, WEAPON_ORDER[pressed]));
     if (Phaser.Input.Keyboard.JustDown(k.cycle)) this.setArsenal(cycleWeapon(this.player.arsenal, 1));

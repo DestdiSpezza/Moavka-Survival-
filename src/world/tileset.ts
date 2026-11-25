@@ -340,6 +340,14 @@ export function generateCombat(scene: Phaser.Scene): void {
   });
   cop('cop-swat', 0x1a1a1a, 0x333333, true);
 
+  // Protestní stan Ekologů.
+  make('tent', 24, 18, (g) => {
+    g.fillStyle(0x000000, 0.3).fillEllipse(13, 12, 24, 12);
+    g.fillStyle(0x3aa04a).fillTriangle(2, 16, 12, 2, 22, 16);
+    g.fillStyle(0x2a7a3a).fillTriangle(12, 2, 22, 16, 12, 16);
+    g.fillStyle(0xf2e9d0).fillRect(5, 9, 8, 2);
+  });
+
   make('corpse', 16, 16, (g) => {
     g.fillStyle(0x7a1010, 0.8).fillEllipse(9, 9, 14, 10);
     g.fillStyle(0x3a3a3a).fillEllipse(7, 8, 11, 6);

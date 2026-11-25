@@ -6,6 +6,7 @@ import { pixelFont } from './BootScene';
 import { GROUP_IDS } from '../systems/respect';
 import { GROUPS } from '../world/gangs';
 import type { RespectHud } from './Gangs';
+import type { BoardHud, MissionHud } from './Missions';
 import { type GameScene, MINIMAP, type PlayerHud, type VehicleHud } from './GameScene';
 
 const HP_COLORS: Record<string, number> = { ok: 0x6fd16a, smoke: 0xe0b23a, fire: 0xe0442a };
@@ -33,6 +34,13 @@ export class UIScene extends Phaser.Scene {
   private respectValues: Phaser.GameObjects.Text[] = [];
   private clockText!: Phaser.GameObjects.Text;
   private night!: Phaser.GameObjects.Rectangle;
+  private scoreText!: Phaser.GameObjects.Text;
+  private boardBox!: Phaser.GameObjects.Container;
+  private boardTitle!: Phaser.GameObjects.Text;
+  private boardBody!: Phaser.GameObjects.Text;
+  private missionTitle!: Phaser.GameObjects.Text;
+  private missionObjective!: Phaser.GameObjects.Text;
+  private arrow!: Phaser.GameObjects.Triangle;
   private lastZone = '';
   private wasExhausted = false;
   private wasInForest = false;
@@ -66,6 +74,19 @@ export class UIScene extends Phaser.Scene {
     this.moneyText = this.add.text(width - 16, 16, '', pixelFont(24, '#6fd16a')).setOrigin(1, 0).setStroke('#000', 5);
     this.weaponText = this.add.text(width - 16, 50, '', pixelFont(18, '#f2e9d0')).setOrigin(1, 0).setStroke('#000', 4);
     this.ammoText = this.add.text(width - 16, 74, '', pixelFont(16, '#ffd23f')).setOrigin(1, 0).setStroke('#000', 4);
+    this.scoreText = this.add.text(width - 16, 96, '', pixelFont(14, '#c8c0a8')).setOrigin(1, 0).setStroke('#000', 4);
+
+    // Zakázka: název a úkol pod hodinami, šipka k cíli na okraji obrazovky.
+    this.missionTitle = this.add.text(width / 2, 70, '', pixelFont(16, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 4);
+    this.missionObjective = this.add.text(width / 2, 92, '', pixelFont(15, '#ffffff')).setOrigin(0.5, 0).setStroke('#000', 4);
+    this.arrow = this.add.triangle(0, 0, 0, -9, 18, 0, 0, 9, 0xffd23f).setStrokeStyle(2, 0x000000).setVisible(false);
+
+    // Nabídka zakázek u zadavatele.
+    const panel = this.add.rectangle(0, 0, 520, 250, 0x111111, 0.88).setOrigin(0.5, 0).setStrokeStyle(2, 0xf2e9d0);
+    this.boardTitle = this.add.text(0, 12, '', pixelFont(20, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 4);
+    this.boardBody = this.add.text(-245, 46, '', { ...pixelFont(14), wordWrap: { width: 490 }, lineSpacing: 4 });
+    // Vpravo od panelu respektu, aby ho nezakrývala.
+    this.boardBox = this.add.container(width / 2 + 110, height / 2 - 70, [panel, this.boardTitle, this.boardBody]).setVisible(false);
 
     this.crosshair = this.add.graphics().setDepth(100);
     this.deathText = this.add.text(width / 2, height / 2 - 40, T.died, pixelFont(64, '#d94040')).setOrigin(0.5).setStroke('#000', 8).setVisible(false);
@@ -107,7 +128,7 @@ export class UIScene extends Phaser.Scene {
     const game = this.scene.get('Game');
     game.events.on('toast', (text: string) => this.say(text));
     game.events.on('banner', (text: string) => {
-      this.deathText.setText(text).setColor(text === T.died ? '#d94040' : '#6a9aff');
+      this.deathText.setText(text).setColor(text === T.died ? '#d94040' : text === T.busted ? '#6a9aff' : '#ffd23f');
       this.deathText.setVisible(true).setAlpha(0);
       this.tweens.add({ targets: this.deathText, alpha: 1, duration: 500, hold: 900, yoyo: true, onComplete: () => this.deathText.setVisible(false) });
     });
@@ -157,6 +178,9 @@ export class UIScene extends Phaser.Scene {
       this.ammoText.setText(me.ammo === null ? '' : String(me.ammo));
     }
 
+    if (me) this.scoreText.setText(`Skóre ${me.score.toLocaleString('cs-CZ')}`);
+    this.updateMissionHud();
+
     const gangs = this.registry.get('gangs') as RespectHud | undefined;
     if (gangs) {
       GROUP_IDS.forEach((id, i) => {
@@ -186,6 +210,47 @@ export class UIScene extends Phaser.Scene {
     this.crosshair.strokeCircle(ptr.x, ptr.y, 7);
     this.crosshair.lineStyle(1, 0xffffff, 1).strokeCircle(ptr.x, ptr.y, 7);
     this.crosshair.fillStyle(0xffffff).fillRect(ptr.x - 1, ptr.y - 1, 2, 2);
+  }
+
+  private updateMissionHud(): void {
+    const board = this.registry.get('board') as BoardHud | null;
+    this.boardBox.setVisible(!!board);
+    if (board) {
+      this.boardTitle.setText(`${board.group}: zakázky`).setColor(board.css);
+      this.boardBody.setText(
+        board.refuse
+          ? 'Táhni. S tebou nemluvíme. (Respekt pod −30)'
+          : board.offers
+              .map((o, i) => `[${i + 1}] ${o.tierName}: ${o.title}${o.done ? ' (už splněno)' : ''}\n    ${o.brief}`)
+              .join('\n\n') + '\n\nVyber klávesou 1–3. Během zakázky ji X vzdá.',
+      );
+    }
+
+    const m = this.registry.get('mission') as MissionHud | null;
+    const tierColor = { green: '#6fd16a', yellow: '#ffd23f', red: '#ff6a5a' };
+    this.missionTitle.setText(m ? `ZAKÁZKA: ${m.title}` : '').setColor(m ? tierColor[m.tier] : '#ffd23f');
+    this.missionObjective.setText(m?.objective ?? '');
+
+    // Šipka na okraji obrazovky, když je cíl mimo záběr.
+    const game = this.scene.get('Game') as GameScene;
+    const cam = game.cameras.main;
+    if (!m?.target) {
+      this.arrow.setVisible(false);
+      return;
+    }
+    const sx = (m.target.x - cam.worldView.x) * cam.zoom;
+    const sy = (m.target.y - cam.worldView.y) * cam.zoom;
+    const { width, height } = this.scale;
+    const margin = 40;
+    const inside = sx > margin && sx < width - margin && sy > margin && sy < height - margin;
+    this.arrow.setVisible(!inside);
+    if (!inside) {
+      const cx = width / 2;
+      const cy = height / 2;
+      const angle = Math.atan2(sy - cy, sx - cx);
+      const t = Math.min((width / 2 - margin) / Math.abs(Math.cos(angle) || 1e-6), (height / 2 - margin) / Math.abs(Math.sin(angle) || 1e-6));
+      this.arrow.setPosition(cx + Math.cos(angle) * t, cy + Math.sin(angle) * t).setRotation(angle);
+    }
   }
 
   private say(text: string): void {

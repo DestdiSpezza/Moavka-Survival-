@@ -30,6 +30,13 @@ export class Pedestrian extends Phaser.Physics.Arcade.Sprite {
   fleeUntil = 0;
   /** Útočí na policii (policisté pak střílí po něm). */
   attacksPolice = false;
+  /** Postavu řídí zakázka (Franta, Jarda), ne běžné chování skupiny. */
+  scripted = false;
+  /** Naplánovaná cesta pěšky kolem domů (body v px), kam vede a kdy byla spočítaná. */
+  navPath: Array<{ x: number; y: number }> | null = null;
+  navIdx = 0;
+  navGoal: { x: number; y: number } | null = null;
+  navAt = -100;
 
   constructor(scene: Phaser.Scene, x: number, y: number, look: number, tough: boolean, texture?: string, hp?: number) {
     super(scene, x, y, texture ?? `ped-${look}`);

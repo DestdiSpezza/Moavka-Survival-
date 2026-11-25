@@ -8,7 +8,7 @@ import { lineOfSight } from '../systems/sight';
 import { angleDiff, steerToward } from '../systems/trafficAi';
 import type { DriveInput } from '../systems/vehicleModel';
 import {
-  addCrime, arrestFine, type CrimeKind, newWanted, responseFor, swapCar, tickWanted, type Wanted,
+  addCrime, arrestFine, type CrimeKind, LEVEL_HEAT, newWanted, responseFor, swapCar, tickWanted, type Wanted,
 } from '../systems/wanted';
 import { T } from '../texts/cs';
 import { findFreeTile } from '../world/pickups';
@@ -127,6 +127,14 @@ export class Police {
     const before = this.wanted.level;
     this.wanted = addCrime(this.wanted, e.kind, e);
     if (this.wanted.level > before) this.game.toast(T.radio[this.wanted.level]);
+  }
+
+  /** Zvedne hledanost aspoň na danou úroveň (zakázky, komplikace). */
+  raiseTo(level: number, at: Point): void {
+    if (this.wanted.level >= level) return;
+    const heat = LEVEL_HEAT[level];
+    this.wanted = { heat, level, unseen: -10, lastSeen: { x: at.x, y: at.y } };
+    this.game.toast(T.radio[level]);
   }
 
   /** Hráč přesedl do jiného auta: když ho zrovna nikdo nevidí, policie ztrácí stopu. */
@@ -495,9 +503,7 @@ export class Police {
   }
 
   private walkTo(p: Pedestrian, to: Point, speed: number): number {
-    const angle = Phaser.Math.Angle.Between(p.x, p.y, to.x, to.y);
-    p.setRotation(angle);
-    this.game.physics.velocityFromRotation(angle, speed, (p.body as Phaser.Physics.Arcade.Body).velocity);
+    this.game.walkTo(p, to, speed);
     return Phaser.Math.Distance.Between(p.x, p.y, to.x, to.y);
   }
 

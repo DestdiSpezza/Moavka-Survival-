@@ -1,10 +1,13 @@
 import Phaser from 'phaser';
 import { TILE, WORLD_ZOOM } from '../config';
 import { Player } from '../entities/Player';
+import type { Pedestrian } from '../entities/Pedestrian';
 import { Vehicle } from '../entities/Vehicle';
 import { WEAPONS } from '../systems/combat';
 import { explosionDamageAt, EXPLOSION_RADIUS } from '../systems/damage';
+import { findPath } from '../systems/pathfind';
 import { createRng } from '../systems/rng';
+import { lineOfSight } from '../systems/sight';
 import { isAhead, type Point, steerToward } from '../systems/trafficAi';
 import { type DriveInput, surfaceFor, toKmh } from '../systems/vehicleModel';
 import { T } from '../texts/cs';
@@ -15,6 +18,7 @@ import { parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicle
 import { pixelFont } from './BootScene';
 import { Combat } from './Combat';
 import { Gangs } from './Gangs';
+import { Missions } from './Missions';
 import { Police } from './Police';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
@@ -24,6 +28,9 @@ const CRUISE = 90;
 
 interface Traffic {
   path: Point[];
+  /** Auto zakázky (konvoj): na konci trasy zastaví a nezmizí. */
+  noRespawn?: boolean;
+  arrived?: boolean;
   idx: number;
   cruise: number;
   waited: number;
@@ -39,6 +46,7 @@ export interface PlayerHud {
   armor: number;
   money: number;
   weapon: string;
+  score: number;
   /** null = zbraň bez munice (pěsti, pálka). */
   ammo: number | null;
 }
@@ -62,6 +70,7 @@ export class GameScene extends Phaser.Scene {
   combat!: Combat;
   police!: Police;
   gangs!: Gangs;
+  missions!: Missions;
   layer!: Phaser.Tilemaps.TilemapLayer;
   /** Deterministická náhoda pro celou scénu. */
   readonly random = createRng(99);
@@ -147,6 +156,7 @@ export class GameScene extends Phaser.Scene {
     this.combat = new Combat(this);
     this.police = new Police(this);
     this.gangs = new Gangs(this);
+    this.missions = new Missions(this);
     this.input.setDefaultCursor('none');
     this.scene.launch('UI');
   }
@@ -167,6 +177,22 @@ export class GameScene extends Phaser.Scene {
       v.driver = 'npc';
       this.traffic.set(v, { path, idx: idx + 1, cruise: Math.min(CRUISE, v.spec.params.maxSpeed * 0.85), waited: 0, ignoreUntil: 0, honkedAt: -10, stuck: 0, reverseUntil: 0 });
     }
+  }
+
+  /** Auto v provozu na zadané trase (zakázky: konvoj). */
+  addTrafficVehicle(kind: VehicleKind, pathIndex: number, idx: number, noRespawn: boolean): Vehicle {
+    const path = this.paths[pathIndex];
+    const from = path[idx];
+    const to = path[idx + 1];
+    const v = this.addVehicle(kind, from.x, from.y, Math.atan2(to.y - from.y, to.x - from.x), 0);
+    v.driver = 'npc';
+    this.traffic.set(v, { path, idx: idx + 1, cruise: Math.min(CRUISE, v.spec.params.maxSpeed * 0.85), waited: 0, ignoreUntil: 0, honkedAt: -10, stuck: 0, reverseUntil: 0, noRespawn });
+    return v;
+  }
+
+  /** Dojelo auto zakázky na konec trasy? */
+  trafficArrived(v: Vehicle): boolean {
+    return !!this.traffic.get(v)?.arrived;
   }
 
   addVehicle(kind: VehicleKind, x: number, y: number, angle: number, variant: number): Vehicle {
@@ -224,15 +250,52 @@ export class GameScene extends Phaser.Scene {
     this.combat.update(dt);
     this.police.update(dt);
     this.gangs.update(dt);
+    this.missions.update(dt);
     const a = this.player.arsenal;
     const def = WEAPONS[a.current];
     this.registry.set('player', {
       health: this.player.health,
       armor: this.player.armor,
       money: this.player.money,
+      score: this.player.score,
       weapon: def.name,
       ammo: def.melee ? null : a.ammo[a.current],
     } satisfies PlayerHud);
+  }
+
+  /**
+   * Chůze k cíli: když je cesta volná, jde přímo; jinak si naplánuje cestu
+   * kolem domů a řeky (přepočítá ji, když se cíl pohne nebo uplyne chvíle).
+   */
+  walkTo(p: Pedestrian, to: Point, speed: number): void {
+    const now = this.time.now / 1000;
+    let target: Point = to;
+    if (!lineOfSight(this.world.tiles, TILE, p, to, isSolid)) {
+      const stale = !p.navPath || now - p.navAt > 1.5 || !p.navGoal || Phaser.Math.Distance.Between(p.navGoal.x, p.navGoal.y, to.x, to.y) > 32;
+      if (stale) {
+        const path = findPath(
+          this.world.tiles,
+          [Math.floor(p.x / TILE), Math.floor(p.y / TILE)],
+          [Math.floor(to.x / TILE), Math.floor(to.y / TILE)],
+          (t) => (isSolid(t) ? Infinity : 1),
+          4000,
+        );
+        p.navPath = path ? path.map(([x, y]) => ({ x: (x + 0.5) * TILE, y: (y + 0.5) * TILE })) : null;
+        p.navIdx = 0;
+        p.navGoal = { x: to.x, y: to.y };
+        p.navAt = now;
+      }
+      const path = p.navPath;
+      if (path?.length) {
+        while (p.navIdx < path.length - 1 && Phaser.Math.Distance.Between(p.x, p.y, path[p.navIdx].x, path[p.navIdx].y) < 8) p.navIdx++;
+        target = path[Math.min(p.navIdx + 1, path.length - 1)];
+      }
+    } else {
+      p.navPath = null;
+    }
+    const angle = Phaser.Math.Angle.Between(p.x, p.y, target.x, target.y);
+    p.setRotation(angle);
+    this.physics.velocityFromRotation(angle, speed, (p.body as Phaser.Physics.Arcade.Body).velocity);
   }
 
   tileAt(x: number, y: number): number {
@@ -354,6 +417,10 @@ export class GameScene extends Phaser.Scene {
       target = t.path[t.idx];
     }
     if (!target) {
+      if (t.noRespawn) {
+        t.arrived = true;
+        return { throttle: -1, steer: 0, handbrake: true };
+      }
       // Konec trasy: když to hráč nevidí, auto „odjede“ a objeví se jinde.
       if (!this.inView(v.x, v.y)) this.respawnTraffic(v, t);
       return { throttle: -1, steer: 0, handbrake: false };
@@ -431,7 +498,12 @@ export class GameScene extends Phaser.Scene {
     if (wasInside) this.exitVehicle();
     v.driver = 'none';
     this.traffic.delete(v);
+    this.explodeAt(x, y, v);
+    if (wasInside && !this.player.dead) this.toast(T.explodedInside);
+  }
 
+  /** Výbuch na místě (auto, nálož): efekt, zranění lidí a řetězová reakce aut. */
+  explodeAt(x: number, y: number, source?: Vehicle): void {
     const flash = this.add.circle(x, y, EXPLOSION_RADIUS * 0.6, 0xfff0a0, 0.9).setDepth(15).setBlendMode('ADD');
     this.tweens.add({ targets: flash, scale: 1.8, alpha: 0, duration: 380, onComplete: () => flash.destroy() });
     const burst = this.add.particles(x, y, 'puff', {
@@ -449,12 +521,11 @@ export class GameScene extends Phaser.Scene {
     if (Phaser.Math.Distance.Between(cam.midPoint.x, cam.midPoint.y, x, y) < 300) cam.shake(250, 0.006);
 
     this.combat.explosionAt(x, y);
-    if (wasInside && !this.player.dead) this.toast(T.explodedInside);
 
     // Řetězová reakce: výbuch poškodí auta okolo (zpožděně, ať to bouchá postupně).
     this.time.delayedCall(120, () => {
       for (const o of this.vehicles) {
-        if (o === v || o.wrecked) continue;
+        if (o === source || o.wrecked) continue;
         o.damage(explosionDamageAt(Phaser.Math.Distance.Between(x, y, o.x, o.y)));
       }
     });

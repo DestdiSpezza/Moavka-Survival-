@@ -107,6 +107,21 @@ export class Gangs {
 
   // ---------- Členové ----------
 
+  /** Člen skupiny na daném místě (pro zakázky: šéfové, strážci, přepadení). */
+  spawnAt(g: GroupId, x: number, y: number, hpMul = 1): Pedestrian {
+    const spec = GROUPS[g];
+    const m = new Pedestrian(this.game, x, y, 0, true, `gang-${g}`, Math.round(spec.hp * hpMul));
+    m.role = 'gang';
+    m.group = g;
+    m.home = { x, y };
+    m.mood = 'idle';
+    m.setOrigin(8 / m.width, 0.5);
+    this.game.cameras.getCamera('minimap')?.ignore(m);
+    this.game.combat.peds.push(m);
+    this.members.push(m);
+    return m;
+  }
+
   private spawnMember(g: GroupId, offscreen: boolean): void {
     const spots = this.spawnSpots[g];
     for (let tries = 0; tries < 30; tries++) {
@@ -114,16 +129,7 @@ export class Gangs {
       const x = (tx + 0.5) * TILE;
       const y = (ty + 0.5) * TILE;
       if (offscreen && this.game.inView(x, y)) continue;
-      const spec = GROUPS[g];
-      const m = new Pedestrian(this.game, x, y, 0, true, `gang-${g}`, spec.hp);
-      m.role = 'gang';
-      m.group = g;
-      m.home = { x, y };
-      m.mood = 'idle';
-      m.setOrigin(8 / m.width, 0.5);
-      this.game.cameras.getCamera('minimap')?.ignore(m);
-      this.game.combat.peds.push(m);
-      this.members.push(m);
+      this.spawnAt(g, x, y);
       return;
     }
   }
@@ -153,7 +159,7 @@ export class Gangs {
   }
 
   private updateMember(m: Pedestrian, dt: number): void {
-    if (!m.alive || !m.active || !m.group) return;
+    if (!m.alive || !m.active || !m.group || m.scripted) return;
     const g = m.group;
     const spec = GROUPS[g];
     const now = this.now;
@@ -216,7 +222,7 @@ export class Gangs {
       }
       return;
     }
-    this.walk(m, angle, speed);
+    this.game.walkTo(m, pos, speed);
   }
 
   /** Rozhodne, na koho člen půjde (pokud zrovna na nikoho nejde). */
@@ -283,7 +289,7 @@ export class Gangs {
   }
 
   /** Člen jde na cíl; na hráče s výkřikem „To je on!“ a přidají se kamarádi okolo. */
-  private engage(m: Pedestrian, foe: Pedestrian | 'player', alertFriends: boolean): void {
+  engage(m: Pedestrian, foe: Pedestrian | 'player', alertFriends: boolean): void {
     m.foe = foe;
     m.foeUntil = this.now + 25;
     // Nápřah: první rána nepřijde okamžitě, hráč má šanci reagovat.
