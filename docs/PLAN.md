@@ -41,7 +41,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** se dá volně procházet celou první mapou a nikde se nejde projít zdí.
 
-## Fáze 2: Vozidla
+## Fáze 2: Vozidla ✅
 
 - Nástup a výstup (klávesa E), krádež zaparkovaného auta i vyhození řidiče.
 - Jízdní model shora: zrychlení, brzda, smyk, ruční brzda, rozdílné chování na silnici, šotolině a v trávě.

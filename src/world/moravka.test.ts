@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMoravka, DAM_Y, MAP_H, MAP_W, zoneAt, type WorldMap } from './moravka';
+import { buildMoravka, CROSS_ROAD_Y, DAM_Y, mainRoadX, MAP_H, MAP_W, riverX, zoneAt, type WorldMap } from './moravka';
 import { isSolid, Tile } from './tiles';
 
 const map = buildMoravka();
@@ -66,10 +66,16 @@ describe('mapa Morávky', () => {
     }
   });
 
-  it('budovy nestojí ve vodě ani na silnici', () => {
+  it('budovy nestojí v řece ani na silnici', () => {
     for (const b of map.buildings) {
       for (let y = b.y; y < b.y + b.h; y++) {
-        for (let x = b.x; x < b.x + b.w; x++) expect(map.tiles[y][x], `${b.name} @${x},${y}`).toBe(b.roof);
+        for (let x = b.x; x < b.x + b.w; x++) {
+          const where = `${b.name} @${x},${y}`;
+          expect(map.tiles[y][x], where).toBe(b.roof);
+          expect(Math.abs(x - riverX(y)) > 1, `${where} v řece`).toBe(true);
+          expect(x === mainRoadX(y) || x === mainRoadX(y) + 1, `${where} na hlavní silnici`).toBe(false);
+          expect(y === CROSS_ROAD_Y || y === CROSS_ROAD_Y + 1, `${where} na příčné silnici`).toBe(false);
+        }
       }
     }
   });

@@ -113,7 +113,9 @@ export function buildMoravka(seed = 1234): WorldMap {
     buildings.push({ name, x, y, w, h, roof });
   };
 
-  const roadE = mainRoadX(CROSS_ROAD_Y) + 3;
+  // Náves stojí východně od silnice; silnice se vlní, proto bereme její nejvýchodnější bod v okolí.
+  let roadE = 0;
+  for (let y = CROSS_ROAD_Y - 12; y <= CROSS_ROAD_Y + 14; y++) roadE = Math.max(roadE, mainRoadX(y) + 3);
   // Náves u křižovatky.
   building('Hospoda', roadE, CROSS_ROAD_Y - 8, 8, 6, Tile.RoofBrown);
   building('Obchod', roadE + 10, CROSS_ROAD_Y - 6, 6, 4, Tile.RoofRed);
