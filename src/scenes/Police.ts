@@ -157,7 +157,7 @@ export class Police {
     this.wanted = addCrime(this.wanted, r.kind, r.at);
     // Policista ví přesně; svědek jen přibližně, starší přesný popis nepřepíše.
     this.wanted.description = r.seen || !old ? r.description : old;
-    if (this.wanted.level > before) this.game.toast(T.radio[this.wanted.level]);
+    if (this.wanted.level > before) this.game.toast(this.radioLine(this.wanted.level));
     const popis = describeText(this.wanted.description, T.village.person);
     this.game.announcer.say('radio', T.village.radioWanted.replace('{popis}', popis).replace('{místo}', this.placeName(r.at)), 'wanted', 45);
   }
@@ -166,7 +166,7 @@ export class Police {
   reportNpc(suspect: NpcSuspect, what: string, at: Point, cause: number | null): void {
     const g = this.game;
     if (this.wanted.level >= 2 || this.units.some((u) => u.mode === 'npc')) {
-      g.announcer.say('radio', T.village.radioBusy, 'busy', 120);
+      g.announcer.say('radio', this.wanted.level >= 2 ? T.village.radioBusyPlayer : T.village.radioBusy, 'busy', 120);
       return;
     }
     const nearest: Unit | undefined = this.units
@@ -182,7 +182,9 @@ export class Police {
     const id = g.logEvent('dispatch', `hlídka vyjíždí (${what})`, unit.car, ['police'], [cause], [unit.car]);
     suspect.caseId = id;
     for (const e of [suspect.vehicle, suspect.ped]) if (e) { e.lastEventId = id; e.lastEventAt = this.now; }
-    g.announcer.say('radio', T.village.radioNpcChase.replace('{kdo}', suspect.label).replace('{místo}', this.placeName(at)), 'npc-chase', 60);
+    const tails = T.village.radioNpcChaseTail;
+    const tail = suspect.ped?.role === 'animal' ? tails.boar : suspect.vehicle ? tails.vehicle : tails.ped;
+    g.announcer.say('radio', T.village.radioNpcChase.replace('{kdo}', suspect.label).replace('{místo}', this.placeName(at)).replace('{dodatek}', tail), 'npc-chase', 60);
   }
 
   /** Podezřelé auto odjelo z vesnice: honička končí. */
@@ -224,7 +226,12 @@ export class Police {
     if (this.wanted.level >= level) return;
     const heat = LEVEL_HEAT[level];
     this.wanted = { heat, level, unseen: -10, lastSeen: { x: at.x, y: at.y }, description: describe(this.game.playerAppearance(), !this.game.driving) };
-    this.game.toast(T.radio[level]);
+    this.game.toast(this.radioLine(level));
+  }
+
+  /** Hláška vysílačky k úrovni hledanosti (s názvem oblasti: „do Morávky“, „do Raškovic“). */
+  private radioLine(level: number): string {
+    return T.radio[level].replace('{oblast}', this.game.area.toName);
   }
 
   /** Hráč přesedl do jiného auta: když ho zrovna nikdo nevidí, policie ztrácí stopu. */
@@ -576,7 +583,8 @@ export class Police {
       }
       const cop = this.spawnCop(x, y, u.swat, u);
       cop.npcTarget = s;
-      if (i === 0) this.game.floatText(cop.ped.x, cop.ped.y - 10, pick(T.copShout, this.game.random), '#9fc4ff', 1600);
+      const shout = s.ped?.role === 'animal' ? T.copShoutBoar : s.vehicle ? T.copShoutDriver : T.copShoutPed;
+      if (i === 0) this.game.floatText(cop.ped.x, cop.ped.y - 10, pick(shout, this.game.random), '#9fc4ff', 1600);
     }
     u.crew = 0;
     if (s.vehicle) this.game.holdTraffic(s.vehicle, 20);
@@ -734,7 +742,7 @@ export class Police {
     const t = s.ped ?? s.vehicle!;
     const boar = s.ped?.role === 'animal';
     g.floatText(c.ped.x, c.ped.y - 10, pick(boar ? T.village.arrestedBoar : T.village.arrested, g.random), '#9fc4ff', 1800);
-    const reply = boar ? T.village.arrestedBoarReply : T.village.arrestedNpc;
+    const reply = boar ? T.village.arrestedBoarReply : s.vehicle ? T.village.arrestedDriver : T.village.arrestedPed;
     if (g.inView(t.x, t.y)) g.time.delayedCall(700, () => g.floatText(t.x, t.y - 10, pick(reply, g.random), '#ffffff', 1800));
     g.logEvent('arrest', `zadržen: ${s.label}`, t, ['police'], [s.caseId ?? g.causeOf(t)]);
     g.announcer.say('radio', T.village.radioNpcArrest.replace('{kdo}', s.label), 'npc-arrest', 60);

@@ -4,7 +4,8 @@ import { reactToObstacle, rollDriver } from './drivers';
 import { EventLog, validCause } from './eventLog';
 import { createRng } from './rng';
 import { newRoster, REGEN_SECONDS, returnOfficers, takeOfficers, tickRoster } from './roster';
-import { callChance, describe as describeOf, describeText, mistaken, recognizes, vehicleText } from './witness';
+import { T } from '../texts/cs';
+import { callChance, describe as describeOf, describeText, mistaken, recognizes, vehicleText, vehicleGenitive } from './witness';
 
 describe('deník událostí', () => {
   it('poskládá řetězec příčin a spočítá systémy', () => {
@@ -131,5 +132,26 @@ describe('rozhlas', () => {
     expect(q.next(12, 6)).toBeNull();
     expect(q.next(17, 6)?.key).toBe('chase');
     expect(q.push({ channel: 'rozhlas', text: 'prase', key: 'boar' }, 70, 60)).toBe(true);
+  });
+});
+
+describe('hlášky policie', () => {
+  it('vozidlo ve 2. pádě: řidiče bílé dodávky, červeného osobáku', () => {
+    expect(vehicleGenitive({ kind: 'dodavka', color: 'bily' })).toBe('bílé dodávky');
+    expect(vehicleGenitive({ kind: 'osobak', color: 'cerveny' })).toBe('červeného osobáku');
+    expect(vehicleGenitive({ kind: 'zasahovka', color: 'cerny' })).toBe('černé zásahovky');
+    expect(vehicleGenitive({ kind: 'kolo', color: 'zeleny' })).toBe('zeleného kola');
+    expect(vehicleGenitive({ kind: 'policie', color: 'policejni' })).toBe('policejního auta');
+  });
+
+  it('vysílačka se po dosazení oblasti obejde bez zástupných znaků a sedí i na Raškovice', () => {
+    for (const area of ['Morávky', 'Raškovic']) {
+      for (const line of T.radio) expect(line.replace('{oblast}', area)).not.toMatch(/[{}]/);
+    }
+    expect(T.radio[1].replace('{oblast}', 'Raškovic')).toContain('do Raškovic');
+  });
+
+  it('„čírko“ policie křičí jen na hráče, ne na řidiče, chodce ani prase', () => {
+    for (const list of [T.copShoutDriver, T.copShoutPed, T.copShoutBoar]) for (const l of list) expect(l).not.toMatch(/čír/);
   });
 });

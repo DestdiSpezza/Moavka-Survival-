@@ -39,7 +39,6 @@ export const T = {
   },
   /** Co křičí chodci, když začne střelba nebo bitka. */
   panic: ['Ježišmarjá!', 'Pomóóóc!', 'Utíkej, Mařeno!', 'To snad ne!', 'Já tu nebyl!'],
-  callPolice: ['Haló, policie? Zase on!', 'Volám fízly!', 'Tady Morávka, střílí se!'],
   toughAngry: ['Ty seš mrtvej, punkáči!', 'Pojď sem, ty čírko!', 'To si vypiješ!'],
   died: 'ZMAR',
   busted: 'ZATČEN',
@@ -47,15 +46,22 @@ export const T = {
   /** Policejní vysílačka při zvýšení hledanosti (index = úroveň). */
   radio: [
     '',
-    'Vysílačka: Hlídka do Morávky, nějaký punkáč tam řádí.',
+    'Vysílačka: Hlídka do {oblast}, nějaký punkáč tam řádí.',
     'Vysílačka: Posíláme další auta. Kafe počká.',
     'Vysílačka: Uzavíráme silnice. Zátarasy!',
     'Vysílačka: Vyjíždí zásahovka z Frýdku. Konečně akce.',
-    'Vysílačka: Všechny jednotky na Morávku. I ten důchodce se služebním kolem.',
+    'Vysílačka: Všechny jednotky do {oblast}. I ten důchodce se služebním kolem.',
   ],
   radioLost: 'Vysílačka: Ztratili jsme ho. Asi zalezl do lesa ke klíšťatům.',
   radioSwap: 'Vysílačka: Hledáme… ehm, jaké to mělo auto?',
+  /** Na hráče (punkáč s čírem). */
   copShout: ['Stůj, policie!', 'Na zem!', 'Ruce vzhůru, čírko!', 'Máš to spočítaný!'],
+  /** Na řidiče, kterého hlídka zastavila. */
+  copShoutDriver: ['Policie! Vypněte motor!', 'Vystupte z vozidla, pomalu!', 'Ruce na volant, ať je vidím!'],
+  /** Na chodce (rváč od nehody). */
+  copShoutPed: ['Stůj, policie!', 'Klid, pane, policie!', 'Ruce za hlavu a nehádat se!'],
+  /** Na omráčeného divočáka. */
+  copShoutBoar: ['Stůj, prase! Policie!', 'Čuníku, zůstaň, kde jsi!', 'Kolego, máš tu síť?'],
   wokeUp: 'Probudil ses ve zdravotním středisku. Doktor si vzal {lost} Kč a zbraně ti zabavili.',
   stamina: 'Dech',
   /** Hlášky, když hráč vleze do lesa nebo se zadýchá. */
@@ -85,7 +91,8 @@ export const T = {
     fled: ['Čau, frajere!', 'Pojišťovna ať mi vleze na záda!'],
     runOverStop: ['Ježiš, já ho neviděl! Byl za zatáčkou!', 'On mi tam vlez! Fakt!', 'Jste v pořádku? Ne? No… tak já jedu.'],
     arrested: ['Zatčen! Pojedete s námi, pane.', 'Ruce na kapotu!', 'Tak to vysvětlíte na služebně.'],
-    arrestedNpc: ['To není moje auto, pane strážmistr!', 'Já byl jen pro rohlíky!', 'Můžu si aspoň dopít pivo?'],
+    arrestedDriver: ['To není moje auto, pane strážmistr!', 'Já jel jen pro rohlíky!', 'Foukat nebudu, mám rýmu!'],
+    arrestedPed: ['On začal!', 'Já ho jen objal. Silně.', 'Můžu si aspoň dopít pivo?'],
     boarHit: ['Divočák! Ty bláho, ten mi zničil nárazník!'],
     boarCharge: ['GRUUUNT!'],
     boarDazed: ['*omráčeně chrochtá*', '*kouká na hvězdičky*'],
@@ -94,10 +101,17 @@ export const T = {
     rozhlasBoar: 'Upozorňujeme občany, že se v lokalitě {místo} pohybuje divoké prase. Neprovokujte ho, je to místní.',
     rozhlasCrash: 'V lokalitě {místo} se stala dopravní nehoda. Řidiči se hádají. Kdo dřív přijde, ten se dřív dívá.',
     rozhlasDrunk: 'Hospodský upozorňuje, že pan Franta odjel autem. Prosíme občany, ať nechodí po silnici.',
-    radioWanted: 'Policie pátrá po pachateli: {popis}. Naposledy viděn v lokalitě {místo}.',
-    radioNpcChase: 'Hlídka pronásleduje {kdo}, lokalita {místo}. Řidiči, uhněte. Nebo ne, ať je to zábava.',
+    radioWanted: 'Policie pátrá po pachateli. Popis: {popis}. Naposledy viděn v lokalitě {místo}.',
+    radioNpcChase: 'Hlídka pronásleduje {kdo} v lokalitě {místo}. {dodatek}',
+    /** Dovětek k honičce podle toho, koho honí: auto, chodce, prase. */
+    radioNpcChaseTail: {
+      vehicle: 'Řidiči, uhněte. Nebo ne, ať je zábava.',
+      ped: 'Občané, nepleťte se jim pod nohy.',
+      boar: 'Prase se prý brání výslechu.',
+    },
     radioNpcArrest: 'Policie zadržela {kdo}. Další den, další hrdina.',
     radioNpcEscaped: 'Hlídka ztratila z dohledu {kdo}. Zklamaně jde na oběd.',
-    radioBusy: 'Policie nemá volné hlídky. Volejte znovu, až se uklidní situace s tím punkáčem.',
+    radioBusy: 'Policie nemá volnou hlídku. Volejte znovu, až dojedí svačinu.',
+    radioBusyPlayer: 'Policie nemá volnou hlídku, všechny honí toho punkáče. Ostatní zločiny počkají.',
   },
 } as const;

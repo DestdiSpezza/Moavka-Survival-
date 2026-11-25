@@ -3,7 +3,7 @@ import { Pedestrian } from '../entities/Pedestrian';
 import type { Vehicle } from '../entities/Vehicle';
 import { isEvening } from '../systems/clock';
 import { CRASH_SPEED } from '../systems/drivers';
-import { vehicleText } from '../systems/witness';
+import { vehicleGenitive } from '../systems/witness';
 import { T } from '../texts/cs';
 import { placeLabel } from '../world/areas';
 import { zoneAt } from '../world/moravka';
@@ -236,7 +236,7 @@ export class Incidents {
       const vic = arg.peds[arg.aggressor ? 0 : 1];
       const id = g.logEvent('fled', 'řidič ujel od nehody', car, ['traffic'], [arg.eventId], [car]);
       this.reboard(att, car, true);
-      g.witnesses.npcCrime('hitAndRun', car, { vehicle: car, label: `řidiče: ${vehicleText({ kind: car.spec.kind, color: car.paint })}` }, id, vic);
+      g.witnesses.npcCrime('hitAndRun', car, { vehicle: car, label: `řidiče ${vehicleGenitive({ kind: car.spec.kind, color: car.paint })}` }, id, vic);
       // Poškozený odjede, až domluví s policií.
       this.reboardAfterCall(vic, arg.cars[arg.aggressor ? 0 : 1], 9000);
       arg.phase = 'leave';
@@ -289,7 +289,7 @@ export class Incidents {
     if (this.now - (this.runOverAt.get(victim) ?? -100) < 3) return;
     this.runOverAt.set(victim, this.now);
     const id = g.logEvent('run-over', 'auto srazilo chodce', victim, ['traffic', 'crowd'], [g.causeOf(v), g.causeOf(victim)], [v]);
-    const label = `řidiče: ${vehicleText({ kind: v.spec.kind, color: v.paint })}`;
+    const label = `řidiče ${vehicleGenitive({ kind: v.spec.kind, color: v.paint })}`;
     if (g.isFleeing(v) || g.random() < 0.45) {
       g.releaseTraffic(v, true);
       g.witnesses.npcCrime('hitAndRun', v, { vehicle: v, label }, id);

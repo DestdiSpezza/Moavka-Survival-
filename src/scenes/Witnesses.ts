@@ -6,7 +6,7 @@ import type { Point } from '../systems/combat';
 import { lineOfSight } from '../systems/sight';
 import type { CrimeKind } from '../systems/wanted';
 import {
-  callChance, callDuration, describe, describeText, type Description, MAX_CALLERS, mistaken, vehicleText, WITNESS_RANGE,
+  callChance, callDuration, describe, describeText, type Description, MAX_CALLERS, mistaken, WITNESS_RANGE,
 } from '../systems/witness';
 import { T } from '../texts/cs';
 import { blocksBullets } from '../world/tiles';
@@ -228,7 +228,6 @@ export class Witnesses {
     } else {
       g.police.reportNpc(crime.suspect, NPC_CRIME_TEXT[crime.kind as NpcCrimeKind], crime.at, id);
     }
-    void vehicleText;
   }
 }
 

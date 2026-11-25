@@ -14,15 +14,16 @@ const COLOR_STEM: Record<ColorId, string> = {
 /** Barvy osobáků podle varianty laku (pořadí CAR_PAINT ve sprites.ts). */
 export const PAINT_COLORS: ColorId[] = ['cerveny', 'modry', 'bily', 'zeleny', 'hnedy', 'cerny', 'zluty', 'sedy'];
 
-const KIND_NOUN: Record<VehicleKind, { noun: string; gender: 'm' | 'f' | 'n' }> = {
-  osobak: { noun: 'osobák', gender: 'm' },
-  dodavka: { noun: 'dodávka', gender: 'f' },
-  terenak: { noun: 'teréňák', gender: 'm' },
-  traktor: { noun: 'traktor', gender: 'm' },
-  policie: { noun: 'policejní auto', gender: 'n' },
-  zasahovka: { noun: 'zásahovka', gender: 'f' },
-  skutr: { noun: 'skútr', gender: 'm' },
-  kolo: { noun: 'kolo', gender: 'n' },
+/** Podstatné jméno vozidla v 1. a 2. pádě (osobák / bez osobáku) a jeho rod. */
+const KIND_NOUN: Record<VehicleKind, { noun: string; gen: string; gender: 'm' | 'f' | 'n' }> = {
+  osobak: { noun: 'osobák', gen: 'osobáku', gender: 'm' },
+  dodavka: { noun: 'dodávka', gen: 'dodávky', gender: 'f' },
+  terenak: { noun: 'teréňák', gen: 'teréňáku', gender: 'm' },
+  traktor: { noun: 'traktor', gen: 'traktoru', gender: 'm' },
+  policie: { noun: 'policejní auto', gen: 'policejního auta', gender: 'n' },
+  zasahovka: { noun: 'zásahovka', gen: 'zásahovky', gender: 'f' },
+  skutr: { noun: 'skútr', gen: 'skútru', gender: 'm' },
+  kolo: { noun: 'kolo', gen: 'kola', gender: 'n' },
 };
 
 /** Výchozí barva typů, které nemají varianty laku. */
@@ -58,6 +59,15 @@ export function vehicleText(v: VehicleLook): string {
   const k = KIND_NOUN[v.kind];
   if (v.kind === 'policie') return 'policejní auto';
   return `${colorAdjective(v.color, k.gender)} ${k.noun}`;
+}
+
+/** Vozidlo ve 2. pádě: „řidiče bílé dodávky“, „řidiče červeného osobáku“. */
+export function vehicleGenitive(v: VehicleLook): string {
+  const k = KIND_NOUN[v.kind];
+  if (v.kind === 'policie') return k.gen;
+  const stem = COLOR_STEM[v.color];
+  const adj = v.color === 'policejni' ? (k.gender === 'f' ? stem : 'policejního') : stem + (k.gender === 'f' ? 'é' : 'ého');
+  return `${adj} ${k.gen}`;
 }
 
 /** Popis pro HUD a vysílačku. */
