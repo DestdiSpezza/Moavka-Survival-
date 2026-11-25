@@ -86,7 +86,7 @@ export class Police {
   private driveCost: number[][];
 
   constructor(private game: GameScene) {
-    for (const path of trafficPaths()) {
+    for (const path of trafficPaths(game.world)) {
       for (let i = 0; i < path.length - 1; i += 2) {
         this.roadPoints.push({ p: path[i], angle: Math.atan2(path[i + 1].y - path[i].y, path[i + 1].x - path[i].x) });
       }
@@ -167,6 +167,7 @@ export class Police {
     this.wanted = r.wanted;
     if (r.evaded && before > 0) {
       this.game.toast(T.radioLost);
+      this.game.progression.onEvaded(before);
       this.clear();
     }
 

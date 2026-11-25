@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildMoravka, CROSS_ROAD_Y, DAM_Y, mainRoadX, MAP_H, MAP_W, riverX, zoneAt, type WorldMap } from './moravka';
+import { AREAS } from './areas';
+import { buildArea, buildMoravka, CROSS_ROAD_Y, DAM_Y, mainRoadX, MAP_H, MAP_W, riverX, zoneAt, type WorldMap } from './moravka';
 import { isSolid, Tile } from './tiles';
 
-const map = buildMoravka();
 
 /** Najde, kam se dá z daného bodu dojít pěšky (BFS po neprůchozích dlaždicích). */
 function reachable(m: WorldMap, sx: number, sy: number): boolean[][] {
@@ -23,11 +23,14 @@ function reachable(m: WorldMap, sx: number, sy: number): boolean[][] {
   return seen;
 }
 
-describe('mapa Morávky', () => {
+describe.each([
+  ['Morávka', AREAS.moravka.seed, buildMoravka()],
+  ['Raškovice', AREAS.raskovice.seed, buildArea(AREAS.raskovice.seed, AREAS.raskovice.phase)],
+])('mapa %s', (_name, seed, map) => {
   it('má správné rozměry a je pokaždé stejná', () => {
     expect(map.tiles).toHaveLength(MAP_H);
     expect(map.tiles[0]).toHaveLength(MAP_W);
-    expect(buildMoravka().tiles).toEqual(map.tiles);
+    expect(buildArea(seed, map.phase).tiles).toEqual(map.tiles);
   });
 
   it('hráč se objeví na průchozí dlaždici na návsi', () => {
@@ -48,7 +51,7 @@ describe('mapa Morávky', () => {
       }
       return false;
     };
-    for (const name of ['Hospoda', 'Pila', 'Škola', 'Obchod', 'Kostel', 'Obecní úřad', 'Zdravotní středisko']) {
+    for (const name of ['Hospoda', 'Pila', 'Škola', 'Obchod', 'Kostel', 'Obecní úřad', 'Zdravotní středisko', 'Garáž', 'Chata']) {
       expect(nextTo(name), name).toBe(true);
     }
     expect(r[DAM_Y].some(Boolean), 'hráz').toBe(true);
@@ -79,8 +82,8 @@ describe('mapa Morávky', () => {
         for (let x = b.x; x < b.x + b.w; x++) {
           const where = `${b.name} @${x},${y}`;
           expect(map.tiles[y][x], where).toBe(b.roof);
-          expect(Math.abs(x - riverX(y)) > 1, `${where} v řece`).toBe(true);
-          expect(x === mainRoadX(y) || x === mainRoadX(y) + 1, `${where} na hlavní silnici`).toBe(false);
+          expect(Math.abs(x - riverX(y, map.phase)) > 1, `${where} v řece`).toBe(true);
+          expect(x === mainRoadX(y, map.phase) || x === mainRoadX(y, map.phase) + 1, `${where} na hlavní silnici`).toBe(false);
           expect(y === CROSS_ROAD_Y || y === CROSS_ROAD_Y + 1, `${where} na příčné silnici`).toBe(false);
         }
       }

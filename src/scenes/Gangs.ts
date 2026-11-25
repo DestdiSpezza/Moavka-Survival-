@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { TILE } from '../config';
 import { Pedestrian } from '../entities/Pedestrian';
 import type { Vehicle } from '../entities/Vehicle';
-import { darkness, formatClock, isEvening, minuteOfDay } from '../systems/clock';
+import { darkness, formatClock, GAME_MINUTES_PER_SECOND, isEvening, minuteOfDay } from '../systems/clock';
 import { type Point, rayCircleHit } from '../systems/combat';
 import {
   applyRespect, attitude, ecoAngryAtVehicle, GROUP_IDS, type GroupId, newRespect, relation, type Respect, type RespectEvent,
@@ -60,7 +60,7 @@ export class Gangs {
   private respawnTimer = 0;
   private shoutedAt = new Map<GroupId, number>();
   private respectThrottle = new Map<string, number>();
-  private elapsed = 0;
+  elapsed = 0;
 
   constructor(private game: GameScene) {
     const map = game.world;
@@ -76,6 +76,11 @@ export class Gangs {
 
   private get minute(): number {
     return minuteOfDay(this.elapsed);
+  }
+
+  /** Spánek v chatě: posune hodiny o daný počet hodin. */
+  skipHours(hours: number): void {
+    this.elapsed += (hours * 60) / GAME_MINUTES_PER_SECOND;
   }
 
   /** Štamgasti jsou večer agresivnější (posun hranic postoje). */

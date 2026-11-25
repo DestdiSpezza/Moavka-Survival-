@@ -27,7 +27,7 @@ describe('vozidla na mapě', () => {
   });
 
   it('trasy provozu vedou po silnici, mostě nebo hrázi', () => {
-    for (const path of trafficPaths()) {
+    for (const path of trafficPaths(map)) {
       expect(path.length).toBeGreaterThan(10);
       for (const p of path) expect([Tile.Road, Tile.Bridge, Tile.Dam], `${p.x},${p.y}`).toContain(tileAt(p.x, p.y));
     }

@@ -231,9 +231,10 @@ export class Missions {
     this.finish();
     const pl = this.game.player;
     pl.money += a.reward.money;
-    pl.score += a.reward.score;
+    this.game.addScore(a.reward.score, null);
     this.done.add(a.info.id);
     this.game.gangs.mission(a.info.group, TIER_EVENT[a.info.tier]);
+    this.game.saveGame(false);
     this.game.events.emit('banner', 'SPLNĚNO');
     this.game.toast(`${GROUPS[a.info.group].name} platí ${a.reward.money} Kč. Skóre +${a.reward.score}.`);
   }

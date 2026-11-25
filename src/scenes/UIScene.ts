@@ -6,7 +6,9 @@ import { pixelFont } from './BootScene';
 import { GROUP_IDS } from '../systems/respect';
 import { GROUPS } from '../world/gangs';
 import type { RespectHud } from './Gangs';
+import type { MenuHud } from './Economy';
 import type { BoardHud, MissionHud } from './Missions';
+import type { GoalHud } from './Progression';
 import { type GameScene, MINIMAP, type PlayerHud, type VehicleHud } from './GameScene';
 
 const HP_COLORS: Record<string, number> = { ok: 0x6fd16a, smoke: 0xe0b23a, fire: 0xe0442a };
@@ -35,8 +37,10 @@ export class UIScene extends Phaser.Scene {
   private clockText!: Phaser.GameObjects.Text;
   private night!: Phaser.GameObjects.Rectangle;
   private scoreText!: Phaser.GameObjects.Text;
+  private goalText!: Phaser.GameObjects.Text;
   private boardBox!: Phaser.GameObjects.Container;
   private boardTitle!: Phaser.GameObjects.Text;
+  private boardPanel!: Phaser.GameObjects.Rectangle;
   private boardBody!: Phaser.GameObjects.Text;
   private missionTitle!: Phaser.GameObjects.Text;
   private missionObjective!: Phaser.GameObjects.Text;
@@ -75,6 +79,7 @@ export class UIScene extends Phaser.Scene {
     this.weaponText = this.add.text(width - 16, 50, '', pixelFont(18, '#f2e9d0')).setOrigin(1, 0).setStroke('#000', 4);
     this.ammoText = this.add.text(width - 16, 74, '', pixelFont(16, '#ffd23f')).setOrigin(1, 0).setStroke('#000', 4);
     this.scoreText = this.add.text(width - 16, 96, '', pixelFont(14, '#c8c0a8')).setOrigin(1, 0).setStroke('#000', 4);
+    this.goalText = this.add.text(width - 16, 116, '', { ...pixelFont(13, '#c8c0a8'), align: 'right' }).setOrigin(1, 0).setStroke('#000', 4);
 
     // Zakázka: název a úkol pod hodinami, šipka k cíli na okraji obrazovky.
     this.missionTitle = this.add.text(width / 2, 70, '', pixelFont(16, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 4);
@@ -83,10 +88,11 @@ export class UIScene extends Phaser.Scene {
 
     // Nabídka zakázek u zadavatele.
     const panel = this.add.rectangle(0, 0, 520, 250, 0x111111, 0.88).setOrigin(0.5, 0).setStrokeStyle(2, 0xf2e9d0);
+    this.boardPanel = panel;
     this.boardTitle = this.add.text(0, 12, '', pixelFont(20, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 4);
     this.boardBody = this.add.text(-245, 46, '', { ...pixelFont(14), wordWrap: { width: 490 }, lineSpacing: 4 });
     // Vpravo od panelu respektu, aby ho nezakrývala.
-    this.boardBox = this.add.container(width / 2 + 110, height / 2 - 70, [panel, this.boardTitle, this.boardBody]).setVisible(false);
+    this.boardBox = this.add.container(width / 2 + 110, 130, [panel, this.boardTitle, this.boardBody]).setVisible(false);
 
     this.crosshair = this.add.graphics().setDepth(100);
     this.deathText = this.add.text(width / 2, height / 2 - 40, T.died, pixelFont(64, '#d94040')).setOrigin(0.5).setStroke('#000', 8).setVisible(false);
@@ -213,8 +219,22 @@ export class UIScene extends Phaser.Scene {
   }
 
   private updateMissionHud(): void {
+    const goal = this.registry.get('goal') as GoalHud | undefined;
+    if (goal) {
+      this.goalText.setText(
+        goal.met
+          ? `${goal.area}: cíl splněn ✓${goal.next ? `\n→ ${goal.next} na severu` : ''}`
+          : `Cíl ${goal.area}:\nskóre ${goal.score.toLocaleString('cs-CZ')} / ${goal.scoreGoal.toLocaleString('cs-CZ')}\npeníze ${goal.money.toLocaleString('cs-CZ')} / ${goal.moneyGoal.toLocaleString('cs-CZ')} Kč`,
+      ).setColor(goal.met ? '#9fffa0' : '#c8c0a8');
+    }
+
     const board = this.registry.get('board') as BoardHud | null;
-    this.boardBox.setVisible(!!board);
+    const menu = this.registry.get('menu') as MenuHud | null;
+    this.boardBox.setVisible(!!board || !!menu);
+    if (menu && !board) {
+      this.boardTitle.setText(menu.title).setColor(menu.css);
+      this.boardBody.setText(`${menu.lines.join('\n')}${menu.lines.length ? '\n\n' : ''}${menu.hint}`);
+    }
     if (board) {
       this.boardTitle.setText(`${board.group}: zakázky`).setColor(board.css);
       this.boardBody.setText(
@@ -225,6 +245,9 @@ export class UIScene extends Phaser.Scene {
               .join('\n\n') + '\n\nVyber klávesou 1–3. Během zakázky ji X vzdá.',
       );
     }
+
+    // Výška panelu podle textu (ať nezakrývá panel auta dole).
+    if (this.boardBox.visible) this.boardPanel.setSize(520, this.boardBody.height + 64);
 
     const m = this.registry.get('mission') as MissionHud | null;
     const tierColor = { green: '#6fd16a', yellow: '#ffd23f', red: '#ff6a5a' };

@@ -35,22 +35,38 @@ export interface WorldMap {
   spawn: { x: number; y: number };
   /** Kde se hráč probudí po smrti (před zdravotním střediskem). */
   hospital: { x: number; y: number };
+  /** Posun vlnění řeky a silnice (viz riverX). */
+  phase: number;
 }
 
-/** Osa řeky: x souřadnice středu koryta v daném řádku. */
-export function riverX(y: number): number {
-  return Math.round(48 + 5 * Math.sin(y / 9) + 2 * Math.sin(y / 4));
+/** Osa řeky: x souřadnice středu koryta v daném řádku. `phase` posouvá vlnění (jiná oblast = jiné údolí). */
+export function riverX(y: number, phase = 0): number {
+  return riverXOf(y, phase);
+}
+function riverXOf(y: number, phase: number): number {
+  return Math.round(48 + 5 * Math.sin(y / 9 + phase) + 2 * Math.sin(y / 4 + phase * 1.7));
 }
 /** Hlavní silnice vede východně podél řeky. */
-export function mainRoadX(y: number): number {
-  return riverX(y) + 7;
+export function mainRoadX(y: number, phase = 0): number {
+  return mainRoadXOf(y, phase);
+}
+function mainRoadXOf(y: number, phase: number): number {
+  return riverXOf(y, phase) + 7;
 }
 
 export const DAM_Y = 66;
 export const CROSS_ROAD_Y = 34;
 
-export function buildMoravka(seed = 1234): WorldMap {
+/** Morávka (první oblast). */
+export function buildMoravka(): WorldMap {
+  return buildArea(1234, 0);
+}
+
+/** Vygeneruje údolí: řeka, silnice, náves, škola, pila, přehrada, domy, lesy. */
+export function buildArea(seed: number, phase: number): WorldMap {
   const rnd = createRng(seed);
+  const riverX = (y: number) => riverXOf(y, phase);
+  const mainRoadX = (y: number) => mainRoadXOf(y, phase);
   const t: number[][] = Array.from({ length: MAP_H }, () => Array<number>(MAP_W).fill(Tile.Grass));
   const set = (x: number, y: number, v: number) => {
     if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) t[y][x] = v;
@@ -134,6 +150,14 @@ export function buildMoravka(seed = 1234): WorldMap {
   fill(28, CROSS_ROAD_Y + 9, 3, 1, Tile.Logs);
   fill(20, CROSS_ROAD_Y + 11, 5, 1, Tile.Logs);
 
+  // Garáž u silnice na sever (opravy, přelakování, prodej aut).
+  let garageX = 0;
+  for (let y = 8; y <= 16; y++) garageX = Math.max(garageX, mainRoadX(y) + 4);
+  building('Garáž', garageX, 10, 6, 4, Tile.RoofGray);
+  // Chata na mýtině v západním lese (úkryt: uložení hry, spánek).
+  fill(15, 23, 7, 7, Tile.Dirt);
+  building('Chata', 17, 24, 3, 3, Tile.RoofBrown);
+
   // Rodinné domy podél silnic.
   const houseSpots: Array<[number, number]> = [];
   for (let y = 2; y < DAM_Y - 5; y += 5) {
@@ -157,7 +181,10 @@ export function buildMoravka(seed = 1234): WorldMap {
     { name: 'Hospoda', x: roadE - 2, y: CROSS_ROAD_Y - 10, w: 12, h: 10 },
     { name: 'Škola', x: roadE + 20, y: CROSS_ROAD_Y - 12, w: 14, h: 12 },
     { name: 'Zdravotní středisko', x: roadE + 16, y: CROSS_ROAD_Y + 2, w: 12, h: 9 },
-    { name: 'Náves', x: roadE - 6, y: CROSS_ROAD_Y - 10, w: 28, h: 24 },
+    { name: 'Garáž', x: garageX - 2, y: 8, w: 10, h: 8 },
+    { name: 'Chata', x: 14, y: 22, w: 9, h: 9 },
+    // Náves sahá přes silnici až ke křižovatce, kde hráč začíná.
+    { name: 'Náves', x: Math.min(roadE - 6, mainRoadX(CROSS_ROAD_Y) - 2), y: CROSS_ROAD_Y - 10, w: 28 + Math.max(0, roadE - 6 - (mainRoadX(CROSS_ROAD_Y) - 2)), h: 24 },
     { name: 'Pila', x: 16, y: CROSS_ROAD_Y + 2, w: 18, h: 14 },
     { name: 'Přehrada Morávka', x: 0, y: DAM_Y - 2, w: MAP_W, h: MAP_H - DAM_Y + 2 },
     { name: 'Cesta na Raškovice', x: 0, y: 0, w: MAP_W, h: 8 },
@@ -173,6 +200,7 @@ export function buildMoravka(seed = 1234): WorldMap {
     zones,
     spawn: { x: mainRoadX(CROSS_ROAD_Y), y: CROSS_ROAD_Y },
     hospital: { x: roadE + 22, y: CROSS_ROAD_Y + 3 },
+    phase,
   };
 }
 

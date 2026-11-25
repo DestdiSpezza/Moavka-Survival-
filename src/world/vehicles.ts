@@ -1,6 +1,6 @@
 import type { GroupId } from '../systems/respect';
 import type { VehicleParams } from '../systems/vehicleModel';
-import { CROSS_ROAD_Y, DAM_Y, mainRoadX, type WorldMap } from './moravka';
+import { CROSS_ROAD_Y, DAM_Y, mainRoadX, mainRoadX as roadX, type WorldMap } from './moravka';
 import { Tile } from './tiles';
 import { TILE } from '../config';
 
@@ -101,7 +101,7 @@ export function parkedVehicles(map: WorldMap): ParkedVehicle[] {
     if (!b) throw new Error(`Chybí budova ${name}`);
     return { x: Math.floor(b.x + b.w / 2), y: b.y + b.h + 1 };
   };
-  const dam = { x: mainRoadX(DAM_Y - 3) + 4, y: DAM_Y - 3 };
+  const dam = { x: mainRoadX(DAM_Y - 3, map.phase) + 4, y: DAM_Y - 3 };
   const plan: Array<[VehicleKind, { x: number; y: number }, GroupId | null]> = [
     ['osobak', near('Hospoda'), 'stamgasti'],
     ['traktor', near('Hospoda'), 'drevari'],
@@ -127,7 +127,8 @@ export function parkedVehicles(map: WorldMap): ParkedVehicle[] {
  * Trasy pro provoz. Jezdí se vpravo: na jih po západním pruhu hlavní silnice,
  * na sever po východním; na východ po jižním pruhu příčné silnice, na západ po severním.
  */
-export function trafficPaths(): Array<Array<{ x: number; y: number }>> {
+export function trafficPaths(map: WorldMap): Array<Array<{ x: number; y: number }>> {
+  const mainRoadX = (y: number) => roadX(y, map.phase);
   const south: Array<{ x: number; y: number }> = [];
   for (let y = 1; y <= DAM_Y - 2; y += 2) south.push({ x: (mainRoadX(y) + 0.5) * TILE, y: (y + 0.5) * TILE });
   const north = [...south].reverse().map((p, i) => {

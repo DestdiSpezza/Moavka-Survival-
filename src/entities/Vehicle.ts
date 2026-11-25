@@ -94,6 +94,17 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  /** Oprava v garáži: plné životy, pryč kouř i oheň. */
+  repair(): void {
+    if (this.wrecked) return;
+    this.hp = this.spec.maxHp;
+    this.state = 'ok';
+    this.smoke?.destroy();
+    this.fire?.destroy();
+    this.smoke = undefined;
+    this.fire = undefined;
+  }
+
   damage(amount: number): void {
     if (amount <= 0 || this.wrecked) return;
     this.hp = Math.max(0, this.hp - amount);

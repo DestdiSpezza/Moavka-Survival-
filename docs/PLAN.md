@@ -111,13 +111,19 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** je v první oblasti aspoň 10 zakázek napříč všemi barvami a skupinami a komplikace se objevují bez ručního skriptování.
 
-## Fáze 7: Skóre, peníze a postup oblastmi
+## Fáze 7: Skóre, peníze a postup oblastmi ✅
 
 - Skóre za mise, chaos, honičky, styl (dlouhý únik, zničené vozidlo, přežití hledanosti 5).
 - Peníze: odměny z misí, kradení, prodej aut; útrata za zbraně, opravy, úkryty.
 - Cíl oblasti: dané skóre + peníze. Po splnění se otevře další oblast.
 - Návrh oblastí: **Morávka** → **Raškovice** → **Krásná** → **Lysá hora** (každá s vlastními skupinami).
 - Ukládání a načítání hry.
+- Skóre: zakázky, útěk policii (50 × úroveň²), vraky a řetězové reakce, drift, přežití 30 s na 5 hvězdách, zabití.
+- Garáž (oprava, přelakování do 3 hvězd, výkup aut), obchod „pod pultem“ (zbraně, vesta, lékárnička), chata (koupě, uložení, spánek).
+- Cíl Morávky: 1 500 skóre získaných v Morávce a 2 500 Kč. Raškovice: 3 000 a 6 000 Kč.
+- Raškovice mají vlastní údolí (jiné vlnění řeky a silnice, domy, lesy) a místní názvy; respekt a zakázky se počítají pro každou oblast zvlášť.
+- Zatím neřešeno: Raškovice používají stejné čtyři skupiny a stejný katalog zakázek jako Morávka; vlastní skupiny a zakázky, Krásná a Lysá hora přijdou ve fázi 8.
+- Uložení: automaticky po zakázce, splnění cíle a přejezdu do jiné oblasti; ručně v chatě. Na úvodní obrazovce C = pokračovat.
 
 **Hotovo, když:** jde splnit cíl Morávky a přejít do Raškovic s uloženým postupem.
 

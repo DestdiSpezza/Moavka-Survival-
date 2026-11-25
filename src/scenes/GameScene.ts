@@ -11,14 +11,18 @@ import { lineOfSight } from '../systems/sight';
 import { isAhead, type Point, steerToward } from '../systems/trafficAi';
 import { type DriveInput, surfaceFor, toKmh } from '../systems/vehicleModel';
 import { T } from '../texts/cs';
-import { buildMoravka, type WorldMap, zoneAt } from '../world/moravka';
+import { type AreaDef, type AreaId, AREAS, placeLabel } from '../world/areas';
+import { buildArea, type WorldMap, zoneAt } from '../world/moravka';
+import { newProgress, type Progress, respectIn, writeSave } from '../systems/save';
 import { isSolid, speedFactor, TILE_COUNT } from '../world/tiles';
 import { CAR_COLORS } from '../world/tileset';
 import { parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicles';
 import { pixelFont } from './BootScene';
 import { Combat } from './Combat';
 import { Gangs } from './Gangs';
+import { Economy } from './Economy';
 import { Missions } from './Missions';
+import { Progression } from './Progression';
 import { Police } from './Police';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
@@ -71,6 +75,11 @@ export class GameScene extends Phaser.Scene {
   police!: Police;
   gangs!: Gangs;
   missions!: Missions;
+  economy!: Economy;
+  progression!: Progression;
+  /** Postup celé hry (sdílený mezi oblastmi, ukládá se). */
+  progress!: Progress;
+  area!: AreaDef;
   layer!: Phaser.Tilemaps.TilemapLayer;
   /** Deterministická náhoda pro celou scénu. */
   readonly random = createRng(99);
@@ -86,10 +95,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Při přechodu do jiné oblasti se scéna spouští znovu: staré posluchače pryč.
+    for (const ev of ['crime', 'knockout', 'pedHurt', 'toast', 'banner']) this.events.removeAllListeners(ev);
     this.vehicles = [];
     this.traffic.clear();
     this.driving = null;
-    this.world = buildMoravka();
+    this.progress = (this.registry.get('progress') as Progress | undefined) ?? newProgress();
+    this.registry.set('progress', this.progress);
+    this.area = AREAS[this.progress.area];
+    this.world = buildArea(this.area.seed, this.area.phase);
     const map = this.make.tilemap({ data: this.world.tiles, tileWidth: TILE, tileHeight: TILE });
     const tileset = map.addTilesetImage('tiles', 'tiles', TILE, TILE, 0, 0)!;
     this.layer = map.createLayer(0, tileset, 0, 0)!;
@@ -103,7 +117,7 @@ export class GameScene extends Phaser.Scene {
       .filter((b) => b.name !== 'Dům')
       .map((b) =>
         this.add
-          .text((b.x + b.w / 2) * TILE, (b.y + b.h / 2) * TILE, b.name.toUpperCase(), pixelFont(14, '#fff4d6'))
+          .text((b.x + b.w / 2) * TILE, (b.y + b.h / 2) * TILE, placeLabel(this.area.id, b.name).toUpperCase(), pixelFont(14, '#fff4d6'))
           .setOrigin(0.5)
           .setScale(1 / WORLD_ZOOM)
           .setStroke('#2a1d12', 4)
@@ -148,17 +162,105 @@ export class GameScene extends Phaser.Scene {
     mini.ignore(labels);
     const dot = this.add.circle(0, 0, 40, 0xffd23f).setDepth(20);
     cam.ignore(dot);
-    this.events.on('postupdate', () => {
+    const follow = () => {
       const target = this.driving ?? this.player;
       dot.setPosition(target.x, target.y);
-    });
+    };
+    this.events.on('postupdate', follow);
+    this.events.once('shutdown', () => this.events.off('postupdate', follow));
 
     this.combat = new Combat(this);
     this.police = new Police(this);
     this.gangs = new Gangs(this);
     this.missions = new Missions(this);
+    this.economy = new Economy(this);
+    this.progression = new Progression(this);
+    this.applyProgress();
     this.input.setDefaultCursor('none');
     this.scene.launch('UI');
+  }
+
+  /** Nastaví hráče, skupiny a zakázky podle uloženého postupu; příjezd z jiné oblasti. */
+  private applyProgress(): void {
+    const p = this.progress;
+    const pl = this.player;
+    pl.money = p.money;
+    pl.score = p.score;
+    pl.health = p.health;
+    pl.armor = p.armor;
+    pl.arsenal = { ...p.arsenal, ammo: { ...p.arsenal.ammo }, owned: [...p.arsenal.owned] };
+    pl.updateLook();
+    this.gangs.respect = { ...respectIn(p, this.area.id) };
+    this.gangs.elapsed = p.clock;
+    this.missions.done = new Set(p.missionsDone[this.area.id] ?? []);
+
+    const arrival = this.registry.get('arrival') as { from: AreaId; vehicle: { kind: VehicleKind; hp: number } | null } | null;
+    this.registry.set('arrival', null);
+    const at = arrival ? this.progression.arrivalFrom(arrival.from) : null;
+    if (at) {
+      (pl.body as Phaser.Physics.Arcade.Body).reset(at.x, at.y);
+      if (arrival?.vehicle) {
+        const v = this.addVehicle(arrival.vehicle.kind, at.x, at.y, -Math.PI / 2, 0);
+        v.hp = arrival.vehicle.hp;
+        v.stolen = true;
+        this.enterVehicle(v);
+      }
+    }
+    this.time.delayedCall(300, () => this.events.emit('banner', this.area.name.toUpperCase()));
+  }
+
+  get areaScore(): number {
+    return this.progress.areaScore[this.area.id] ?? 0;
+  }
+
+  /** Připíše skóre (celkové i za oblast) a ukáže ho nad hráčem. */
+  addScore(points: number, reason: string | null): void {
+    if (points <= 0) return;
+    this.player.score += points;
+    this.progress.areaScore[this.area.id] = this.areaScore + points;
+    if (reason) {
+      const f = this.driving ?? this.player;
+      this.floatText(f.x, f.y - 22, `${reason} +${points}`, '#ffd23f', 1500);
+    }
+  }
+
+  /** Zapíše stav hry do postupu (před uložením nebo přechodem). */
+  private syncProgress(): void {
+    const p = this.progress;
+    const pl = this.player;
+    p.area = this.area.id;
+    p.money = pl.money;
+    p.score = pl.score;
+    p.health = Math.max(1, pl.health);
+    p.armor = pl.armor;
+    p.arsenal = { ...pl.arsenal, ammo: { ...pl.arsenal.ammo }, owned: [...pl.arsenal.owned] };
+    p.respect[this.area.id] = { ...this.gangs.respect };
+    p.missionsDone[this.area.id] = [...this.missions.done];
+    p.clock = this.gangs.elapsed;
+  }
+
+  saveGame(announce: boolean): void {
+    this.syncProgress();
+    const ok = writeSave(this.progress);
+    if (announce) this.toast(ok ? 'Hra uložena.' : 'Uložit nešlo: prohlížeč nepovoluje úložiště.');
+  }
+
+  /** Odjezd do jiné oblasti: uložit a spustit scénu znovu s novou mapou. */
+  travel(to: AreaId): void {
+    const v = this.driving;
+    this.registry.set('arrival', { from: this.area.id, vehicle: v ? { kind: v.spec.kind, hp: v.hp } : null });
+    this.syncProgress();
+    this.progress.area = to;
+    writeSave(this.progress);
+    this.scene.stop('UI');
+    this.scene.restart();
+  }
+
+  removeVehicle(v: Vehicle): void {
+    const i = this.vehicles.indexOf(v);
+    if (i >= 0) this.vehicles.splice(i, 1);
+    this.traffic.delete(v);
+    v.destroy();
   }
 
   private spawnVehicles(): void {
@@ -166,7 +268,7 @@ export class GameScene extends Phaser.Scene {
       const v = this.addVehicle(p.kind, p.x, p.y, p.angle, Math.floor(this.random() * CAR_COLORS.length));
       v.owner = p.owner;
     }
-    this.paths = trafficPaths();
+    this.paths = trafficPaths(this.world);
     const kinds: VehicleKind[] = ['osobak', 'osobak', 'dodavka', 'osobak', 'traktor', 'osobak', 'osobak'];
     for (let i = 0; i < TRAFFIC_COUNT; i++) {
       const path = this.paths[i % this.paths.length];
@@ -243,7 +345,9 @@ export class GameScene extends Phaser.Scene {
     const focus = this.driving ?? this.player;
     const tx = Math.floor(focus.x / TILE);
     const ty = Math.floor(focus.y / TILE);
-    this.registry.set('zone', zoneAt(this.world, tx, ty));
+    // Mimo pojmenovaná místa se ukazuje jméno oblasti.
+    const zone = zoneAt(this.world, tx, ty);
+    this.registry.set('zone', zone === 'Morávka' ? this.area.name : placeLabel(this.area.id, zone));
     this.registry.set('tile', this.driving ? -1 : this.world.tiles[ty]?.[tx]);
     this.registry.set('vehicle', this.driving ? this.vehicleHud(this.driving) : null);
     this.registry.set('prompt', this.driving || this.player.dead ? '' : this.enterPrompt());
@@ -251,6 +355,8 @@ export class GameScene extends Phaser.Scene {
     this.police.update(dt);
     this.gangs.update(dt);
     this.missions.update(dt);
+    this.economy.update();
+    this.progression.update(dt);
     const a = this.player.arsenal;
     const def = WEAPONS[a.current];
     this.registry.set('player', {
@@ -343,6 +449,11 @@ export class GameScene extends Phaser.Scene {
     if (!v.stolen) this.gangs.onSteal(v);
     v.stolen = true;
     this.police.onEnterVehicle(v);
+    this.enterVehicle(v);
+  }
+
+  /** Posadí hráče do auta (bez krádeže: při příjezdu z jiné oblasti). */
+  private enterVehicle(v: Vehicle): void {
     this.traffic.delete(v);
     v.driver = 'player';
     this.driving = v;
@@ -494,7 +605,9 @@ export class GameScene extends Phaser.Scene {
   private explode(v: Vehicle): void {
     const { x, y } = v;
     const wasInside = v === this.driving;
-    this.gangs.onWrecked(v, wasInside || this.time.now / 1000 - v.playerHitAt < 6);
+    const byPlayer = wasInside || this.time.now / 1000 - v.playerHitAt < 6;
+    this.gangs.onWrecked(v, byPlayer);
+    if (byPlayer) this.progression.onWreck(v);
     if (wasInside) this.exitVehicle();
     v.driver = 'none';
     this.traffic.delete(v);
