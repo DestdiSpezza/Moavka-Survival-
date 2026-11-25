@@ -25,6 +25,7 @@ export class UIScene extends Phaser.Scene {
   private ammoText!: Phaser.GameObjects.Text;
   private crosshair!: Phaser.GameObjects.Graphics;
   private deathText!: Phaser.GameObjects.Text;
+  private stars: Phaser.GameObjects.Text[] = [];
   private lastZone = '';
   private wasExhausted = false;
   private wasInForest = false;
@@ -60,6 +61,12 @@ export class UIScene extends Phaser.Scene {
     this.crosshair = this.add.graphics().setDepth(100);
     this.deathText = this.add.text(width / 2, height / 2 - 40, T.died, pixelFont(64, '#d94040')).setOrigin(0.5).setStroke('#000', 8).setVisible(false);
 
+    // Hvězdičky hledanosti nahoře uprostřed.
+    this.stars = [];
+    for (let i = 0; i < 5; i++) {
+      this.stars.push(this.add.text(width / 2 + (i - 2) * 30, 22, '★', pixelFont(26, '#ffd23f')).setOrigin(0.5).setStroke('#000', 4));
+    }
+
     // Panel vozidla vpravo dole.
     const px = width - 220;
     const py = height - 110;
@@ -75,13 +82,14 @@ export class UIScene extends Phaser.Scene {
 
     const game = this.scene.get('Game');
     game.events.on('toast', (text: string) => this.say(text));
-    game.events.on('died', () => {
+    game.events.on('banner', (text: string) => {
+      this.deathText.setText(text).setColor(text === T.died ? '#d94040' : '#6a9aff');
       this.deathText.setVisible(true).setAlpha(0);
       this.tweens.add({ targets: this.deathText, alpha: 1, duration: 500, hold: 900, yoyo: true, onComplete: () => this.deathText.setVisible(false) });
     });
     this.events.once('shutdown', () => {
       game.events.off('toast');
-      game.events.off('died');
+      game.events.off('banner');
     });
   }
 
@@ -124,6 +132,15 @@ export class UIScene extends Phaser.Scene {
       this.weaponText.setText(me.weapon);
       this.ammoText.setText(me.ammo === null ? '' : String(me.ammo));
     }
+
+    const wanted = this.registry.get('wanted') as { level: number; searching: boolean } | undefined;
+    const level = wanted?.level ?? 0;
+    // Když tě policie zrovna nevidí, hvězdy blikají.
+    const blink = wanted?.searching && Math.floor(this.time.now / 300) % 2 === 0;
+    this.stars.forEach((s, i) => {
+      const on = i < level;
+      s.setColor(on ? '#ffd23f' : '#3a3a3a').setAlpha(on ? (blink ? 0.35 : 1) : level > 0 ? 0.7 : 0.25);
+    });
 
     // Zaměřovač místo kurzoru.
     const ptr = this.input.activePointer;

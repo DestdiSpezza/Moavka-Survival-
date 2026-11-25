@@ -3,7 +3,7 @@ import { CROSS_ROAD_Y, DAM_Y, mainRoadX, type WorldMap } from './moravka';
 import { Tile } from './tiles';
 import { TILE } from '../config';
 
-export type VehicleKind = 'osobak' | 'dodavka' | 'terenak' | 'traktor' | 'policie';
+export type VehicleKind = 'osobak' | 'dodavka' | 'terenak' | 'traktor' | 'policie' | 'zasahovka';
 
 export interface VehicleType {
   kind: VehicleKind;
@@ -36,7 +36,15 @@ export const VEHICLE_TYPES: Record<VehicleKind, VehicleType> = {
     kind: 'policie', name: 'Policejní auto', length: 20, width: 10, maxHp: 120,
     params: { maxSpeed: 210, reverseSpeed: 65, accel: 170, brake: 280, turnRate: 2.8, grip: 7.5, offroad: false },
   },
+  zasahovka: {
+    kind: 'zasahovka', name: 'Zásahovka', length: 24, width: 12, maxHp: 240,
+    params: { maxSpeed: 175, reverseSpeed: 55, accel: 130, brake: 230, turnRate: 2.2, grip: 6.5, offroad: true },
+  },
 };
+
+export function isPoliceKind(kind: VehicleKind): boolean {
+  return kind === 'policie' || kind === 'zasahovka';
+}
 
 export interface ParkedVehicle {
   kind: VehicleKind;

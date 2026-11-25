@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import { damageState, type DamageState, FIRE_BURN_FRACTION, impactDamage } from '../systems/damage';
 import { type DriveInput, type DriveState, forwardSpeed, stepDrive, type Surface } from '../systems/vehicleModel';
-import { VEHICLE_TYPES, type VehicleKind, type VehicleType } from '../world/vehicles';
+import { isPoliceKind, VEHICLE_TYPES, type VehicleKind, type VehicleType } from '../world/vehicles';
 
-export type Driver = 'none' | 'npc' | 'player';
+export type Driver = 'none' | 'npc' | 'player' | 'police';
 
 /**
  * Vozidlo: sprite s fyzikálním tělem, jízdní model a poškození.
@@ -14,6 +14,8 @@ export type Driver = 'none' | 'npc' | 'player';
 export class Vehicle extends Phaser.Physics.Arcade.Sprite {
   readonly spec: VehicleType;
   driver: Driver = 'none';
+  /** Hráč ho už jednou ukradl (krádež se hlásí jen poprvé). */
+  stolen = false;
   hp: number;
   state: DamageState = 'ok';
   drive: DriveState;
@@ -51,6 +53,10 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     return forwardSpeed(this.drive);
   }
 
+  get isPolice(): boolean {
+    return isPoliceKind(this.spec.kind);
+  }
+
   get wrecked(): boolean {
     return this.state === 'wrecked';
   }
@@ -77,9 +83,9 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     this.lastVy = this.drive.vy;
     this.setRotation(this.drive.angle);
 
-    if (this.spec.kind === 'policie' && this.driver === 'player') {
+    if (this.isPolice && (this.driver === 'player' || this.driver === 'police')) {
       this.sirenTimer += dt;
-      this.setTexture(`policie-${Math.floor(this.sirenTimer * 4) % 2}`);
+      this.setTexture(`${this.spec.kind}-${Math.floor(this.sirenTimer * 4) % 2}`);
     }
   }
 

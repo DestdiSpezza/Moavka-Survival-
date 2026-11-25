@@ -42,6 +42,20 @@ export const T = {
   callPolice: ['Haló, policie? Zase on!', 'Volám fízly!', 'Tady Morávka, střílí se!'],
   toughAngry: ['Ty seš mrtvej, punkáči!', 'Pojď sem, ty čírko!', 'To si vypiješ!'],
   died: 'ZMAR',
+  busted: 'ZATČEN',
+  bustedInfo: 'Noc na služebně. Pokuta {fine} Kč a zbraně zabavené.',
+  /** Policejní vysílačka při zvýšení hledanosti (index = úroveň). */
+  radio: [
+    '',
+    'Vysílačka: Hlídka do Morávky, nějaký punkáč tam řádí.',
+    'Vysílačka: Posíláme další auta. Kafe počká.',
+    'Vysílačka: Uzavíráme silnice. Zátarasy!',
+    'Vysílačka: Vyjíždí zásahovka z Frýdku. Konečně akce.',
+    'Vysílačka: Všechny jednotky na Morávku. I ten důchodce se služebním kolem.',
+  ],
+  radioLost: 'Vysílačka: Ztratili jsme ho. Asi zalezl do lesa ke klíšťatům.',
+  radioSwap: 'Vysílačka: Hledáme… ehm, jaké to mělo auto?',
+  copShout: ['Stůj, policie!', 'Na zem!', 'Ruce vzhůru, čírko!', 'Máš to spočítaný!'],
   wokeUp: 'Probudil ses ve zdravotním středisku. Doktor si vzal {lost} Kč a zbraně ti zabavili.',
   stamina: 'Dech',
   /** Hlášky, když hráč vleze do lesa nebo se zadýchá. */

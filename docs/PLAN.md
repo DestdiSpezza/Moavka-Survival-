@@ -62,7 +62,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** jde bojovat pěšky i z auta a smrt má jasný a férový následek.
 
-## Fáze 4: Policie a hledanost
+## Fáze 4: Policie a hledanost ✅
 
 - Trestné činy (krádež auta, napadení, střelba, ničení) zvyšují hledanost.
 - 5 úrovní hledanosti:
@@ -72,7 +72,9 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
   4. ozbrojené jednotky,
   5. kompletní hon na hráče.
 - Policie hráče hledá podle toho, kde ho viděla naposledy. Mimo dohled hledanost postupně klesá; úkryt v lese nebo převlečení auta pomáhá.
-- Zatčení: ztráta zbraní a pokuta.
+- Zatčení (na 1.–2. úrovni, když tě policista chytí pěšky nebo v stojícím autě): noc na služebně u obecního úřadu, pokuta 20 % a zbraně pryč.
+- Policejní auta hledají cestu po mapě (silnice mají přednost), na 3. úrovni střílí z oken, na 4. přijíždí zásahovka se samopaly.
+- Po nahlášení zločinu má policie 10 s na dojezd, teprve pak běží odpočet útěku.
 - Hvězdičky hledanosti na HUDu.
 
 **Hotovo, když:** krádež auta spustí honičku, která se umí vyhrotit až na úroveň 5 i zase uklidnit.

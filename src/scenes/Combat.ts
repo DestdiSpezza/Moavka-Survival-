@@ -8,6 +8,7 @@ import {
 } from '../systems/combat';
 import { CALL_POLICE_CHANCE, FLEE_TIME, fleeAngle, hears, PED_RUN, PED_WALK, runOverDamage } from '../systems/crowd';
 import { EXPLOSION_RADIUS } from '../systems/damage';
+import type { CrimeKind } from '../systems/wanted';
 import { T } from '../texts/cs';
 import { PICKUP_RESPAWN, pickupSpots, type PickupKind } from '../world/pickups';
 import { blocksBullets, isSolid, Tile } from '../world/tiles';
@@ -27,11 +28,11 @@ interface Pickup {
   readyAt: number;
 }
 
-/** Hlášení trestného činu pro policii (fáze 4). */
+/** Hlášení trestného činu pro policii. */
 export interface CrimeEvent {
   x: number;
   y: number;
-  kind: 'assault' | 'shooting' | 'murder' | 'reported';
+  kind: CrimeKind;
 }
 
 type WeaponKeys = Record<'one' | 'two' | 'three' | 'four' | 'five' | 'cycle', Phaser.Input.Keyboard.Key>;
@@ -98,7 +99,7 @@ export class Combat {
     this.respawnTimer += dt;
     if (this.respawnTimer > 2) {
       this.respawnTimer = 0;
-      const alive = this.peds.filter((p) => p.alive).length;
+      const alive = this.peds.filter((p) => p.alive && p.role === 'civil').length;
       if (alive < PED_COUNT) this.spawnPed(true);
     }
   }
@@ -155,6 +156,7 @@ export class Combat {
     for (const v of this.game.vehicles) {
       if (!v.wrecked && inMeleeArc(origin, angle, v, def.range + 8)) {
         v.damage(def.damage * 0.2);
+        if (v.isPolice) this.crime(origin, 'copAssault');
         hit = true;
       }
     }
@@ -214,6 +216,7 @@ export class Combat {
       this.blood.explode(6, end.x, end.y);
     } else if (hitCar) {
       hitCar.damage(damage * 0.5);
+      if (hitCar.isPolice && !own) this.crime(start, 'copAssault');
       this.sparks.explode(4, end.x, end.y);
     } else if (best < range) {
       this.sparks.explode(3, end.x, end.y);
@@ -221,12 +224,19 @@ export class Combat {
   }
 
   /** Hluk (výstřel, výbuch): chodci v doslechu zpanikaří a někdo zavolá policii. */
-  private noise(at: Point, radius: number, kind: CrimeEvent['kind']): void {
+  private noise(at: Point, radius: number, kind: CrimeKind | null): void {
     if (radius <= 0) return;
-    this.game.events.emit('crime', { x: at.x, y: at.y, kind } satisfies CrimeEvent);
+    if (kind) this.crime(at, kind);
     for (const p of this.peds) {
-      if (p.alive && p.mood !== 'fight' && hears(p, at, radius)) this.panic(p, at);
+      if (p.alive && p.role === 'civil' && p.mood !== 'fight' && hears(p, at, radius)) this.panic(p, at);
     }
+  }
+
+  private crime(at: Point, kind: CrimeKind): void {
+    // Policie potřebuje vědět, kde je hráč, ne kde dopadla kulka.
+    const focus = this.game.driving ?? this.player;
+    this.game.events.emit('crime', { x: focus.x, y: focus.y, kind } satisfies CrimeEvent);
+    void at;
   }
 
   // ---------- Chodci ----------
@@ -253,7 +263,7 @@ export class Combat {
     const now = this.time;
     const rnd = this.game.random;
     for (const p of this.peds) {
-      if (!p.alive) continue;
+      if (!p.alive || p.role !== 'civil') continue;
       const body = p.body as Phaser.Physics.Arcade.Body;
       if (p.mood === 'flee') {
         if (now > p.until) p.mood = 'idle';
@@ -275,8 +285,9 @@ export class Combat {
         if (now > p.until) this.pickWanderTarget(p);
       }
     }
-    // Mrtvé po čase ukliď.
-    this.peds = this.peds.filter((p) => p.active);
+    // Zničené (uklizené mrtvoly, odjetí policisté) vyřaď. Pole se mění na místě,
+    // protože na něj odkazují kolize; nové pole by kolize neviděly.
+    for (let i = this.peds.length - 1; i >= 0; i--) if (!this.peds[i].active) this.peds.splice(i, 1);
   }
 
   private walk(p: Pedestrian, angle: number, speed: number): void {
@@ -311,20 +322,30 @@ export class Combat {
       const rnd = this.game.random;
       if (rnd() < CALL_POLICE_CHANCE) {
         this.game.floatText(p.x, p.y - 10, pick(T.callPolice, rnd), '#9fc4ff', 2200);
-        this.game.events.emit('crime', { x: p.x, y: p.y, kind: 'reported' } satisfies CrimeEvent);
+        this.crime(p, 'reported');
       } else if (rnd() < 0.4) {
         this.game.floatText(p.x, p.y - 10, pick(T.panic, rnd), '#ffffff', 1600);
       }
     }
   }
 
-  private hurtPed(p: Pedestrian, damage: number, from: Point): void {
-    if (!p.alive) return;
+  /** Zranění chodce nebo policisty. byPlayer=false: zásah od policie (není to tvůj zločin). */
+  hurtPed(p: Pedestrian, damage: number, from: Point, byPlayer = true): void {
+    if (!p.alive || damage <= 0) return;
     p.hp -= damage;
     this.blood.explode(4, p.x, p.y);
+    const cop = p.role === 'cop';
     if (p.hp <= 0) {
       this.killPed(p);
-      this.noise(p, 140, 'murder');
+      this.noise(p, 140, byPlayer ? (cop ? 'copMurder' : 'murder') : null);
+      return;
+    }
+    if (cop) {
+      if (byPlayer) this.crime(p, 'copAssault');
+      return;
+    }
+    if (!byPlayer) {
+      this.panic(p, from);
       return;
     }
     // Drsoň se otočí a jde po tobě, ostatní utíkají.
@@ -366,7 +387,11 @@ export class Combat {
     const body = p.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(0, 0);
     body.enable = false;
-    if (this.game.random() < 0.6) {
+    if (p.role === 'cop') {
+      // Policista upustí služební zbraň.
+      this.addPickup(p.texture.key === 'cop-swat' ? 'smg' : 'pistol', p.x + 6, p.y + 4, 0, false);
+      p.setTexture('corpse');
+    } else if (this.game.random() < 0.6) {
       const amount = 10 + Math.floor(this.game.random() * 70);
       this.addPickup('money', p.x + 6, p.y + 4, amount, false);
     }
@@ -377,10 +402,11 @@ export class Combat {
     if (!p.alive || v.wrecked) return;
     const dmg = runOverDamage(v.speed);
     if (dmg <= 0) {
-      if (p.mood !== 'flee') this.panic(p, v);
+      if (p.mood !== 'flee' && p.role === 'civil') this.panic(p, v);
       return;
     }
-    this.hurtPed(p, dmg, v);
+    // Přejetí policejním autem ani provozem není hráčův zločin.
+    this.hurtPed(p, dmg, v, v === this.game.driving);
     if (p.alive) {
       const body = p.body as Phaser.Physics.Arcade.Body;
       body.setVelocity(v.drive.vx * 0.8, v.drive.vy * 0.8);
@@ -414,16 +440,35 @@ export class Combat {
 
   private die(): void {
     const pl = this.player;
+    pl.setTexture('corpse').setOrigin(0.5);
+    this.knockout(T.died, [40, 0, 0], this.game.world.hospital, () => {
+      const { money, lost } = deathPenalty(pl.money);
+      pl.money = money;
+      return T.wokeUp.replace('{lost}', String(lost));
+    });
+  }
+
+  /** Zatčení: noc na služebně (obecní úřad), pokuta a zbraně pryč. */
+  arrest(fine: number, station: { x: number; y: number }): void {
+    if (this.player.dead) return;
+    this.knockout(T.busted, [0, 0, 40], station, () => {
+      this.player.money -= fine;
+      return T.bustedInfo.replace('{fine}', String(fine));
+    });
+  }
+
+  /** Společný průběh smrti i zatčení: zatmít, odebrat zbraně, probudit jinde. */
+  private knockout(banner: string, rgb: [number, number, number], at: { x: number; y: number }, penalty: () => string): void {
+    const pl = this.player;
     pl.dead = true;
     if (this.game.driving) this.game.exitVehicle();
     (pl.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
-    pl.setTexture('corpse').setOrigin(0.5);
-    this.game.events.emit('died');
+    this.game.events.emit('banner', banner);
+    this.game.events.emit('knockout');
     const cam = this.game.cameras.main;
-    cam.fadeOut(1400, 40, 0, 0);
+    cam.fadeOut(1400, rgb[0], rgb[1], rgb[2]);
     cam.once('camerafadeoutcomplete', () => {
-      const { money, lost } = deathPenalty(pl.money);
-      pl.money = money;
+      const info = penalty();
       pl.health = 100;
       pl.armor = 0;
       pl.arsenal = { ...pl.arsenal, owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0 } };
@@ -431,17 +476,16 @@ export class Combat {
       pl.dead = false;
       pl.setTexture('player');
       pl.updateLook();
-      const h = this.game.world.hospital;
-      (pl.body as Phaser.Physics.Arcade.Body).reset((h.x + 0.5) * TILE, (h.y + 0.5) * TILE);
+      (pl.body as Phaser.Physics.Arcade.Body).reset((at.x + 0.5) * TILE, (at.y + 0.5) * TILE);
       for (const p of this.peds) if (p.mood === 'fight') p.mood = 'idle';
       cam.fadeIn(900);
-      this.game.toast(T.wokeUp.replace('{lost}', String(lost)));
+      this.game.toast(info);
     });
   }
 
   // ---------- Věci k sebrání ----------
 
-  private addPickup(kind: PickupKind, x: number, y: number, amount: number, respawns: boolean): void {
+  addPickup(kind: PickupKind, x: number, y: number, amount: number, respawns: boolean): void {
     const sprite = this.game.add.image(x, y, `pickup-${kind}`).setDepth(4);
     this.game.tweens.add({ targets: sprite, scale: 1.25, duration: 500, yoyo: true, repeat: -1 });
     this.pickups.push({ kind, sprite, amount, respawns, readyAt: 0 });

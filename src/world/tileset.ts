@@ -188,6 +188,20 @@ export function generateVehicles(scene: Phaser.Scene): void {
   make('policie-1', 20, 10, (g) => police(g, false, true));
   make('policie-wreck', 20, 10, (g) => police(g, true, false));
 
+  const swatVan = (g: G, wreck: boolean, flip: boolean) => {
+    wheels(g, 24, 12, 3, 4);
+    g.fillStyle(wreck ? 0x2a2420 : 0x1c2433).fillRect(1, 1, 22, 10);
+    g.fillStyle(wreck ? 0x1a1614 : 0x9fc4d8).fillRect(18, 2, 2, 8);
+    g.fillStyle(wreck ? 0x332c27 : 0x2a3448).fillRect(2, 2, 15, 8);
+    if (wreck) return;
+    g.fillStyle(0x2a5fd0).fillRect(2, 5, 15, 2);
+    g.fillStyle(flip ? 0xff3030 : 0x3050ff).fillRect(10, 2, 2, 3);
+    g.fillStyle(flip ? 0x3050ff : 0xff3030).fillRect(10, 7, 2, 3);
+  };
+  make('zasahovka-0', 24, 12, (g) => swatVan(g, false, false));
+  make('zasahovka-1', 24, 12, (g) => swatVan(g, false, true));
+  make('zasahovka-wreck', 24, 12, (g) => swatVan(g, true, false));
+
   // Částice: kouř, oheň, jiskry.
   make('puff', 6, 6, (g) => g.fillStyle(0xffffff).fillCircle(3, 3, 3));
   make('spark', 2, 2, (g) => g.fillStyle(0xffffff).fillRect(0, 0, 2, 2));
@@ -261,6 +275,19 @@ export function generateCombat(scene: Phaser.Scene): void {
     g.fillStyle(0x6a4a2a).fillRect(10, 7, 3, 2);
     head(g);
   });
+
+  // Policisté: modrá uniforma s čepicí; zásahovka černá s helmou a samopalem.
+  const cop = (key: string, jacket: number, cap: number, long: boolean) =>
+    make(key, 20, 16, (g) => {
+      g.fillStyle(0x000000, 0.35).fillEllipse(8, 9, 12, 11);
+      g.fillStyle(jacket).fillEllipse(7, 8, 9, 12);
+      g.fillStyle(0xe0b48a).fillRect(10, 7, 4, 2);
+      g.fillStyle(0x1a1a1a).fillRect(13, 7, long ? 6 : 3, 2);
+      g.fillStyle(cap).fillCircle(8, 8, 3);
+      g.fillStyle(0xffd23f).fillRect(4, 6, 2, 1);
+    });
+  cop('cop', 0x2a4a9a, 0x1a2a5a, false);
+  cop('cop-swat', 0x1a1a1a, 0x333333, true);
 
   make('corpse', 16, 16, (g) => {
     g.fillStyle(0x7a1010, 0.8).fillEllipse(9, 9, 14, 10);
