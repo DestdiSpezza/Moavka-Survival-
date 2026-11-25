@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { damageState, type DamageState, FIRE_BURN_FRACTION, impactDamage } from '../systems/damage';
 import { type DriveInput, type DriveState, forwardSpeed, stepDrive, type Surface } from '../systems/vehicleModel';
+import type { GroupId } from '../systems/respect';
 import { isPoliceKind, VEHICLE_TYPES, type VehicleKind, type VehicleType } from '../world/vehicles';
 
 export type Driver = 'none' | 'npc' | 'player' | 'police';
@@ -16,6 +17,10 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
   driver: Driver = 'none';
   /** Hráč ho už jednou ukradl (krádež se hlásí jen poprvé). */
   stolen = false;
+  /** Skupina, které vozidlo patří. */
+  owner: GroupId | null = null;
+  /** Kdy ho naposledy poškodil hráč (herní čas v s); podle toho se pozná, kdo ho zničil. */
+  playerHitAt = -100;
   hp: number;
   state: DamageState = 'ok';
   drive: DriveState;

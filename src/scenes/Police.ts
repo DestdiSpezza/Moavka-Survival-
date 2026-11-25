@@ -436,6 +436,18 @@ export class Police {
       return;
     }
 
+    // Člen skupiny, který napadl policii, má přednost.
+    const thug = this.nearestThug(p);
+    if (thug) {
+      body.setVelocity(0, 0);
+      p.setRotation(Phaser.Math.Angle.Between(p.x, p.y, thug.x, thug.y));
+      if (this.now > c.nextShot) {
+        c.nextShot = this.now + (c.smg ? 0.15 : 0.8);
+        this.copShoot(p, thug, c.smg ? 0.28 : 0.2, c.smg ? 5 : 7);
+      }
+      return;
+    }
+
     const dist = Phaser.Math.Distance.Between(p.x, p.y, f.x, f.y);
     const visible = dist < SIGHT && lineOfSight(this.game.world.tiles, TILE, p, f, blocksBullets);
     const holdsGun = this.game.player.arsenal.current !== 'fists' && this.game.player.arsenal.current !== 'bat';
@@ -466,6 +478,20 @@ export class Police {
     if (Phaser.Math.Distance.Between(p.x, p.y, target.x, target.y) > (resp.arrest ? 10 : 30)) this.walkTo(p, target, c.smg ? COP_SPEED * 1.1 : COP_SPEED);
     else body.setVelocity(0, 0);
     void dt;
+  }
+
+  private nearestThug(cop: Pedestrian): Pedestrian | null {
+    let best: Pedestrian | null = null;
+    let bestD = 180;
+    for (const m of this.game.combat.peds) {
+      if (!m.alive || !m.active || m.role !== 'gang' || !m.attacksPolice) continue;
+      const d = Phaser.Math.Distance.Between(cop.x, cop.y, m.x, m.y);
+      if (d < bestD && lineOfSight(this.game.world.tiles, TILE, cop, m, blocksBullets)) {
+        best = m;
+        bestD = d;
+      }
+    }
+    return best;
   }
 
   private walkTo(p: Pedestrian, to: Point, speed: number): number {

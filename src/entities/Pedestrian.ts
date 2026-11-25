@@ -1,8 +1,12 @@
 import Phaser from 'phaser';
 import { PED_HP, TOUGH_PED_HP } from '../systems/crowd';
+import type { GroupId } from '../systems/respect';
 
 export type PedState = 'idle' | 'wander' | 'flee' | 'fight' | 'dead';
-export type PedRole = 'civil' | 'cop';
+export type PedRole = 'civil' | 'cop' | 'gang';
+
+/** Na koho člen skupiny nebo policista útočí. */
+export type Foe = Pedestrian | 'player' | Phaser.GameObjects.Sprite | null;
 
 /** Chodec: bloumá po vesnici, při nebezpečí utíká; drsoň se brání. */
 export class Pedestrian extends Phaser.Physics.Arcade.Sprite {
@@ -16,11 +20,22 @@ export class Pedestrian extends Phaser.Physics.Arcade.Sprite {
   attackReadyAt = 0;
   stuckFor = 0;
   role: PedRole = 'civil';
+  maxHp: number;
+  /** Člen skupiny: ke které patří, kde má „doma“ a na koho jde. */
+  group: GroupId | null = null;
+  home: { x: number; y: number } | null = null;
+  foe: Foe = null;
+  foeUntil = 0;
+  nextAttack = 0;
+  fleeUntil = 0;
+  /** Útočí na policii (policisté pak střílí po něm). */
+  attacksPolice = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, look: number, tough: boolean, texture?: string, hp?: number) {
     super(scene, x, y, texture ?? `ped-${look}`);
     this.tough = tough;
     this.hp = hp ?? (tough ? TOUGH_PED_HP : PED_HP);
+    this.maxHp = this.hp;
     scene.add.existing(this);
     scene.physics.add.existing(this);
     const body = this.body as Phaser.Physics.Arcade.Body;

@@ -188,6 +188,29 @@ export function generateVehicles(scene: Phaser.Scene): void {
   make('policie-1', 20, 10, (g) => police(g, false, true));
   make('policie-wreck', 20, 10, (g) => police(g, true, false));
 
+  // Skútr a kolo: malé, vrak je jen ohořelý rám.
+  const scooter = (g: G, wreck: boolean, color: number) => {
+    g.fillStyle(0x151515).fillRect(0, 2, 3, 3).fillRect(11, 2, 3, 3);
+    g.fillStyle(wreck ? 0x2a2420 : color).fillRoundedRect(2, 1, 10, 5, 2);
+    g.fillStyle(wreck ? 0x1a1614 : 0x222222).fillRect(4, 2, 4, 3);
+    if (!wreck) g.fillStyle(0xfff2a0).fillRect(12, 3, 1, 1);
+  };
+  make('skutr-0', 14, 7, (g) => scooter(g, false, 0xc04ad0));
+  make('skutr-wreck', 14, 7, (g) => scooter(g, true, 0));
+  const bike = (g: G, wreck: boolean) => {
+    g.fillStyle(0x151515).fillCircle(2, 3, 2).fillCircle(11, 3, 2);
+    g.fillStyle(wreck ? 0x2a2420 : 0x3aa04a).fillRect(2, 2, 10, 2);
+    g.fillStyle(0x888888).fillRect(10, 0, 1, 6);
+  };
+  make('kolo-0', 14, 6, (g) => bike(g, false));
+  make('kolo-wreck', 14, 6, (g) => bike(g, true));
+
+  // Vrhané věci: láhev, molotov, kámen z praku, petarda.
+  make('proj-bottle', 6, 3, (g) => g.fillStyle(0x3a8a3a).fillRect(0, 0, 5, 3).fillStyle(0x9ad09a).fillRect(4, 1, 2, 1));
+  make('proj-molotov', 6, 3, (g) => g.fillStyle(0x8a5a2a).fillRect(0, 0, 5, 3).fillStyle(0xffa020).fillRect(5, 0, 1, 3));
+  make('proj-rock', 3, 3, (g) => g.fillStyle(0x9a9a9a).fillCircle(1.5, 1.5, 1.5));
+  make('proj-firework', 5, 3, (g) => g.fillStyle(0xd02020).fillRect(0, 0, 4, 3).fillStyle(0xffd23f).fillRect(4, 1, 1, 1));
+
   const swatVan = (g: G, wreck: boolean, flip: boolean) => {
     wheels(g, 24, 12, 3, 4);
     g.fillStyle(wreck ? 0x2a2420 : 0x1c2433).fillRect(1, 1, 22, 10);
@@ -287,6 +310,34 @@ export function generateCombat(scene: Phaser.Scene): void {
       g.fillStyle(0xffd23f).fillRect(4, 6, 2, 1);
     });
   cop('cop', 0x2a4a9a, 0x1a2a5a, false);
+
+  // Členové skupin: bunda v barvě skupiny, typická výbava v ruce.
+  const member = (key: string, jacket: number, hair: number, tool: (g: G) => void) =>
+    make(key, 22, 16, (g) => {
+      g.fillStyle(0x000000, 0.35).fillEllipse(8, 9, 12, 11);
+      g.fillStyle(jacket).fillEllipse(7, 8, 10, 13);
+      g.fillStyle(0xe0b48a).fillRect(10, 7, 4, 2);
+      tool(g);
+      g.fillStyle(0xe8c39a).fillCircle(8, 8, 3);
+      g.fillStyle(hair).fillRect(6, 6, 3, 4);
+    });
+  member('gang-drevari', 0xb03a2a, 0x3a2a1a, (g) => {
+    g.fillStyle(0x1a1a1a).fillRect(3, 4, 7, 1).fillRect(3, 11, 7, 1); // kostkovaná flanelka
+    g.fillStyle(0x7a5a3a).fillRect(13, 7, 6, 2);
+    g.fillStyle(0xc8c8c8).fillRect(18, 5, 3, 5); // sekera
+  });
+  member('gang-stamgasti', 0xd8b030, 0x9a9a9a, (g) => {
+    g.fillStyle(0xffffff).fillRect(4, 6, 3, 4); // pivní pěna na tričku
+    g.fillStyle(0x3a8a3a).fillRect(13, 7, 5, 2); // láhev
+  });
+  member('gang-ekologove', 0x3aa04a, 0xd8c070, (g) => {
+    g.fillStyle(0x8a5a2a).fillRect(13, 6, 4, 1).fillRect(13, 9, 4, 1); // prak
+    g.fillStyle(0xe8e0c8).fillRect(4, 7, 2, 2);
+  });
+  member('gang-skola', 0x9a4ad0, 0x1a1a1a, (g) => {
+    g.fillStyle(0xffffff).fillRect(4, 3, 2, 10); // pruhy na teplákovce
+    g.fillStyle(0xb88a4a).fillRect(13, 7, 7, 2); // pálka
+  });
   cop('cop-swat', 0x1a1a1a, 0x333333, true);
 
   make('corpse', 16, 16, (g) => {

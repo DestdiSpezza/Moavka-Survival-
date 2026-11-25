@@ -79,7 +79,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** krádež auta spustí honičku, která se umí vyhrotit až na úroveň 5 i zase uklidnit.
 
-## Fáze 5: Skupiny a respekt (hlavní mechanika)
+## Fáze 5: Skupiny a respekt (hlavní mechanika) ✅
 
 - Data skupin: název, barva/symbol, území na mapě, členové, typická vozidla, vztahy k ostatním skupinám.
 - 4 skupiny v první oblasti (viz [Skupiny Morávky](#skupiny-morávky)).
@@ -90,6 +90,9 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 - Chování podle respektu: vysoký respekt znamená, že tě nechají být nebo ti pomůžou; hluboko v mínusu na jejich území zazní „To je on!“ a zaútočí.
 - Skupiny reagují i na policii a na sebe navzájem. Tím vzniká řetězový chaos: honička → spřátelená skupina napadne policii → přijedou posily.
 - HUD: respekt u skupin v aktuální oblasti.
+- Herní čas (den = 12 minut, začíná se v 16:00), noc ztmaví obraz; Štamgasti jsou večer rychlejší, přesnější a házejí molotovy.
+- Vozidla skupin (traktory a dodávka Dřevařů, skútry Školy a Štamgastů, kola Ekologů): krádež −8, zničení −12 respektu.
+- Zatím neřešeno: členové skupin nejezdí vozidly, chodí pěšky.
 
 **Hotovo, když:** se dá situace „ukradnu auto → policie → vjedu ke spřáteleným → oni střílí na policii“ odehrát sama od sebe, bez skriptu.
 

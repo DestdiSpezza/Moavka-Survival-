@@ -28,6 +28,15 @@ interface Pickup {
   readyAt: number;
 }
 
+/** Zranění postavy (pro respekt skupin a odvetu). */
+export interface PedHurtEvent {
+  ped: Pedestrian;
+  killed: boolean;
+  byPlayer: boolean;
+  /** Kdo útočil, pokud je to postava (policista, člen skupiny). */
+  attacker: Pedestrian | null;
+}
+
 /** Hlášení trestného činu pro policii. */
 export interface CrimeEvent {
   x: number;
@@ -155,6 +164,7 @@ export class Combat {
     }
     for (const v of this.game.vehicles) {
       if (!v.wrecked && inMeleeArc(origin, angle, v, def.range + 8)) {
+        v.playerHitAt = this.time;
         v.damage(def.damage * 0.2);
         if (v.isPolice) this.crime(origin, 'copAssault');
         hit = true;
@@ -215,6 +225,7 @@ export class Combat {
       this.hurtPed(hitPed, damage, start);
       this.blood.explode(6, end.x, end.y);
     } else if (hitCar) {
+      hitCar.playerHitAt = this.time;
       hitCar.damage(damage * 0.5);
       if (hitCar.isPolice && !own) this.crime(start, 'copAssault');
       this.sparks.explode(4, end.x, end.y);
@@ -335,9 +346,16 @@ export class Combat {
     p.hp -= damage;
     this.blood.explode(4, p.x, p.y);
     const cop = p.role === 'cop';
+    const attacker = from instanceof Pedestrian ? from : null;
     if (p.hp <= 0) {
       this.killPed(p);
+      this.game.events.emit('pedHurt', { ped: p, killed: true, byPlayer, attacker } satisfies PedHurtEvent);
       this.noise(p, 140, byPlayer ? (cop ? 'copMurder' : 'murder') : null);
+      return;
+    }
+    this.game.events.emit('pedHurt', { ped: p, killed: false, byPlayer, attacker } satisfies PedHurtEvent);
+    if (p.role === 'gang') {
+      if (byPlayer) this.crime(p, 'assault');
       return;
     }
     if (cop) {
@@ -391,8 +409,8 @@ export class Combat {
       // Policista upustí služební zbraň.
       this.addPickup(p.texture.key === 'cop-swat' ? 'smg' : 'pistol', p.x + 6, p.y + 4, 0, false);
       p.setTexture('corpse');
-    } else if (this.game.random() < 0.6) {
-      const amount = 10 + Math.floor(this.game.random() * 70);
+    } else if (p.role === 'gang' || this.game.random() < 0.6) {
+      const amount = p.role === 'gang' ? 40 + Math.floor(this.game.random() * 120) : 10 + Math.floor(this.game.random() * 70);
       this.addPickup('money', p.x + 6, p.y + 4, amount, false);
     }
     this.game.tweens.add({ targets: p, alpha: 0, delay: 25000, duration: 2000, onComplete: () => p.destroy() });

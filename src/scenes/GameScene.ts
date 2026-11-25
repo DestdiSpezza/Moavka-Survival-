@@ -14,6 +14,7 @@ import { CAR_COLORS } from '../world/tileset';
 import { parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicles';
 import { pixelFont } from './BootScene';
 import { Combat } from './Combat';
+import { Gangs } from './Gangs';
 import { Police } from './Police';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
@@ -60,6 +61,7 @@ export class GameScene extends Phaser.Scene {
   driving: Vehicle | null = null;
   combat!: Combat;
   police!: Police;
+  gangs!: Gangs;
   layer!: Phaser.Tilemaps.TilemapLayer;
   /** Deterministická náhoda pro celou scénu. */
   readonly random = createRng(99);
@@ -110,7 +112,10 @@ export class GameScene extends Phaser.Scene {
       const va = a as Vehicle;
       const vb = b as Vehicle;
       const other = va === this.driving ? vb : vb === this.driving ? va : null;
-      if (other?.isPolice && Math.abs(this.driving!.speed) > 40) this.events.emit('crime', { x: this.driving!.x, y: this.driving!.y, kind: 'rammedCop' });
+      if (other && Math.abs(this.driving!.speed) > 40) {
+        other.playerHitAt = this.time.now / 1000;
+        if (other.isPolice) this.events.emit('crime', { x: this.driving!.x, y: this.driving!.y, kind: 'rammedCop' });
+      }
     });
     this.physics.add.collider(this.player, this.vehicles);
 
@@ -141,13 +146,15 @@ export class GameScene extends Phaser.Scene {
 
     this.combat = new Combat(this);
     this.police = new Police(this);
+    this.gangs = new Gangs(this);
     this.input.setDefaultCursor('none');
     this.scene.launch('UI');
   }
 
   private spawnVehicles(): void {
     for (const p of parkedVehicles(this.world)) {
-      this.addVehicle(p.kind, p.x, p.y, p.angle, Math.floor(this.random() * CAR_COLORS.length));
+      const v = this.addVehicle(p.kind, p.x, p.y, p.angle, Math.floor(this.random() * CAR_COLORS.length));
+      v.owner = p.owner;
     }
     this.paths = trafficPaths();
     const kinds: VehicleKind[] = ['osobak', 'osobak', 'dodavka', 'osobak', 'traktor', 'osobak', 'osobak'];
@@ -216,6 +223,7 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('prompt', this.driving || this.player.dead ? '' : this.enterPrompt());
     this.combat.update(dt);
     this.police.update(dt);
+    this.gangs.update(dt);
     const a = this.player.arsenal;
     const def = WEAPONS[a.current];
     this.registry.set('player', {
@@ -269,6 +277,7 @@ export class GameScene extends Phaser.Scene {
     if (v.driver === 'npc') this.yankDriver(v);
     else if (!v.stolen) this.events.emit('crime', { x: v.x, y: v.y, kind: v.isPolice ? 'policeTheft' : 'theft' });
     if (v.isPolice && !v.stolen) this.toast(T.stolePolice);
+    if (!v.stolen) this.gangs.onSteal(v);
     v.stolen = true;
     this.police.onEnterVehicle(v);
     this.traffic.delete(v);
@@ -418,6 +427,7 @@ export class GameScene extends Phaser.Scene {
   private explode(v: Vehicle): void {
     const { x, y } = v;
     const wasInside = v === this.driving;
+    this.gangs.onWrecked(v, wasInside || this.time.now / 1000 - v.playerHitAt < 6);
     if (wasInside) this.exitVehicle();
     v.driver = 'none';
     this.traffic.delete(v);

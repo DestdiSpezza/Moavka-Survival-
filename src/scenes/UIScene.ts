@@ -3,6 +3,9 @@ import { STAMINA_MAX } from '../systems/movement';
 import { T } from '../texts/cs';
 import { Tile } from '../world/tiles';
 import { pixelFont } from './BootScene';
+import { GROUP_IDS } from '../systems/respect';
+import { GROUPS } from '../world/gangs';
+import type { RespectHud } from './Gangs';
 import { type GameScene, MINIMAP, type PlayerHud, type VehicleHud } from './GameScene';
 
 const HP_COLORS: Record<string, number> = { ok: 0x6fd16a, smoke: 0xe0b23a, fire: 0xe0442a };
@@ -26,6 +29,10 @@ export class UIScene extends Phaser.Scene {
   private crosshair!: Phaser.GameObjects.Graphics;
   private deathText!: Phaser.GameObjects.Text;
   private stars: Phaser.GameObjects.Text[] = [];
+  private respectBars: Phaser.GameObjects.Rectangle[] = [];
+  private respectValues: Phaser.GameObjects.Text[] = [];
+  private clockText!: Phaser.GameObjects.Text;
+  private night!: Phaser.GameObjects.Rectangle;
   private lastZone = '';
   private wasExhausted = false;
   private wasInForest = false;
@@ -37,6 +44,8 @@ export class UIScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     const { x, y, w, h } = MINIMAP;
+    // Noc: tmavý závoj pod HUDem (HUD se kreslí až po něm, takže zůstane čitelný).
+    this.night = this.add.rectangle(0, 0, width, height, 0x0a1030, 1).setOrigin(0).setAlpha(0);
     this.add.rectangle(x - 2, y - 2, w + 4, h + 4).setOrigin(0).setStrokeStyle(3, 0xf2e9d0);
     this.zoneText = this.add.text(x, y + h + 10, '', pixelFont(18, '#ffd23f')).setStroke('#000', 4);
 
@@ -60,6 +69,21 @@ export class UIScene extends Phaser.Scene {
 
     this.crosshair = this.add.graphics().setDepth(100);
     this.deathText = this.add.text(width / 2, height / 2 - 40, T.died, pixelFont(64, '#d94040')).setOrigin(0.5).setStroke('#000', 8).setVisible(false);
+
+    // Respekt u skupin: středová čárka = 0, doprava plus, doleva mínus.
+    this.respectBars = [];
+    this.respectValues = [];
+    const ry = y + h + 108;
+    GROUP_IDS.forEach((id, i) => {
+      const spec = GROUPS[id];
+      const rowY = ry + i * 20;
+      this.add.text(x, rowY - 3, spec.name, pixelFont(14, spec.css)).setStroke('#000', 4);
+      this.add.rectangle(x + 100, rowY, 124, 12, 0x000000, 0.6).setOrigin(0);
+      this.add.rectangle(x + 162, rowY - 1, 2, 14, 0xf2e9d0).setOrigin(0.5, 0);
+      this.respectBars.push(this.add.rectangle(x + 162, rowY + 2, 0, 8, spec.color).setOrigin(0, 0));
+      this.respectValues.push(this.add.text(x + 230, rowY - 3, '0', pixelFont(14)).setStroke('#000', 4));
+    });
+    this.clockText = this.add.text(width / 2, 46, '', pixelFont(16, '#f2e9d0')).setOrigin(0.5, 0).setStroke('#000', 4);
 
     // Hvězdičky hledanosti nahoře uprostřed.
     this.stars = [];
@@ -131,6 +155,20 @@ export class UIScene extends Phaser.Scene {
       this.moneyText.setText(`${me.money.toLocaleString('cs-CZ')} ${T.currency}`);
       this.weaponText.setText(me.weapon);
       this.ammoText.setText(me.ammo === null ? '' : String(me.ammo));
+    }
+
+    const gangs = this.registry.get('gangs') as RespectHud | undefined;
+    if (gangs) {
+      GROUP_IDS.forEach((id, i) => {
+        const r = gangs.respect[id];
+        const bar = this.respectBars[i];
+        // Záporný respekt roste doleva od středu.
+        bar.width = Math.abs(r) * 0.6;
+        bar.x = r >= 0 ? MINIMAP.x + 163 : MINIMAP.x + 162 - bar.width;
+        this.respectValues[i].setText(`${r > 0 ? '+' : ''}${Math.round(r)}`).setColor(r <= -30 ? '#ff7a6a' : r >= 50 ? '#9fffa0' : '#f2e9d0');
+      });
+      this.clockText.setText(gangs.clock);
+      this.night.setAlpha(gangs.darkness);
     }
 
     const wanted = this.registry.get('wanted') as { level: number; searching: boolean } | undefined;

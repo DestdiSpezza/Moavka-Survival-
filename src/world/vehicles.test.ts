@@ -11,6 +11,8 @@ describe('vozidla na mapě', () => {
   it('zaparkovaná auta stojí na trávě nebo hlíně a nepřekrývají se', () => {
     const parked = parkedVehicles(map);
     expect(parked.some((p) => p.kind === 'policie')).toBe(true);
+    expect(parked.filter((p) => p.owner === 'skola').length).toBeGreaterThan(1);
+    expect(parked.some((p) => p.kind === 'kolo' && p.owner === 'ekologove')).toBe(true);
     for (const p of parked) {
       // Auto zabírá dvě dlaždice vedle sebe.
       expect([Tile.Grass, Tile.Dirt]).toContain(tileAt(p.x - 8, p.y));

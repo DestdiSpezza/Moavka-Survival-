@@ -1,9 +1,10 @@
+import type { GroupId } from '../systems/respect';
 import type { VehicleParams } from '../systems/vehicleModel';
 import { CROSS_ROAD_Y, DAM_Y, mainRoadX, type WorldMap } from './moravka';
 import { Tile } from './tiles';
 import { TILE } from '../config';
 
-export type VehicleKind = 'osobak' | 'dodavka' | 'terenak' | 'traktor' | 'policie' | 'zasahovka';
+export type VehicleKind = 'osobak' | 'dodavka' | 'terenak' | 'traktor' | 'policie' | 'zasahovka' | 'skutr' | 'kolo';
 
 export interface VehicleType {
   kind: VehicleKind;
@@ -36,6 +37,14 @@ export const VEHICLE_TYPES: Record<VehicleKind, VehicleType> = {
     kind: 'policie', name: 'Policejní auto', length: 20, width: 10, maxHp: 120,
     params: { maxSpeed: 210, reverseSpeed: 65, accel: 170, brake: 280, turnRate: 2.8, grip: 7.5, offroad: false },
   },
+  skutr: {
+    kind: 'skutr', name: 'Skútr', length: 14, width: 7, maxHp: 45,
+    params: { maxSpeed: 150, reverseSpeed: 30, accel: 170, brake: 260, turnRate: 3.3, grip: 7, offroad: false },
+  },
+  kolo: {
+    kind: 'kolo', name: 'Kolo', length: 14, width: 6, maxHp: 30,
+    params: { maxSpeed: 95, reverseSpeed: 20, accel: 120, brake: 240, turnRate: 3.5, grip: 8, offroad: true },
+  },
   zasahovka: {
     kind: 'zasahovka', name: 'Zásahovka', length: 24, width: 12, maxHp: 240,
     params: { maxSpeed: 175, reverseSpeed: 55, accel: 130, brake: 230, turnRate: 2.2, grip: 6.5, offroad: true },
@@ -48,6 +57,8 @@ export function isPoliceKind(kind: VehicleKind): boolean {
 
 export interface ParkedVehicle {
   kind: VehicleKind;
+  /** Skupina, které vozidlo patří (krádež nebo zničení jí vadí). */
+  owner: GroupId | null;
   /** Střed vozidla v px. */
   x: number;
   y: number;
@@ -90,19 +101,25 @@ export function parkedVehicles(map: WorldMap): ParkedVehicle[] {
     if (!b) throw new Error(`Chybí budova ${name}`);
     return { x: Math.floor(b.x + b.w / 2), y: b.y + b.h + 1 };
   };
-  const plan: Array<[VehicleKind, { x: number; y: number }]> = [
-    ['osobak', near('Hospoda')],
-    ['traktor', near('Hospoda')],
-    ['dodavka', near('Pila')],
-    ['traktor', near('Pila')],
-    ['osobak', near('Škola')],
-    ['policie', near('Obecní úřad')],
-    ['dodavka', near('Obchod')],
-    ['terenak', { x: mainRoadX(DAM_Y - 3) + 4, y: DAM_Y - 3 }],
+  const dam = { x: mainRoadX(DAM_Y - 3) + 4, y: DAM_Y - 3 };
+  const plan: Array<[VehicleKind, { x: number; y: number }, GroupId | null]> = [
+    ['osobak', near('Hospoda'), 'stamgasti'],
+    ['traktor', near('Hospoda'), 'drevari'],
+    ['skutr', near('Hospoda'), 'stamgasti'],
+    ['dodavka', near('Pila'), 'drevari'],
+    ['traktor', near('Pila'), 'drevari'],
+    ['osobak', near('Škola'), 'skola'],
+    ['skutr', near('Škola'), 'skola'],
+    ['skutr', near('Škola'), 'skola'],
+    ['policie', near('Obecní úřad'), null],
+    ['dodavka', near('Obchod'), null],
+    ['kolo', near('Obchod'), 'ekologove'],
+    ['terenak', dam, null],
+    ['kolo', dam, 'ekologove'],
   ];
-  return plan.map(([kind, at], i) => {
+  return plan.map(([kind, at, owner], i) => {
     const { tx, ty } = findParkingSpot(map, at.x, at.y, taken);
-    return { kind, x: (tx + 1) * TILE, y: (ty + 0.5) * TILE, angle: i % 2 ? Math.PI : 0 };
+    return { kind, owner, x: (tx + 1) * TILE, y: (ty + 0.5) * TILE, angle: i % 2 ? Math.PI : 0 };
   });
 }
 
