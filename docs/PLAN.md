@@ -77,7 +77,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 ## Fáze 5: Skupiny a respekt (hlavní mechanika)
 
 - Data skupin: název, barva/symbol, území na mapě, členové, typická vozidla, vztahy k ostatním skupinám.
-- 3 skupiny v první oblasti (názvy a charakter doplníme společně).
+- 4 skupiny v první oblasti (viz [Skupiny Morávky](#skupiny-morávky)).
 - Respekt u každé skupiny: od -100 do +100, start kolem 0.
   - **Roste:** splněná mise, pomoc členům, škoda nepřátelům skupiny.
   - **Klesá:** zabití členů, zničení majetku, selhání v důležité zakázce.
@@ -120,9 +120,37 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 ---
 
-## Otevřené otázky
+## Styl hry
 
-1. **Skupiny:** jak se mají jmenovat a jaké mají mít povahy? (Návrh: místní „dřevaři“, parta od přehrady, překupníci aut.) Názvy budou smyšlené, ne skutečné firmy nebo lidé.
-2. **Grafika:** pixel-art, nebo čistší vektorový styl?
-3. **Jazyk hry:** jen čeština, nebo i angličtina?
-4. **Tón:** spíš humor a nadsázka, nebo vážnější atmosféra?
+- **Grafika:** rastrový pixel-art (dlaždice 16×16 px, zvětšené bez vyhlazování).
+- **Jazyk:** čeština (všechny texty v jednom souboru, aby šlo později přidat další jazyk).
+- **Tón:** černý humor, nadsázka, trochu punk. Hlášky chodců a skupin, absurdní komplikace v misích, policejní vysílačka s komentáři.
+
+## Skupiny Morávky
+
+Všechny skupiny jsou smyšlené.
+
+| Skupina | Povaha | Kde je najdeš | Zbraně | Vozidla |
+|---|---|---|---|---|
+| **Dřevaři** | Drsní, málomluvní, řeší věci sekerou | Pila, hospoda | Sekery, motorové pily, palice | Traktory, lesní nákladáky, valníky |
+| **Štamgasti** | Opilci s velkým srdcem a krátkým fitilem | Hospoda (od rána do noci) | Láhve, molotovy, stará brokovnice | Rozbitá stará auta, mopedy |
+| **Ekologové** | Všudypřítomní, nesnáší auta | Všude: les, přehrada, náves | Spreje, praky, zápalné bomby na auta | Kola, koloběžky, pěšky |
+| **Škola** | Vesnický „sídlištní“ gang školáků a mlaďochů | Škola, hřiště, autobusová zastávka | Pálky, nože, petardy | Skútry, kradená auta |
+
+### Vztahy mezi skupinami (výchozí)
+
+| | Dřevaři | Štamgasti | Ekologové | Škola |
+|---|---|---|---|---|
+| **Dřevaři** | — | 🙂 sdílejí hospodu | 💀 nepřátelé (kácení lesa) | 😐 neutrální |
+| **Štamgasti** | 🙂 | — | 😐 neutrální | 😠 rivalové (kluci jim kradou pivo) |
+| **Ekologové** | 💀 | 😐 | — | 😠 rivalové (skútry a petardy) |
+| **Škola** | 😐 | 😠 | 😠 | — |
+
+Hospoda je sdílené území Dřevařů a Štamgastů: kdo si tam rozhádá jedny, má problém i s druhými.
+
+### Zvláštní chování
+
+- **Ekologové** útočí na hráče, když řídí auto (hlavně nákladní nebo kouřící), a ničí zaparkovaná vozidla. Pěšky nebo na kole tě nechají být.
+- **Štamgasti** jsou přes den pomalí a nepřesní, večer agresivnější.
+- **Dřevaři** jsou pomalí, ale vydrží nejvíc a jejich vozidla jsou těžká a ničivá.
+- **Škola** je rychlá, útočí ve skupinkách a rychle utíká.
