@@ -23,6 +23,8 @@ Po dokončení každé fáze se zastavíme, probereme ji a teprve pak jde dalš�
 
 Co se zruší: zadavatelé „!“ u skupin, nabídky a katalog 22 zakázek (Morávka i Raškovice),
 krok tutoriálu o zakázkách. Respekt skupin zůstává (mění ho boj a příběh).
+Výjezd do Raškovic otevře až příběh (ADR-011). Dealer Veseta je od teď Vesta ze Štamgastů (ADR-009),
+Omyx je přes den u řeky a večer v eRku (ADR-010).
 
 ---
 
@@ -40,10 +42,14 @@ krok tutoriálu o zakázkách. Respekt skupin zůstává (mění ho boj a příb
 
 ## Fáze P1: Akt 1 – Příjezd
 
+### 0. Hrdina
+- Jméno a důvod příjezdu dodá zadání (ADR-012). Do té doby ho NPC oslovují „punkáči“.
+
 ### 1. Zrušení zakázek
 - Pryč: zadavatelé „!“, nabídky, katalog zakázek, odměny a komplikace zakázek, krok tutoriálu o zakázkách.
 - Zůstává: kroky (`steps.ts`), ukazatel cíle, text úkolu v HUDu. Z `Missions` se stane `Story` (běh aktu a misí).
 - Staré uložené hry: postup, peníze a výbava zůstanou, rozehraná zakázka se zahodí. Příběh v nich začne od Aktu 1 bez úvodní animace.
+- Výjezd do Raškovic se zavře (otevře ho až některý akt). Budova Veseta se přejmenuje na Vestovu (obchod pod pultem zůstává).
 
 ### 2. Příběhový systém
 - `src/story/`: akty jako data (akt → mise → kroky), stav příběhu (aktuální akt a mise, příznaky typu `metPlotkova`, `refusedTalk`), vztahy s NPC (−100 až 100).

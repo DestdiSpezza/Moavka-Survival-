@@ -45,12 +45,22 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 - **Stav:** navrženo
 - **Rozhodnutí:** Uložení dostane novou verzi: aktuální akt a mise, příznaky, vztahy s NPC. Staré uložení se převede (příběh začne Aktem 1 bez úvodní animace, peníze a výbava zůstanou).
 
-## ADR-009: Jména Vesta a Veseta
-- **Stav:** otevřeno
+## ADR-009: Vesta je Veseta
+- **Stav:** přijato
 - **Kontext:** Štamgast se jmenuje Vesta, dealer u úřadu Veseta a neprůstřelná výbava v HUDu taky „Vesta“.
-- **Otázka:** Jsou Vesta a Veseta stejná postava? Má se přejmenovat výbava (např. „Neprůstřelná vesta“ nebo „Kevlar“)?
+- **Rozhodnutí:** Vesta a Veseta jsou jedna postava: bohatý Štamgast Vesta, který zároveň prodává zbraně, vestu a lékárničky pod pultem. Jméno Veseta ze hry zmizí (budova u úřadu bude Vestova).
+- **Otevřené:** Neprůstřelná výbava v HUDu se pořád jmenuje „Vesta“; návrh je přejmenovat ji na „Neprůstřelná vesta“, ať se to neplete s postavou.
 
 ## ADR-010: Kde je Omyx
-- **Stav:** otevřeno
+- **Stav:** přijato
 - **Kontext:** Omyx dnes stojí u řeky a prodává trávu. Podle zadání je zároveň Štamgast v eRku.
-- **Návrh:** Večer v eRku, přes den u řeky. V Aktu 1 sedí v hospodě.
+- **Rozhodnutí:** Přes den stojí u řeky, večer sedí v eRku. V Aktu 1 je v hospodě.
+
+## ADR-011: Raškovice odemyká příběh
+- **Stav:** přijato
+- **Kontext:** Výjezd do Raškovic se dosud otevřel po splnění cíle oblasti (skóre 1 500 a 2 500 Kč), hlavně ze zakázek.
+- **Rozhodnutí:** Výjezd zůstane zavřený, dokud ho neotevře některý akt. Skóre a peníze se sbírají dál (obchody, garáž, chata).
+
+## ADR-012: Hrdina
+- **Stav:** otevřeno (jméno a důvod příjezdu dodá zadání)
+- **Zatím:** Punkáč se zeleným čírem, jak ho hra kreslí. Dokud nebude jméno, NPC mu říkají „punkáči“.

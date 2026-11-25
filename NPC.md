@@ -17,13 +17,13 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Kde:** U stolu u okna, objednává za všechny a pak to všem připomíná.
 - **Plotková:** „Vesta. Má prachy, chytrej není. Kdyby se kecy daly prodat, koupil by celou Morávku. Dvakrát.“
 - **Hlášky:** „Já bych to koupil, ale nechci, aby ses cítil chudej.“ / „Moje auto má víc koní než celý Raškovice.“ / „Pomůžu ti. Ale řeknu to všem.“
-- **Otázka:** Je to stejná postava jako dealer **Veseta** u obecního úřadu (prodává zbraně pod pultem)? A neprůstřelná vesta v HUDu se taky jmenuje „Vesta“ (viz ADR-009).
+- **Obchod:** Je to zároveň dealer u obecního úřadu: pod pultem prodává zbraně, vestu a lékárničky (dřív „Veseta“, ADR-009). Přes den v obchodě, večer v eRku.
 
 ### Omyx
 - **Kdo:** Střelený zhulený dealer trávy, hlasitý, občas se popere.
 - **Výhoda:** Prodává trávu (když za ním dojdeš) a poradí, jak na koho jít.
 - **Nevýhoda:** Po rozhovoru s ním hráčova postava pořád mele, že chce hulit a chce za Omyxem.
-- **Kde:** Ve hře už stojí u řeky a prodává trávu; v eRku sedí u stolu nejblíž dveřím (viz ADR-010).
+- **Kde:** Přes den u řeky (prodává trávu), večer v eRku u stolu nejblíž dveřím (ADR-010). V Aktu 1 sedí v hospodě.
 - **Plotková:** „Omyx. Neptej se, co prodává. Teda… ptej se, on ti to stejně řekne. Nahlas.“
 - **Hlášky:** „Zelený? Domácí, z Beskyd.“ / „Na Metějku jdi zezadu, zepředu má ústa.“ / „Kdo říkal, že se peru? Já se jen hlasitě objímám.“
 
@@ -97,9 +97,6 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Kdo:** Místní důchodkyně na lavičce u zastávky před eRkem. Vidí všechno, komentuje všechno.
 - **Role:** První postava, kterou hráč potká po vystoupení z autobusu. Sarkasticky ho pošle do hospody.
 - **Hlášky:** „Vypadáš žíznivě. Nejbližší hospoda je eRko. Nejvzdálenější taky, jiná tu není.“ / „S takovým čírem tě do kostela nepustí. Do eRka jo, tam pustí i prase.“
-
-### Veseta
-- **Kdo:** Dealer u obecního úřadu, prodává „pod pultem“ zbraně, vestu a lékárničky (už ve hře).
 
 ### Zmínění, zatím bez role
 - **Lakatoš** (Dřevaři ho pořád hledají, má klíče od traktoru), **pan Franta** (rozhlas: odjel autem z hospody).
