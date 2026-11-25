@@ -57,6 +57,11 @@ export class UIScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     const { x, y, w, h } = MINIMAP;
+    // Tmavé panely pod HUDem (čitelnost na pestré mapě).
+    const hudPanel = (px: number, py: number, pw: number, ph: number) =>
+      this.add.rectangle(px, py, pw, ph, 0x0a0a10, 0.5).setOrigin(0).setStrokeStyle(1, 0x000000, 0.8);
+    hudPanel(x - 6, y + h + 6, 262, 194);
+    hudPanel(width - 232, 8, 224, 172);
     // Noc: tmavý závoj pod HUDem (HUD se kreslí až po něm, takže zůstane čitelný).
     this.add.rectangle(x - 2, y - 2, w + 4, h + 4).setOrigin(0).setStrokeStyle(3, 0xf2e9d0);
     this.zoneText = this.add.text(x, y + h + 10, '', pixelFont(18, '#ffd23f')).setStroke('#000', 3);

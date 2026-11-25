@@ -19,7 +19,12 @@ export class TitleScene extends Phaser.Scene {
     const { width, height } = this.scale;
     // Pozadí: skutečná malba Morávky, kamera pomalu pluje nad vesnicí.
     const area = AREAS.moravka;
-    if (!this.textures.exists('ground-moravka')) this.textures.addCanvas('ground-moravka', paintGround(buildArea(area.seed, area.phase), area.seed));
+    if (!this.textures.exists('ground-moravka')) {
+      const art = paintGround(buildArea(area.seed, area.phase), area.seed);
+      this.textures.addCanvas('ground-moravka', art.ground);
+      this.textures.addCanvas('lights-moravka', art.lights);
+      this.registry.set('chimneys-moravka', art.chimneys);
+    }
     if (!this.textures.exists('water')) this.textures.addCanvas('water', paintWater());
     const bg = this.add.container(0, 0);
     const ground = this.textures.get('ground-moravka').getSourceImage() as HTMLCanvasElement;

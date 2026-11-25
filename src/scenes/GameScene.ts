@@ -85,6 +85,8 @@ export class GameScene extends Phaser.Scene {
   private night!: Phaser.GameObjects.Rectangle;
   private water!: Phaser.GameObjects.TileSprite;
   private decals!: Phaser.GameObjects.RenderTexture;
+  private nightLights!: Phaser.GameObjects.Image;
+  private chimneySmoke: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private skidTick = 0;
   private headlights = new Map<Vehicle, Phaser.GameObjects.Image>();
   /** Postup celé hry (sdílený mezi oblastmi, ukládá se). */
@@ -108,6 +110,7 @@ export class GameScene extends Phaser.Scene {
     // Při přechodu do jiné oblasti se scéna spouští znovu: staré posluchače pryč.
     for (const ev of ['crime', 'knockout', 'pedHurt', 'toast', 'banner']) this.events.removeAllListeners(ev);
     this.vehicles = [];
+    this.chimneySmoke = null;
     this.traffic.clear();
     this.driving = null;
     this.progress = (this.registry.get('progress') as Progress | undefined) ?? newProgress();
@@ -127,8 +130,30 @@ export class GameScene extends Phaser.Scene {
     if (!this.textures.exists('water')) this.textures.addCanvas('water', paintWater());
     this.water = this.add.tileSprite(0, 0, wPx, hPx, 'water').setOrigin(0).setDepth(0);
     const groundKey = `ground-${this.area.id}`;
-    if (!this.textures.exists(groundKey)) this.textures.addCanvas(groundKey, paintGround(this.world, this.area.seed));
+    const lightsKey = `lights-${this.area.id}`;
+    let chimneys = this.registry.get(`chimneys-${this.area.id}`) as Array<{ x: number; y: number }> | undefined;
+    if (!this.textures.exists(groundKey) || !chimneys) {
+      const art = paintGround(this.world, this.area.seed);
+      if (this.textures.exists(groundKey)) this.textures.remove(groundKey);
+      if (this.textures.exists(lightsKey)) this.textures.remove(lightsKey);
+      this.textures.addCanvas(groundKey, art.ground);
+      this.textures.addCanvas(lightsKey, art.lights);
+      chimneys = art.chimneys;
+      this.registry.set(`chimneys-${this.area.id}`, chimneys);
+    }
     this.add.image(0, 0, groundKey).setOrigin(0).setDepth(0.5);
+    // Noční světla (lampy, okna) svítí přes tmu; ve dne jsou neviditelná.
+    this.nightLights = this.add.image(0, 0, lightsKey).setOrigin(0).setDepth(41).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
+    // Kouř z komínů: jeden emitor, obláček pokaždé z náhodného komína.
+    if (chimneys.length) {
+      const pts = chimneys;
+      const smoke = this.add.particles(0, 0, 'puff', {
+        lifespan: 2600, speedX: { min: 4, max: 10 }, speedY: { min: -8, max: -3 }, scale: { start: 0.4, end: 1.6 },
+        alpha: { start: 0.35, end: 0 }, tint: 0xc8c8c8, frequency: 70,
+        emitZone: { type: 'random', source: { getRandomPoint: (pt: Phaser.Types.Math.Vector2Like) => Object.assign(pt, pts[Math.floor(Math.random() * pts.length)]) } as unknown as Phaser.Types.GameObjects.Particles.RandomZoneSource },
+      }).setDepth(13);
+      this.chimneySmoke = smoke;
+    }
     // Trvalé stopy na zemi: smyky, krev, ohořelá místa (jako v GTA 2 zůstávají).
     this.decals = this.add.renderTexture(0, 0, wPx, hPx).setOrigin(0).setDepth(0.6);
 
@@ -180,6 +205,7 @@ export class GameScene extends Phaser.Scene {
       .startFollow(this.player);
     mini.setName('minimap');
     mini.ignore(labels);
+    if (this.chimneySmoke) mini.ignore(this.chimneySmoke);
     const dot = this.add.circle(0, 0, 40, 0xffd23f).setDepth(20);
     cam.ignore(dot);
     const follow = () => {
@@ -234,6 +260,7 @@ export class GameScene extends Phaser.Scene {
     const dark = (this.registry.get('gangs') as { darkness: number } | undefined)?.darkness ?? 0;
     const view = this.cameras.main.worldView;
     this.night.setPosition(view.x - 20, view.y - 20).setSize(view.width + 40, view.height + 40).setAlpha(dark);
+    this.nightLights.setAlpha(Math.min(1, dark * 2.2));
     for (const [v, img] of this.headlights) {
       if (!v.active || v.wrecked || v.driver === 'none' || dark < 0.08) {
         img.destroy();
@@ -742,9 +769,16 @@ export class GameScene extends Phaser.Scene {
   /** Výbuch na místě (auto, nálož): efekt, zranění lidí a řetězová reakce aut. */
   explodeAt(x: number, y: number, source?: Vehicle): void {
     Sound.explosion(this.audioVol({ x, y }));
+    if (!this.anims.exists('boom')) {
+      this.anims.create({ key: 'boom', frames: this.anims.generateFrameNumbers('fireball', { start: 0, end: 5 }), frameRate: 14 });
+    }
+    const ball = this.add.sprite(x, y, 'fireball').setDepth(16).setScale(1.4).setRotation(this.random() * Math.PI * 2);
+    this.cameras.getCamera('minimap')?.ignore(ball);
+    ball.play('boom');
+    ball.once('animationcomplete', () => ball.destroy());
     this.stampDecal('scorch', x, y, this.random() * 360, 0.9);
-    const flash = this.add.circle(x, y, EXPLOSION_RADIUS * 0.6, 0xfff0a0, 0.9).setDepth(15).setBlendMode('ADD');
-    this.tweens.add({ targets: flash, scale: 1.8, alpha: 0, duration: 380, onComplete: () => flash.destroy() });
+    const flash = this.add.circle(x, y, EXPLOSION_RADIUS * 0.35, 0xfff0a0, 0.5).setDepth(15).setBlendMode('ADD');
+    this.tweens.add({ targets: flash, scale: 1.6, alpha: 0, duration: 180, onComplete: () => flash.destroy() });
     const burst = this.add.particles(x, y, 'puff', {
       lifespan: 700,
       speed: { min: 40, max: 160 },

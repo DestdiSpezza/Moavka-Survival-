@@ -10,12 +10,14 @@ import { type Color, hash2, mix, PAL, Painter, shade } from './painter';
  * stíny budov, střechy podle typu budovy, koruny stromů a keře.
  * Voda zůstane průhledná, aby pod ní byla vidět animovaná vrstva dlaždic.
  */
-export function paintGround(map: WorldMap, seed: number): HTMLCanvasElement {
+export function paintGround(map: WorldMap, seed: number): { ground: HTMLCanvasElement; lights: HTMLCanvasElement; chimneys: Array<{ x: number; y: number }> } {
   const W = map.width * TILE;
   const H = map.height * TILE;
   const p = new Painter(W, H, createRng(seed * 7 + 3));
   const t = map.tiles;
   const at = (x: number, y: number) => t[y]?.[x] ?? Tile.Rock;
+  windows = [];
+  chimneys = [];
 
   for (let ty = 0; ty < map.height; ty++) {
     for (let tx = 0; tx < map.width; tx++) paintTile(p, at(tx, ty), tx, ty, at, seed);
@@ -37,8 +39,66 @@ export function paintGround(map: WorldMap, seed: number): HTMLCanvasElement {
   for (const [tx, ty] of trees) p.ellipse(tx * TILE + 11, ty * TILE + 12, 9, 7, PAL.shadow, 0.28);
 
   for (const b of map.buildings) paintBuilding(p, b, seed);
+  const lamps = lampPositions(map, at);
+  for (const l of lamps) paintLamp(p, l);
   for (const [tx, ty] of trees) paintTree(p, tx, ty, seed);
 
+  return { ground: p.toCanvas(), lights: paintNightLights(W, H, lamps), chimneys };
+}
+
+// ---------- Noční světla ----------
+
+/** Okna zapsaná při kreslení průčelí (pro noční vrstvu). */
+let windows: Array<{ x: number; y: number; w: number; h: number }> = [];
+/** Komíny (odtud stoupá kouř). */
+let chimneys: Array<{ x: number; y: number }> = [];
+
+interface Lamp {
+  /** Pata sloupu */
+  x: number;
+  y: number;
+  /** Kam svítí (bod nad silnicí) */
+  lx: number;
+  ly: number;
+}
+
+/** Lampy na chodnících podél silnice, zhruba po šesti dlaždicích. */
+function lampPositions(map: WorldMap, at: (x: number, y: number) => number): Lamp[] {
+  const out: Lamp[] = [];
+  for (let ty = 1; ty < map.height - 1; ty++) {
+    for (let tx = 1; tx < map.width - 1; tx++) {
+      if (at(tx, ty) !== Tile.Sidewalk || (tx * 3 + ty * 5) % 7 !== 0) continue;
+      const dirs: Array<[number, number]> = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      const road = dirs.find(([dx, dy]) => at(tx + dx, ty + dy) === Tile.Road);
+      if (!road) continue;
+      const x = tx * TILE + 8 - road[0] * 5;
+      const y = ty * TILE + 8 - road[1] * 5;
+      out.push({ x, y, lx: x + road[0] * 9, ly: y + road[1] * 9 });
+    }
+  }
+  return out;
+}
+
+function paintLamp(p: Painter, l: Lamp): void {
+  p.ellipse(l.x + 1, l.y + 1, 2, 2, PAL.shadow, 0.35);
+  p.ellipse(l.x, l.y, 1, 1, 0x2a2a2e);
+  p.line(l.x, l.y, l.lx, l.ly, 0x3a3a40);
+  p.rect(l.lx - 1, l.ly - 1, 3, 3, 0x5a5a60);
+  p.px(l.lx, l.ly, 0xe8e0b0);
+}
+
+/** Vrstva světel na noc (aditivně přes tmu): kužely lamp a rozsvícená okna. */
+function paintNightLights(W: number, H: number, lamps: Lamp[]): HTMLCanvasElement {
+  const p = new Painter(W, H, createRng(99));
+  for (const l of lamps) {
+    for (const [r, a] of [[26, 0.05], [19, 0.07], [12, 0.1], [6, 0.16]] as const) p.ellipse(l.lx, l.ly, r, r * 0.8, 0xffd890, a);
+    p.px(l.lx, l.ly, 0xffffff);
+  }
+  for (const w of windows) {
+    if (hash2(w.x, w.y, 3) < 0.35) continue; // někde už spí
+    p.rect(w.x - 2, w.y - 2, w.w + 4, w.h + 4, 0xffb850, 0.18);
+    p.rect(w.x, w.y, w.w, w.h, 0xffd070, 0.85);
+  }
   return p.toCanvas();
 }
 
@@ -467,6 +527,7 @@ function pitched(p: Painter, x: number, y: number, w: number, h: number, base: C
     p.rect(cx, cy, 5, 5, 0x8a4a34);
     p.rect(cx, cy, 5, 1, 0xa86a50);
     p.rect(cx + 1, cy + 1, 3, 3, 0x1a1412);
+    chimneys.push({ x: cx + 2, y: cy + 2 });
   }
   if (v > 0.55 && w > 40) {
     // Střešní okno
@@ -558,6 +619,7 @@ function facade(p: Painter, x: number, y: number, w: number, h: number, wall: Co
   const glassHi = 0x9ac0d8;
   const door = Math.floor(w / 2) - 2 + (v > 0.5 ? 6 : -6);
   if (kind === 'shop') {
+    windows.push({ x: x + 3, y: y + 1, w: w - 6, h: h - 2 });
     p.rect(x + 3, y + 1, w - 6, h - 2, glass);
     p.rect(x + 3, y + 1, w - 6, 1, glassHi);
     for (let i = x + 8; i < x + w - 4; i += 10) p.rect(i, y + 1, 1, h - 2, 0x6e6a62);
@@ -581,6 +643,7 @@ function facade(p: Painter, x: number, y: number, w: number, h: number, wall: Co
     if (Math.abs(i - (x + door)) < 5) continue;
     p.rect(i, y + 1, kind === 'church' ? 2 : 3, h - 3, glass);
     p.px(i, y + 1, glassHi);
+    windows.push({ x: i, y: y + 1, w: kind === 'church' ? 2 : 3, h: h - 3 });
   }
   p.rect(x + door, y + 1, 4, h - 1, kind === 'pub' ? 0x5a3418 : 0x6a4424);
   p.px(x + door + 3, y + 3, 0xd8b040);

@@ -47,7 +47,7 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     const body = this.body as Phaser.Physics.Arcade.Body;
     // Arcade tělo se neotáčí, takže auto je v kolizích kruh přes jeho střed.
     // Poloměr podle šířky, aby se auta v sousedních pruzích (16 px) nedotýkala.
-    const r = Math.floor(this.spec.width / 2) + 1;
+    const r = Math.floor(this.spec.width / 2);
     body.setCircle(r, this.spec.length / 2 - r, this.spec.width / 2 - r);
     body.setMass(this.spec.maxHp / 50);
     body.setCollideWorldBounds(true);

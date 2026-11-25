@@ -463,6 +463,25 @@ export function generateEffectSprites(scene: Phaser.Scene): void {
     for (let k = 0; k < 6; k++) b.px(Math.floor(b.rnd() * 12), Math.floor(b.rnd() * 12), 0x7a0a0a, 0.8);
     add(scene, `blood-${i}`, b);
   }
+  // Ohnivá koule výbuchu: 6 snímků 40×40 (záblesk → oheň → kouř).
+  const fb = new Painter(40 * 6, 40, createRng(40));
+  for (let f = 0; f < 6; f++) {
+    const cx = f * 40 + 20;
+    const r = 6 + f * 3;
+    const t = f / 5;
+    if (f < 4) {
+      fb.blob(cx, 20, r + 2, 0x5a2a1a, f * 1.7, 0.6 + 0.3 * (1 - t));
+      fb.blob(cx, 20, r, 0xe0581a, f * 1.3);
+      fb.blob(cx - 1, 19, r * 0.7, 0xffa030, f * 2.1);
+      fb.blob(cx - 2, 18, r * 0.4, f < 2 ? 0xffffff : 0xfff2a0, f);
+    } else {
+      fb.blob(cx, 20, r, 0x3a3634, f * 1.1, 0.75 - (f - 4) * 0.25);
+      fb.blob(cx - 2, 18, r * 0.6, 0x5a5654, f, 0.6 - (f - 4) * 0.2);
+    }
+    fb.noise(cx - r, 20 - r, r * 2, r * 2, [0xffd23f, 0x2a2420], 0.04);
+  }
+  add(scene, 'fireball', fb, { w: 40, n: 6 });
+
   // Stopa pneumatiky
   const s = new Painter(3, 3, createRng(30));
   s.rect(0, 0, 3, 3, 0x141414, 0.5);
