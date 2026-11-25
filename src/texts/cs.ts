@@ -4,5 +4,9 @@ export const T = {
   subtitle: 'Beskydy. Hospoda. Chaos.',
   loading: 'Načítám Morávku…',
   pressStart: 'Stiskni MEZERNÍK',
-  phase0: 'Fáze 0: kostra hry běží. Svět přijde ve fázi 1.',
+  controls: 'WASD pohyb · SHIFT sprint · myš míření',
+  stamina: 'Dech',
+  /** Hlášky, když hráč vleze do lesa nebo se zadýchá. */
+  forest: 'Les. Klíšťata tě vítají.',
+  exhausted: 'Zadýchal ses. Moc piva, málo kardia.',
 } as const;

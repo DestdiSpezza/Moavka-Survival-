@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import { T } from '../texts/cs';
+import { generatePlayer, generateTileset } from '../world/tileset';
 
 /**
- * Načítání assetů. Zatím žádné obrázky nemáme, takže dočasné pixelové
- * dlaždice vyrobíme kódem. Ve fázi 8 je nahradí ručně kreslený pixel-art.
+ * Načítání assetů. Zatím žádné obrázky nemáme, takže dočasnou pixelovou
+ * grafiku vyrobíme kódem. Ve fázi 8 ji nahradí ručně kreslený pixel-art.
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -13,13 +14,15 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     const { width, height } = this.scale;
-    const label = this.add.text(width / 2, height / 2, T.loading, pixelFont(8)).setOrigin(0.5);
+    const label = this.add.text(width / 2, height / 2, T.loading, pixelFont(16)).setOrigin(0.5);
     this.load.on('complete', () => label.destroy());
   }
 
   create(): void {
     makeTile(this, 'tile-grass', 0x3f7d3a, 0x4a8c42);
     makeTile(this, 'tile-road', 0x4b4b4f, 0x56565b);
+    generateTileset(this, 'tiles');
+    generatePlayer(this, 'player');
     this.scene.start('Title');
   }
 }
@@ -37,5 +40,5 @@ function makeTile(scene: Phaser.Scene, key: string, base: number, speck: number)
 }
 
 export function pixelFont(size: number, color = '#f2e9d0'): Phaser.Types.GameObjects.Text.TextStyle {
-  return { fontFamily: 'monospace', fontSize: `${size}px`, color, resolution: 4 };
+  return { fontFamily: 'monospace', fontSize: `${size}px`, color, fontStyle: 'bold' };
 }

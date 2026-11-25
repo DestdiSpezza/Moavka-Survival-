@@ -13,7 +13,7 @@ Každá fáze končí **hratelným stavem**. Hra se tak dá zkoušet po každém
 | Jazyk | TypeScript | Typy ohlídají chyby, až systémů (skupiny, policie, mise) přibude. |
 | Herní engine | Phaser 3 | Ověřený 2D engine pro prohlížeč: tilemapy, kamera, fyzika a kolize už v sobě má. |
 | Build | Vite | Rychlý vývojový server a jednoduchý build. |
-| Mapa | Tiled (`.tmj`) | Grafický editor map, Phaser ho načte přímo. |
+| Mapa | Zatím generovaná kódem, později Tiled (`.tmj`) | Kód se rychle ladí; Tiled přijde pro ruční detaily. |
 | Testy | Vitest | Pro herní logiku (respekt, hledanost, skóre) nezávisle na vykreslování. |
 | Nasazení | GitHub Pages přes GitHub Actions | Každá verze hratelná v prohlížeči přes odkaz. |
 
@@ -21,7 +21,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 ---
 
-## Fáze 0: Kostra projektu
+## Fáze 0: Kostra projektu ✅
 
 - Projekt Vite + TypeScript + Phaser, složky `src/scenes`, `src/systems`, `src/entities`, `assets/`.
 - Prázdná scéna, herní smyčka, načítání assetů.
@@ -30,10 +30,11 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 **Hotovo, když:** hra se otevře v prohlížeči z odkazu na GitHub Pages a CI je zelené.
 
-## Fáze 1: Hráč a svět Morávky
+## Fáze 1: Hráč a svět Morávky ✅
 
 - Hráč pěšky: pohyb WASD, míření myší, chůze a sprint.
-- První mapa v Tiled: střed Morávky, hlavní silnice, řeka Morávka, přehrada, domy, les, kopce jako neprůchozí terén.
+- První mapa: střed Morávky, hlavní silnice, řeka Morávka, přehrada, domy, les, kopce jako neprůchozí terén.
+  Mapa se zatím generuje kódem (`src/world/moravka.ts`), což se při ladění rozložení upravuje rychleji než v Tiled. Na Tiled přejdeme, až bude potřeba ruční detail.
 - Kolize se stěnami, vodou a stromy; les zpomaluje.
 - Kamera sleduje hráče, minimapa v rohu.
 - Jednoduché placeholder grafiky (barevné tvary), aby šlo hru hrát hned.
