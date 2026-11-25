@@ -61,7 +61,8 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 
 ## Dealeři a kontraband
 
-- [ ] Dealer Omyx: na mapě stojí jeho bouda u řeky, ale zatím nic neprodává. Veseta už prodává „pod pultem“ (zbraně, vesta, lékárničky).
+- [x] Dealer Omyx u řeky prodává trávu (čitelný efekt bez falešných sirén). Veseta prodává „pod pultem“ (zbraně, vesta, lékárničky).
+- [ ] Víc druhů zboží u Omyxe a jeho vztah s ostatními (Štamgasti mu nevěří, Biomatky „bio“).
 - [ ] Efekty trávy. Pozor: falešné sirény a zátarasy jdou proti pravidlu „chaos musí být čitelný“ a okamžité +1★ proti systému svědků.
 - [ ] Těžké zbraně (bazuka, minigun) a granáty. Pozor na měřítko vesnice: policie na 1–3★ by neměla šanci.
 

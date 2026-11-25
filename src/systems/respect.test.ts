@@ -21,7 +21,7 @@ describe('respekt', () => {
     expect(Object.values(newRespect())).toEqual([0, 0, 0, 0]);
   });
 
-  it('zabití Ekologa: Ekologové ↓, Dřevaři ↑, Škola trochu ↑', () => {
+  it('zabití Biomatky: Biomatky ↓, Dřevaři ↑, Omladina trochu ↑', () => {
     const r = applyRespect(newRespect(), 'ekologove', 'killMember');
     expect(r.ekologove).toBeLessThan(0);
     expect(r.drevari).toBeGreaterThan(0);
@@ -30,7 +30,7 @@ describe('respekt', () => {
     expect(r.stamgasti).toBe(0);
   });
 
-  it('pomoc Dřevařům potěší i Štamgasty a naštve Ekology', () => {
+  it('pomoc Dřevařům potěší i Štamgasty a naštve Biomatky', () => {
     const r = applyRespect(newRespect(), 'drevari', 'missionYellow');
     expect(r.drevari).toBe(18);
     expect(r.stamgasti).toBeGreaterThan(0);
@@ -57,7 +57,7 @@ describe('respekt', () => {
     expect(missionTiers(80)).toEqual(['green', 'yellow', 'red']);
   });
 
-  it('Ekologům nevadí kolo, traktor ano i při slušném respektu', () => {
+  it('Biomatkám nevadí kolo, traktor ano i při slušném respektu', () => {
     expect(ecoAngryAtVehicle(0, 'kolo', false)).toBe(false);
     expect(ecoAngryAtVehicle(0, 'osobak', false)).toBe(true);
     expect(ecoAngryAtVehicle(55, 'osobak', false)).toBe(false);

@@ -15,7 +15,7 @@ export interface GroupSpec {
   speed: number;
   melee: { damage: number; range: number; cooldown: number } | null;
   ranged: { kind: ProjectileKind; damage: number; range: number; cooldown: number } | null;
-  /** Při jakém zbytku zdraví utíká (Škola). */
+  /** Při jakém zbytku zdraví utíká (Omladina). */
   fleeAt: number;
   /** Co křičí, když tě pozná na svém území. */
   spotted: string[];
@@ -37,13 +37,13 @@ export const GROUPS: Record<GroupId, GroupSpec> = {
     helping: ['Na zdraví, fízlové!', 'Za našeho kámoše!'],
   },
   ekologove: {
-    id: 'ekologove', name: 'Ekologové', color: 0x3aa04a, css: '#5ad06a', members: 6, hp: 50, speed: 75,
+    id: 'ekologove', name: 'Biomatky', color: 0x3aa04a, css: '#5ad06a', members: 6, hp: 50, speed: 75,
     melee: null, ranged: { kind: 'rock', damage: 8, range: 170, cooldown: 1.3 }, fleeAt: 0.3,
     spotted: ['To je on! Vrah stromů!', 'Smrdíš benzínem!', 'Za Beskydy!'],
     helping: ['Policejní auta smrdí taky!', 'Za svobodu a les!'],
   },
   skola: {
-    id: 'skola', name: 'Škola', color: 0x9a4ad0, css: '#c07af0', members: 6, hp: 45, speed: 98,
+    id: 'skola', name: 'Omladina', color: 0x9a4ad0, css: '#c07af0', members: 6, hp: 45, speed: 98,
     melee: { damage: 8, range: 16, cooldown: 0.8 }, ranged: { kind: 'firework', damage: 15, range: 130, cooldown: 3.2 }, fleeAt: 0.4,
     spotted: ['To je on! Kluci, sem!', 'Ty vole, to je ten týpek!', 'Dej mobil, punkáči!'],
     helping: ['Fízlové, chytněte si nás!', 'Kluci, petardy!'],
@@ -56,7 +56,7 @@ function zone(map: WorldMap, name: string): Zone {
   return z;
 }
 
-/** Území skupiny (kde tě nepřátelská skupina napadne). Ekologové jsou všude. */
+/** Území skupiny (kde tě nepřátelská skupina napadne). Biomatky jsou všude (auta nesnáší kdekoli). */
 export function territory(map: WorldMap, id: GroupId): Zone[] {
   switch (id) {
     case 'drevari':
@@ -70,8 +70,9 @@ export function territory(map: WorldMap, id: GroupId): Zone[] {
   }
 }
 
-/** Kde se členové objevují. Ekologové v lese u vesnice, u přehrady a na návsi. */
+/** Kde se členové objevují: Dřevaři na pile, Štamgasti u hospody, Omladina u školy, Biomatky u školky. */
 export function spawnAreas(map: WorldMap, id: GroupId): Zone[] {
+  if (id === 'drevari') return [zone(map, 'Pila')];
   if (id !== 'ekologove') return territory(map, id);
   return map.ecoSpawn;
 }

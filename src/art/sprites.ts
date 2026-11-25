@@ -432,6 +432,8 @@ export function generateHumanSprites(scene: Phaser.Scene): void {
   sh('cop', { jacket: 0x2a4a9a, pants: 0x1a2a5a, hair: 'cap', hairColor: 0x1a2a5a, skin: SKIN[0], tool: 'pistol' });
   sh('cop-swat', { jacket: 0x1a1a1e, pants: 0x1a1a1e, hair: 'helmet', hairColor: 0x2a2a2e, skin: SKIN[1], tool: 'long' });
   for (const [g, look] of Object.entries(GANG_LOOKS)) sh(`gang-${g}`, look);
+  // Dealer Omyx: zelená mikina s pruhy, čepice.
+  sh('dealer', { jacket: 0x2f6a2a, pants: 0x3a3a3a, hair: 'beanie', hairColor: 0xd8b030, skin: SKIN[1], tool: 'none', pattern: 'stripes' });
 
   // Divočák: tmavé štětinaté tělo, světlejší rypák s kly, nožky při běhu.
   const boar = new Painter(FW * 3, FH, createRng(13));

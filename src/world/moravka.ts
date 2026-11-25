@@ -65,11 +65,11 @@ export type Decor =
 
 /** Pojmenovaná místa pro zakázky, výbavu a skupiny (v dlaždicích). */
 export interface MapSpots {
-  /** Zadavatel zakázek Ekologů. */
+  /** Zadavatel zakázek Biomatek. */
   ecoGiver: { x: number; y: number };
   /** U přehrady (zakázky, auta). */
   dam: { x: number; y: number };
-  /** Tábor Ekologů v lese. */
+  /** Tábor Biomatek v lese. */
   camp: { x: number; y: number };
   /** Samopal na hrázi. */
   smg: { x: number; y: number };
@@ -77,6 +77,8 @@ export interface MapSpots {
   damParking: { x: number; y: number };
   /** Školní hřiště. */
   hriste: { x: number; y: number };
+  /** Kde stojí dealer trávy (Omyx), pokud v oblasti je. */
+  dealer?: { x: number; y: number };
 }
 
 export interface WorldMap {
@@ -99,7 +101,7 @@ export interface WorldMap {
   /** Výjezd na sever (další oblast) a na jih (předchozí oblast). */
   exits: { next: MapExit; prev: MapExit | null };
   spots: MapSpots;
-  /** Kde se objevují Ekologové (všude, nejvíc v lese a u vody). */
+  /** Kde se objevují Biomatky (v Morávce u školky, jinde v lese a u vody). */
   ecoSpawn: Zone[];
   /** Autobusové zastávky (px, levý horní roh přístřešku). */
   busStops: Array<{ x: number; y: number }>;

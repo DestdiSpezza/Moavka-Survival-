@@ -38,6 +38,17 @@ export class Pedestrian extends Phaser.Physics.Arcade.Sprite {
   navIdx = 0;
   navGoal: { x: number; y: number } | null = null;
   navAt = -100;
+  /** Hlídání zaseknutí: kde postava byla při poslední kontrole a kdy. */
+  walkX = 0;
+  walkY = 0;
+  walkAt = -100;
+  stuckHits = 0;
+  /** Krok stranou od překážky (strom, roh domu) do tohoto času, tímto směrem. */
+  sideUntil = 0;
+  sideAngle = 0;
+  /** Kam utíká (bod, kam se dá doběhnout). */
+  fleeTarget: { x: number; y: number } | null = null;
+  fleeTargetAt = -100;
   /** Poslední událost, které se postava účastnila (pro řetězení příčin). */
   lastEventId: number | null = null;
   lastEventAt = -100;

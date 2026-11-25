@@ -21,7 +21,7 @@ describe('skupiny na mapě', () => {
     expect(inZones(territory(map, 'skola'), pila.x, pila.y)).toBe(false);
   });
 
-  it('Ekologové jsou všude', () => {
+  it('Biomatky jsou všude', () => {
     expect(inZones(territory(map, 'ekologove'), 5, 5)).toBe(true);
     expect(inZones(territory(map, 'ekologove'), 100, 80)).toBe(true);
   });

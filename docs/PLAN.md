@@ -91,7 +91,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 - Skupiny reagují i na policii a na sebe navzájem. Tím vzniká řetězový chaos: honička → spřátelená skupina napadne policii → přijedou posily.
 - HUD: respekt u skupin v aktuální oblasti.
 - Herní čas (den = 12 minut, začíná se v 16:00), noc ztmaví obraz; Štamgasti jsou večer rychlejší, přesnější a házejí molotovy.
-- Vozidla skupin (traktory a dodávka Dřevařů, skútry Školy a Štamgastů, kola Ekologů): krádež −8, zničení −12 respektu.
+- Vozidla skupin (traktory a dodávka Dřevařů, skútry Omladiny a Štamgastů, kola Biomatek): krádež −8, zničení −12 respektu.
 - Zatím neřešeno: členové skupin nejezdí vozidly, chodí pěšky.
 
 **Hotovo, když:** se dá situace „ukradnu auto → policie → vjedu ke spřáteleným → oni střílí na policii“ odehrát sama od sebe, bez skriptu.
@@ -103,8 +103,8 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 - Typy misí jako šablony: ukradni vozidlo, doprav člověka, zlikviduj bosse, znič vozidlo, dovez zásilku, přepadni konvoj, sabotuj objekt, ukradni náklad, ochraň člena, uteč policii, přežij útok.
 - Komplikace, které se náhodně spustí během mise (majitel volá policii, nepřátelská skupina přepadne, auto se rozbije). Mise se tak nedrží jednoho plánu: „Dovez dodávku z Raškovic“ může skončit honičkou, útěkem do lesa a návratem pro dodávku.
 - Odměny: peníze, respekt, skóre.
-- Zadavatelé: Dřevaři u pily, Štamgasti u hospody, Ekologové na hrázi, Škola na hřišti. Nabídka klávesami 1–3, X zakázku vzdá.
-- 13 zakázek (4 Dřevaři, 3 Štamgasti, 3 Ekologové, 3 Škola) pokrývá všech 11 typů.
+- Zadavatelé: Dřevaři u pily, Štamgasti u hospody, Biomatky u školky (dřív Ekologové na hrázi), Omladina u školy. Nabídka klávesami 1–3, X zakázku vzdá.
+- 13 zakázek (4 Dřevaři, 3 Štamgasti, 3 Biomatky, 3 Omladina) pokrývá všech 11 typů.
 - Komplikace: majitel volá policii, přepadení nepřátelskou skupinou, porucha auta, práskač u policie.
 - Selhání žluté nebo červené zakázky stojí respekt; smrt nebo zatčení zakázku ukončí.
 - Členové skupin a policisté pěšky si hledají cestu kolem domů.
@@ -174,9 +174,17 @@ Dlouhý běh: `npm run build && npm run soak` přehraje 30 minut herního času 
 
 - Rozložení podle mapy obce (ne na sto procent): křižovatka u **hospody eRko** (hospoda stojí hned západně od ní), silnice na severozápad, na Raškovice (severovýchod), na jihozápad a na jih ke **škole** s hřištěm a oválem.
 - Vlaský potok na západě (most na silnici na severozápad), řeka Morávka na severovýchodě a východě, podél ní silnice s cyklostezkou až k hrázi přehrady. Vznikla smyčka: na jih → po hrázi → podél řeky → zpátky na silnici na Raškovice.
-- Na místech podle mapy: Hasiči, Foop obchod, obecní úřad s parkovištěm a zastávkou, dealer Veseta (prodává „pod pultem“), Autoúpravy Dan (garáž), Školka s pískovištěm, Omyx u řeky, safe house (chata, úkryt) na jihovýchodě, pila Dřevařů za potokem.
+- Na místech podle mapy: Hasiči, Foop obchod, obecní úřad s parkovištěm a zastávkou, dealer Veseta (prodává „pod pultem“), Autoúpravy Dan (garáž), Školka s pískovištěm, dealer Omyx u řeky, safe house (chata, úkryt) na jihovýchodě, pila Dřevařů za potokem.
 - Silnice a potoky se kreslí hladce i šikmo podle os (asfalt, chodníky s obrubníky, středové čáry, přechody, mosty se zábradlím, polní cesty s kolejemi). Hra dál počítá s dlaždicemi.
 - Mapu staví `src/world/realMoravka.ts` (souřadnice z mapy obce, 16 px mapy na dlaždici); Raškovice zůstávají generované.
+
+### Úpravy po mapě ✅
+
+- Výjezd na Raškovice je v levém horním rohu (silnice na severozápad); konvoj od Raškovic jede odtud.
+- Skupiny se přejmenovaly: **Škola → Omladina**, **Ekologové → Biomatky** (v Raškovicích dál Učňáci a Chalupáři). Biomatky se drží u školky, Štamgasti u hospody, Dřevaři na pile, Omladina u školy.
+- Členové stejné party spolu kecají v bublinách: Omladina zkratkami generace Z (bruh, no cap, fr fr, yk…), Štamgasti hospodské řeči (Metějka, panáky, kdy se Omyx pomlátí), Dřevaři o stromech, kubících, rumu a Lakatošovi, Biomatky o školní jídelně, chia semínkách a bioleji.
+- **Dealer Omyx** stojí u řeky a prodává trávu (150 Kč): minuta klidu, obraz zezelená a lehce se houpe, chodíš pomaleji, ale dech nedochází a pomalu se hojíš. Když ho někdo zabije, za tři minuty je zpátky.
+- Postavy se nezasekávají o stromy: chůze počítá s šířkou těla, kdo se zasekne, udělá krok stranou a naplánuje cestu znovu. Chodci se rodí a chodí po chodnících kolem silnic, utíkají na místo, kam se dá doběhnout. Měřeno: zaseknutí při chůzi z 86 % na 2 %, na chodnících a silnicích 75 % chodců (dřív 2 %).
 
 ---
 
@@ -194,23 +202,23 @@ Všechny skupiny jsou smyšlené.
 |---|---|---|---|---|
 | **Dřevaři** | Drsní, málomluvní, řeší věci sekerou | Pila, hospoda | Sekery, motorové pily, palice | Traktory, lesní nákladáky, valníky |
 | **Štamgasti** | Opilci s velkým srdcem a krátkým fitilem | Hospoda (od rána do noci) | Láhve, molotovy, stará brokovnice | Rozbitá stará auta, mopedy |
-| **Ekologové** | Všudypřítomní, nesnáší auta | Všude: les, přehrada, náves | Spreje, praky, zápalné bomby na auta | Kola, koloběžky, pěšky |
-| **Škola** | Vesnický „sídlištní“ gang školáků a mlaďochů | Škola, hřiště, autobusová zastávka | Pálky, nože, petardy | Skútry, kradená auta |
+| **Biomatky** (dřív Ekologové) | Všudypřítomné, nesnáší auta, všechno musí být bio | U školky (auta nesnáší kdekoli) | Spreje, praky, zápalné bomby na auta | Kola, koloběžky, pěšky |
+| **Omladina** (dřív Škola) | Vesnický „sídlištní“ gang mlaďochů, mluví zkratkami generace Z | Škola, hřiště s oválem | Pálky, nože, petardy | Skútry, kradená auta |
 
 ### Vztahy mezi skupinami (výchozí)
 
-| | Dřevaři | Štamgasti | Ekologové | Škola |
+| | Dřevaři | Štamgasti | Biomatky | Omladina |
 |---|---|---|---|---|
 | **Dřevaři** | — | 🙂 sdílejí hospodu | 💀 nepřátelé (kácení lesa) | 😐 neutrální |
 | **Štamgasti** | 🙂 | — | 😐 neutrální | 😠 rivalové (kluci jim kradou pivo) |
-| **Ekologové** | 💀 | 😐 | — | 😠 rivalové (skútry a petardy) |
-| **Škola** | 😐 | 😠 | 😠 | — |
+| **Biomatky** | 💀 | 😐 | — | 😠 rivalové (skútry a petardy) |
+| **Omladina** | 😐 | 😠 | 😠 | — |
 
 Hospoda je sdílené území Dřevařů a Štamgastů: kdo si tam rozhádá jedny, má problém i s druhými.
 
 ### Zvláštní chování
 
-- **Ekologové** útočí na hráče, když řídí auto (hlavně nákladní nebo kouřící), a ničí zaparkovaná vozidla. Pěšky nebo na kole tě nechají být.
+- **Biomatky** útočí na hráče, když řídí auto (hlavně nákladní nebo kouřící), a ničí zaparkovaná vozidla. Pěšky nebo na kole tě nechají být.
 - **Štamgasti** jsou přes den pomalí a nepřesní, večer agresivnější.
 - **Dřevaři** jsou pomalí, ale vydrží nejvíc a jejich vozidla jsou těžká a ničivá.
-- **Škola** je rychlá, útočí ve skupinkách a rychle utíká.
+- **Omladina** je rychlá, útočí ve skupinkách a rychle utíká.

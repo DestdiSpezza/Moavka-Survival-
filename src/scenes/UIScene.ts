@@ -36,6 +36,7 @@ export class UIScene extends Phaser.Scene {
   private wantedText!: Phaser.GameObjects.Text;
   private announceText!: Phaser.GameObjects.Text;
   private debugText!: Phaser.GameObjects.Text;
+  private stonedTint!: Phaser.GameObjects.Rectangle;
   private respectBars: Phaser.GameObjects.Rectangle[] = [];
   private respectValues: Phaser.GameObjects.Text[] = [];
   private respectNames: Phaser.GameObjects.Text[] = [];
@@ -61,6 +62,8 @@ export class UIScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     const { x, y, w, h } = MINIMAP;
+    // Po trávě od Omyxe: zelený závoj přes hru (pod HUDem).
+    this.stonedTint = this.add.rectangle(0, 0, width, height, 0x5adf5a, 0).setOrigin(0);
     // Tmavé panely pod HUDem (čitelnost na pestré mapě).
     const hudPanel = (px: number, py: number, pw: number, ph: number) =>
       this.add.rectangle(px, py, pw, ph, 0x0a0a10, 0.5).setOrigin(0).setStrokeStyle(1, 0x000000, 0.8);
@@ -172,6 +175,8 @@ export class UIScene extends Phaser.Scene {
   }
 
   update(): void {
+    const stoned = (this.registry.get('stoned') as number | undefined) ?? 0;
+    this.stonedTint.setAlpha(stoned * (0.16 + 0.08 * Math.sin(this.time.now / 700)));
     const game = this.scene.get('Game') as GameScene;
     const p = game.player;
     if (!p) return;
@@ -235,7 +240,8 @@ export class UIScene extends Phaser.Scene {
     this.wantedText.setText(wanted?.desc ? `Hledají: ${wanted.desc}` : '');
     const ann = this.registry.get('announce') as AnnounceHud | null | undefined;
     const gameNow = (this.scene.get('Game') as GameScene).time.now / 1000;
-    if (ann && gameNow < ann.until) {
+    // Když je otevřená nabídka (obchod, garáž, Omyx), hlášení ji nepřekrývá.
+    if (ann && gameNow < ann.until && !this.registry.get('menu')) {
       const prefix = ann.channel === 'rozhlas' ? '📢 Obecní rozhlas: ' : '📻 Rádio: ';
       this.announceText.setText(prefix + ann.text).setVisible(true).setColor(ann.channel === 'rozhlas' ? '#ffe9a0' : '#a0e4ff');
     } else {

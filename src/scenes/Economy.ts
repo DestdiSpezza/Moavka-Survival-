@@ -76,7 +76,8 @@ export class Economy {
     const here = g.player.dead || g.missions.active
       ? undefined
       : this.places.find((p) => Phaser.Math.Distance.Between(focus.x, focus.y, p.at.x, p.at.y) < RANGE + (g.driving ? 10 : 0));
-    const menu = here ? this.menuFor(here.kind) : null;
+    // Dealer Omyx nemá dveře, stojí venku a obchoduje z ruky.
+    const menu = here ? this.menuFor(here.kind) : !g.player.dead && !g.missions.active && g.dealer.near(focus) ? g.dealer.menu() : null;
     this.menuOpen = !!menu;
     if (!menu) {
       g.registry.set('menu', null);

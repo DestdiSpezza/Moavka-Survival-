@@ -65,6 +65,9 @@ export class Combat {
   private fx: Phaser.GameObjects.Graphics;
   private blood: Phaser.GameObjects.Particles.ParticleEmitter;
   private sparks: Phaser.GameObjects.Particles.ParticleEmitter;
+  /** Chodníky (dlaždice) rozdělené do čtverců 8×8, ať se rychle najde chodník poblíž. */
+  private walkBuckets = new Map<string, Array<[number, number]>>();
+  private walkTiles: Array<[number, number]> = [];
 
   constructor(private game: GameScene) {
     const scene = game;
@@ -84,6 +87,14 @@ export class Combat {
     mini?.ignore([this.fx, this.blood, this.sparks]);
 
     for (const s of pickupSpots(game.world)) this.addPickup(s.kind, s.x, s.y, 0, true);
+    game.world.tiles.forEach((row, ty) => row.forEach((t, tx) => {
+      if (t !== Tile.Sidewalk) return;
+      this.walkTiles.push([tx, ty]);
+      const key = `${tx >> 3},${ty >> 3}`;
+      const list = this.walkBuckets.get(key) ?? [];
+      list.push([tx, ty]);
+      this.walkBuckets.set(key, list);
+    }));
     for (let i = 0; i < PED_COUNT; i++) this.spawnPed(false);
     scene.physics.add.collider(this.peds, game.layer);
     scene.physics.add.collider(game.player, this.peds);
@@ -264,13 +275,23 @@ export class Combat {
 
   // ---------- Chodci ----------
 
+  /** Je dlaždice na volném prostranství (kolem dokola nic, o co by se zasekl)? */
+  private openTile(tx: number, ty: number): boolean {
+    const tiles = this.game.world.tiles;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if (isSolid(tiles[ty + j]?.[tx + i] ?? Tile.Rock)) return false;
+    return true;
+  }
+
+  /** Chodci se rodí hlavně na chodnících (chodí kolem cest), občas na volné trávě. */
   private spawnPed(offscreen: boolean): void {
     const rnd = this.game.random;
+    const map = this.game.world;
     for (let tries = 0; tries < 40; tries++) {
-      const tx = 18 + Math.floor(rnd() * 80);
-      const ty = 2 + Math.floor(rnd() * 62);
-      const t = this.game.world.tiles[ty][tx];
-      if (t !== Tile.Grass && t !== Tile.Dirt) continue;
+      const onWalk = this.walkTiles.length > 0 && rnd() < 0.85;
+      const [tx, ty] = onWalk ? this.walkTiles[Math.floor(rnd() * this.walkTiles.length)] : [1 + Math.floor(rnd() * (map.width - 2)), 1 + Math.floor(rnd() * (map.height - 2))];
+      const t = map.tiles[ty][tx];
+      if (!onWalk && t !== Tile.Grass && t !== Tile.Dirt) continue;
+      if (!this.openTile(tx, ty)) continue;
       const x = (tx + 0.5) * TILE;
       const y = (ty + 0.5) * TILE;
       if (offscreen && this.game.inView(x, y)) continue;
@@ -291,18 +312,18 @@ export class Combat {
       const body = p.body as Phaser.Physics.Arcade.Body;
       if (p.mood === 'flee') {
         if (now > p.until) p.mood = 'idle';
-        else this.walk(p, p.heading, PED_RUN);
+        else this.flee(p, now);
       } else if (p.mood === 'fight') {
         this.fight(p, now);
       } else if (p.mood === 'wander' && p.target) {
         const d = Phaser.Math.Distance.Between(p.x, p.y, p.target.x, p.target.y);
         p.stuckFor = body.speed < 5 ? p.stuckFor + dt : 0;
-        if (d < 4 || p.stuckFor > 1.5) {
+        if (d < 6 || p.stuckFor > 3 || now > p.until) {
           p.mood = 'idle';
           p.until = now + 1 + rnd() * 3;
           body.setVelocity(0, 0);
         } else {
-          this.walk(p, Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y), PED_WALK);
+          this.game.walkTo(p, p.target, PED_WALK);
         }
       } else {
         body.setVelocity(0, 0);
@@ -314,14 +335,39 @@ export class Combat {
     for (let i = this.peds.length - 1; i >= 0; i--) if (!this.peds[i].active) this.peds.splice(i, 1);
   }
 
-  private walk(p: Pedestrian, angle: number, speed: number): void {
-    p.heading = angle;
-    p.setRotation(angle);
-    this.game.physics.velocityFromRotation(angle, speed, (p.body as Phaser.Physics.Arcade.Body).velocity);
+  /** Útěk: běží k bodu, kam se dá doběhnout; po doběhnutí si najde další dál od hrozby. */
+  private flee(p: Pedestrian, now: number): void {
+    const t = p.fleeTarget;
+    if (!t || Phaser.Math.Distance.Between(p.x, p.y, t.x, t.y) < 10 || now - p.fleeTargetAt > 2.5) {
+      const behind = { x: p.x - Math.cos(p.heading) * 40, y: p.y - Math.sin(p.heading) * 40 };
+      p.fleeTarget = this.game.fleeSpot(p, behind, 90 + this.game.random() * 50);
+      p.fleeTargetAt = now;
+    }
+    this.game.walkTo(p, p.fleeTarget!, PED_RUN);
   }
 
+  /** Kam se jít projít: chodník kousek dál (3–14 dlaždic), jinak volné místo poblíž. */
   private pickWanderTarget(p: Pedestrian): void {
     const rnd = this.game.random;
+    const tx = Math.floor(p.x / TILE);
+    const ty = Math.floor(p.y / TILE);
+    const near: Array<[number, number]> = [];
+    for (let by = (ty >> 3) - 2; by <= (ty >> 3) + 2; by++) {
+      for (let bx = (tx >> 3) - 2; bx <= (tx >> 3) + 2; bx++) {
+        for (const c of this.walkBuckets.get(`${bx},${by}`) ?? []) {
+          const d = Math.hypot(c[0] - tx, c[1] - ty);
+          if (d >= 3 && d <= 14) near.push(c);
+        }
+      }
+    }
+    if (near.length && rnd() < 0.9) {
+      const [wx, wy] = near[Math.floor(rnd() * near.length)];
+      p.target = { x: (wx + 0.5) * TILE, y: (wy + 0.5) * TILE };
+      p.mood = 'wander';
+      p.stuckFor = 0;
+      p.until = this.time + 20;
+      return;
+    }
     for (let tries = 0; tries < 8; tries++) {
       const x = p.x + (rnd() - 0.5) * 160;
       const y = p.y + (rnd() - 0.5) * 160;
@@ -331,6 +377,7 @@ export class Combat {
       p.target = { x, y };
       p.mood = 'wander';
       p.stuckFor = 0;
+      p.until = this.time + 12;
       return;
     }
     p.until = this.time + 1;
@@ -342,6 +389,8 @@ export class Combat {
     p.mood = 'flee';
     p.until = now + FLEE_TIME + this.game.random() * 2;
     p.heading = fleeAngle(p, threat, this.game.random);
+    p.fleeTarget = this.game.fleeSpot(p, threat, 110 + this.game.random() * 50);
+    p.fleeTargetAt = now;
     // Volat policii se rozhodují svědci (Witnesses); panika jen křičí a utíká.
     if (wasCalm && this.game.inView(p.x, p.y) && this.game.random() < 0.35) {
       this.game.floatText(p.x, p.y - 10, pick(T.panic, this.game.random), '#ffffff', 1600);
@@ -399,7 +448,7 @@ export class Combat {
       return;
     }
     const angle = Phaser.Math.Angle.Between(p.x, p.y, target.x, target.y);
-    if (d > 13) this.walk(p, angle, PED_RUN * 0.9);
+    if (d > 13) this.game.walkTo(p, target, PED_RUN * 0.9);
     else {
       body.setVelocity(0, 0);
       p.setRotation(angle);

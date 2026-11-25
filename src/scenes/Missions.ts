@@ -282,7 +282,7 @@ export class Missions {
       const enemy = [...GROUP_IDS].filter((x) => x !== a.info.group).sort((x, y) => relation(a.info.group, x) - relation(a.info.group, y))[0];
       const spawned = this.spawnNear(enemy, g.driving ?? g.player, 3, 150);
       for (const m of spawned) g.gangs.engage(m, 'player', false);
-      g.toast(`Přepadení! ${groupName(g.area.id, enemy)} o zakázce věděli.`);
+      g.toast(`Přepadení! O zakázce se dozvěděla parta: ${groupName(g.area.id, enemy)}.`);
       return;
     }
     g.police.raiseTo(Math.max(1, g.police.wanted.level), g.driving ?? g.player);
@@ -346,7 +346,7 @@ export class Missions {
           new GotoStep('Vyzvedni Frantu u hospody', p.hospoda, 30),
           new EscortStep('Doprovoď Frantu na pilu (jde, jen když jsi u něj)', franta, p.pila, (game, at) => {
             for (const m of this.spawnNear('ekologove', at, 3, 110)) game.gangs.engage(m, franta, false);
-            game.toast('Ekologové! Chtějí Frantu!');
+            game.toast('Biomatky! Chtějí Frantu!');
           }),
         ];
       }
@@ -354,7 +354,7 @@ export class Missions {
         const guards = this.spawnNear('ekologove', p.camp, 6, 30);
         for (const m of guards) m.home = p.camp;
         return [
-          new GotoStep('Najdi tábor Ekologů v lese', p.camp, 90),
+          new GotoStep('Najdi tábor Biomatek v lese', p.camp, 90),
           new PlantStep('Drž E u tábora a polož nálož', p.camp, 'tent'),
         ];
       }

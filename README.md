@@ -1,6 +1,6 @@
 # Survive Morávka
 
-2D hra s pohledem shora z obce Morávka v Beskydech. Volný pohyb, krádeže aut, soupeřící skupiny (Dřevaři, Štamgasti, Ekologové, Škola), respekt, policejní hledanost a pořádný chaos. Postupuješ, když vyděláš dost peněz a získáš cílové skóre v oblasti.
+2D hra s pohledem shora z obce Morávka v Beskydech. Volný pohyb, krádeže aut, soupeřící skupiny (Dřevaři, Štamgasti, Biomatky, Omladina), respekt, policejní hledanost a pořádný chaos. Postupuješ, když vyděláš dost peněz a získáš cílové skóre v oblasti.
 
 Černý humor, nadsázka, trochu punk. Pixel-art. Česky.
 
@@ -24,7 +24,8 @@ Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 - Dvě oblasti: Morávka a Raškovice. Do Raškovic tě pustí po splnění cíle Morávky (skóre a peníze). Mapa Morávky vychází ze skutečné vesnice ([náhled](docs/mapa-moravka.jpg)).
 - Čtyři skupiny v každé oblasti, respekt, zakázky se zelenou, žlutou a červenou obtížností a náhodnými komplikacemi.
 - Policie s pěti úrovněmi hledanosti, zátarasy a zásahovkou. Hledanost roste, jen když tě někdo viděl: svědci volají policii a podle jejich popisu tě hledají.
-- Živá vesnice: nehody v provozu, hádky a rvačky řidičů, opilci, divočáci na silnici, policie honí i NPC, obecní rozhlas hlásí, co se právě stalo.
+- Živá vesnice: nehody v provozu, hádky a rvačky řidičů, opilci, divočáci na silnici, policie honí i NPC, obecní rozhlas hlásí, co se právě stalo. Členové skupin spolu kecají v bublinách, chodci chodí po chodnících.
+- Dealer Omyx u řeky prodává trávu (minuta klidu), Veseta zbraně pod pultem.
 - Auta, krádeže, poškození, provoz, zbraně, chodci, den a noc, rádio.
 - Ukládání do prohlížeče (automaticky a v chatě).
 

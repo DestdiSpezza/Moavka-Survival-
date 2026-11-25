@@ -12,7 +12,8 @@ import { lineOfSight } from '../systems/sight';
 import { groupName } from '../world/areas';
 import { GROUPS, inZones, type ProjectileKind, spawnTiles, territory } from '../world/gangs';
 import type { Zone } from '../world/moravka';
-import { blocksBullets } from '../world/tiles';
+import { CHATTER } from '../texts/chatter';
+import { blocksBullets, isSolid } from '../world/tiles';
 import type { PedHurtEvent } from './Combat';
 import type { GameScene } from './GameScene';
 
@@ -51,7 +52,7 @@ export interface RespectHud {
 /**
  * Skupiny Morávky: členové na svých územích, respekt hráče, postoj ke hráči
  * („To je on!“), pomoc spřáteleným, bitky mezi rivaly, útoky na policii,
- * vrhané věci a ničení aut Ekology. Taky herní čas (večer jsou Štamgasti horší).
+ * vrhané věci a ničení aut Biomatkami. Taky herní čas (večer jsou Štamgasti horší).
  */
 export class Gangs {
   respect: Respect = newRespect();
@@ -61,6 +62,8 @@ export class Gangs {
   private projectiles: Projectile[] = [];
   private fires: FireZone[] = [];
   private respawnTimer = 0;
+  /** Za kolik sekund si zase někdo pokecá. */
+  private chatIn = 3;
   private shoutedAt = new Map<GroupId, number>();
   private respectThrottle = new Map<string, number>();
   elapsed = 0;
@@ -106,6 +109,7 @@ export class Gangs {
       }
     }
     for (const m of this.members) this.updateMember(m, dt);
+    this.chatter(dt);
     for (let i = this.members.length - 1; i >= 0; i--) if (!this.members[i].active || !this.members[i].alive) this.members.splice(i, 1);
     this.updateProjectiles(dt);
     this.updateFires(dt);
@@ -175,10 +179,15 @@ export class Gangs {
     const evening = g === 'stamgasti' && isEvening(this.minute);
     const speed = spec.speed * (evening ? 1.3 : 1);
 
-    // Útěk (Škola a Ekologové při malém zdraví).
+    // Útěk (Omladina a Biomatky při malém zdraví).
     if (now < m.fleeUntil) {
       const from = this.foePos(m) ?? this.playerTarget() ?? m;
-      this.walk(m, Phaser.Math.Angle.Between(from.x, from.y, m.x, m.y), speed * 1.2);
+      const t = m.fleeTarget;
+      if (!t || Phaser.Math.Distance.Between(m.x, m.y, t.x, t.y) < 10 || now - m.fleeTargetAt > 2) {
+        m.fleeTarget = this.game.fleeSpot(m, from, 110);
+        m.fleeTargetAt = now;
+      }
+      this.game.walkTo(m, m.fleeTarget!, speed * 1.2);
       return;
     }
 
@@ -243,7 +252,7 @@ export class Gangs {
     const wanted = this.game.police.wanted.level;
 
     if (t) {
-      // Ekologové: auto je nepřítel, chodec ne (dokud je nenaštveš úplně).
+      // Biomatky: auto je nepřítel, chodec ne (dokud je nenaštveš úplně).
       if (g === 'ekologove') {
         const angryCar = t.driving && ecoAngryAtVehicle(this.respect.ekologove, t.driving.spec.kind, t.driving.state !== 'ok');
         if ((angryCar && this.sees(m, t, 140)) || (att === 'hunt' && this.sees(m, t))) {
@@ -269,7 +278,7 @@ export class Gangs {
           m.attacksPolice = true;
           this.shout(m, GROUPS[g].helping, '#9fffa0');
           // Útok na policii řeší policisté na místě (vidí ho a střílí); hráči to hledanost nepřidá.
-          this.game.logEvent('gang-vs-police', `${GROUPS[g].name} napadli policii`, m, ['gangs', 'police'], [this.game.causeOf(m)], [m]);
+          this.game.logEvent('gang-vs-police', `útok na policii: ${GROUPS[g].name}`, m, ['gangs', 'police'], [this.game.causeOf(m)], [m]);
           return;
         }
       }
@@ -283,7 +292,7 @@ export class Gangs {
       return;
     }
 
-    // Ekologové ničí zaparkovaná auta.
+    // Biomatky ničí zaparkovaná auta.
     if (g === 'ekologove' && this.game.random() < 0.004) {
       const car = this.game.vehicles.find(
         (v) => v.driver === 'none' && !v.wrecked && v.state === 'ok' && v.owner !== 'ekologove' && v.spec.kind !== 'kolo' &&
@@ -347,30 +356,72 @@ export class Gangs {
     return best;
   }
 
+  /**
+   * Bez nepřítele: postává a popochází kolem svého místa, rád k někomu ze své party
+   * (ať je s kým kecat). Cíl je vždycky místo, kam se dá dojít.
+   */
   private loiter(m: Pedestrian, dt: number): void {
     const body = m.body as Phaser.Physics.Arcade.Body;
     const now = this.now;
-    if (m.target && Phaser.Math.Distance.Between(m.x, m.y, m.target.x, m.target.y) > 4 && now < m.until) {
+    if (m.target && Phaser.Math.Distance.Between(m.x, m.y, m.target.x, m.target.y) > 6 && now < m.until) {
       m.stuckFor = body.speed < 5 ? m.stuckFor + dt : 0;
-      if (m.stuckFor < 1.5) {
-        this.walk(m, Phaser.Math.Angle.Between(m.x, m.y, m.target.x, m.target.y), GROUPS[m.group!].speed * 0.45);
+      if (m.stuckFor < 2.5) {
+        this.game.walkTo(m, m.target, GROUPS[m.group!].speed * 0.45);
         return;
       }
     }
     body.setVelocity(0, 0);
     if (now > m.until) {
       const home = m.home ?? m;
-      const x = home.x + (this.game.random() - 0.5) * 120;
-      const y = home.y + (this.game.random() - 0.5) * 120;
-      m.target = { x, y };
+      const rnd = this.game.random;
+      const buddies = this.members.filter((o) => o !== m && o.alive && o.group === m.group && !o.foe && Phaser.Math.Distance.Between(o.x, o.y, home.x, home.y) < 150);
+      const buddy = buddies.length && rnd() < 0.6 ? buddies[Math.floor(rnd() * buddies.length)] : null;
+      const base = buddy ?? home;
+      const spread = buddy ? 36 : 120;
+      for (let tries = 0; tries < 8; tries++) {
+        const x = base.x + (rnd() - 0.5) * spread;
+        const y = base.y + (rnd() - 0.5) * spread;
+        if (isSolid(this.game.tileAt(x, y))) continue;
+        m.target = { x, y };
+        break;
+      }
       m.stuckFor = 0;
-      m.until = now + 3 + this.game.random() * 4;
+      m.until = now + 3 + rnd() * 4;
     }
   }
 
-  private walk(m: Pedestrian, angle: number, speed: number): void {
-    m.setRotation(angle);
-    this.game.physics.velocityFromRotation(angle, speed, (m.body as Phaser.Physics.Arcade.Body).velocity);
+  // ---------- Kecy ----------
+
+  /** Dva ze stejné party u sebe: jeden něco plácne, druhý odpoví (jen když to hráč vidí). */
+  private chatter(dt: number): void {
+    this.chatIn -= dt;
+    if (this.chatIn > 0) return;
+    this.chatIn = 2 + this.game.random() * 3;
+    const g = this.game;
+    const rnd = g.random;
+    const idle = this.members.filter((m) => m.alive && m.active && !m.scripted && !m.foe && this.now > m.fleeUntil && g.inView(m.x, m.y));
+    for (let i = idle.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [idle[i], idle[j]] = [idle[j], idle[i]];
+    }
+    for (const a of idle) {
+      const b = idle.find((o) => o !== a && o.group === a.group && Phaser.Math.Distance.Between(a.x, a.y, o.x, o.y) < 80);
+      if (!b) continue;
+      const talk = CHATTER[a.group!];
+      const frame = GROUPS[a.group!].color;
+      for (const [p, q] of [[a, b], [b, a]] as const) {
+        (p.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+        p.setRotation(Phaser.Math.Angle.Between(p.x, p.y, q.x, q.y));
+        p.until = this.now + 4;
+        p.target = null;
+      }
+      g.speech.say(a, talk.lines[Math.floor(rnd() * talk.lines.length)], frame);
+      g.time.delayedCall(1900, () => {
+        if (b.active && b.alive && !b.foe) g.speech.say(b, talk.replies[Math.floor(rnd() * talk.replies.length)], frame, 2200);
+      });
+      this.chatIn = 4 + rnd() * 4;
+      return;
+    }
   }
 
   /** Úder zblízka do cíle (hráč, jeho auto, postava nebo auto). */
@@ -476,7 +527,7 @@ export class Gangs {
     }
   }
 
-  /** Petarda: malý výbuch, zraní všechny okolo (i kluky ze Školy) a vyděsí chodce. */
+  /** Petarda: malý výbuch, zraní všechny okolo (i Omladinu) a vyděsí chodce. */
   private blast(x: number, y: number, damage: number, owner: Pedestrian): void {
     const radius = 24;
     const flash = this.game.add.circle(x, y, radius * 0.6, 0xfff0a0, 0.9).setDepth(15).setBlendMode('ADD');
@@ -570,7 +621,7 @@ export class Gangs {
     }
     const before = this.respect;
     this.respect = applyRespect(this.respect, g, event);
-    // Ukázat změny u hráče: „-25 Ekologové, +10 Dřevaři“.
+    // Ukázat změny u hráče: „-25 Biomatky, +10 Dřevaři“.
     const pl = this.game.driving ?? this.game.player;
     let row = 0;
     for (const id of GROUP_IDS) {

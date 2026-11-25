@@ -349,7 +349,7 @@ export function generateCombat(scene: Phaser.Scene): void {
   });
   cop('cop-swat', 0x1a1a1a, 0x333333, true);
 
-  // Protestní stan Ekologů.
+  // Protestní stan Biomatek.
   make('tent', 24, 18, (g) => {
     g.fillStyle(0x000000, 0.3).fillEllipse(13, 12, 24, 12);
     g.fillStyle(0x3aa04a).fillTriangle(2, 16, 12, 2, 22, 16);

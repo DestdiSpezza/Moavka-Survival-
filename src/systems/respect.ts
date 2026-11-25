@@ -91,7 +91,7 @@ export function missionTiers(respect: number): Array<'green' | 'yellow' | 'red'>
   return tiers;
 }
 
-/** Ekologové nesnáší auta. Kolo jim nevadí, nákladní a kouřící auta nejvíc. */
+/** Biomatky nesnáší auta. Kolo jim nevadí, nákladní a kouřící auta nejvíc. */
 export function ecoAngryAtVehicle(respect: number, kind: string, smoking: boolean): boolean {
   if (kind === 'kolo') return false;
   const heavy = kind === 'traktor' || kind === 'dodavka' || kind === 'zasahovka';

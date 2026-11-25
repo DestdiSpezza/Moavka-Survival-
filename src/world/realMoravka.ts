@@ -85,8 +85,10 @@ const NAMED: Array<[string, number, number, number, number, number]> = [
   ['Pila', 3, 8, 7, 5, Tile.RoofBrown],
   ['Garáž', 11, 29, 5, 4, Tile.RoofGray],
   ['Chata', 109, 56, 3, 3, Tile.RoofBrown],
-  ['Omyx', 78, 7, 4, 3, Tile.RoofBrown],
 ];
+
+/** Kde stojí dealer Omyx (u řeky, mezi silnicí na sever a cyklostezkou). */
+const OMYX: Pt = [80, 9];
 
 /** Středy rodinných domů podle mapy obce; kam se nevejdou, tam nebudou. */
 const HOUSES: Pt[] = [
@@ -206,7 +208,7 @@ export function buildMoravka(): WorldMap {
       reserve(d.x - 1, d.y - 1, d.w + 2, d.h + 2);
     }
   }
-  // Dvůr pily s klády, dvůr autoúprav, mýtina s táborem Ekologů.
+  // Dvůr pily s klády, dvůr autoúprav, mýtina s táborem Biomatek.
   fill(1, 5, 13, 12, Tile.Dirt);
   reserve(0, 4, 15, 14);
   fill(10, 33, 6, 3, Tile.Dirt);
@@ -265,6 +267,7 @@ export function buildMoravka(): WorldMap {
 
   // ---------- Zóny ----------
   const zones: Zone[] = [
+    { name: 'Cesta na Raškovice', x: 5, y: 0, w: 14, h: 4 },
     { name: 'Hospoda', x: 16, y: 15, w: 14, h: 11 },
     { name: 'Škola', x: 52, y: 40, w: 32, h: 26 },
     { name: 'Školka', x: 42, y: 52, w: 10, h: 9 },
@@ -272,19 +275,19 @@ export function buildMoravka(): WorldMap {
     { name: 'Garáž', x: 8, y: 27, w: 11, h: 10 },
     { name: 'Chata', x: 105, y: 53, w: 9, h: 9 },
     { name: 'Hasiči', x: 38, y: 9, w: 10, h: 8 },
-    { name: 'Omyx', x: 75, y: 4, w: 9, h: 8 },
+    { name: 'Omyx', x: 75, y: 5, w: 9, h: 7 },
     { name: 'Kostel', x: 67, y: 19, w: 9, h: 12 },
     { name: 'Náves', x: 26, y: 14, w: 22, h: 31 },
     { name: 'Pila', x: 0, y: 3, w: 15, h: 16 },
     { name: 'Přehrada Morávka', x: 0, y: 67, w: W, h: H - 67 },
-    { name: 'Cesta na Raškovice', x: 62, y: 0, w: 14, h: 4 },
+
     { name: 'Les', x: 0, y: 18, w: 7, h: 49 },
     { name: 'Les', x: 112, y: 0, w: W - 112, h: 67 },
   ];
 
   // ---------- Provoz ----------
-  // Okruh: Raškovice → křižovatka → na jih → po hrázi → podél řeky → zpátky na Raškovice.
-  const loop = joinPaths(reversed(NE_B), reversed(NE_A), SOUTH, CREST, reversed(RIVER_ROAD), NE_B);
+  // První trasa vede od Raškovic (levý horní roh): křižovatka → na jih → po hrázi → podél řeky → na sever.
+  const loop = joinPaths(NW, SOUTH, CREST, reversed(RIVER_ROAD), NE_B);
   const westSouth = joinPaths(NW, SW);
   const westNorth = joinPaths(NW, NE_A, NE_B);
   const southLoop = joinPaths(reversed(SW), SOUTH, CREST, reversed(RIVER_ROAD), NE_B);
@@ -294,10 +297,9 @@ export function buildMoravka(): WorldMap {
   const traffic = [loop, reversed(loop), westSouth, reversed(westSouth), westNorth, reversed(westNorth), southLoop, reversed(southLoop)].map(lane);
 
   // ---------- Výjezd, místa, zastávky, přechody ----------
-  const neAll = ROADS[1].pts;
-  const neLen = polylineLength(neAll);
-  const exitAt = pointAlong(neAll, neLen - 2);
-  const exitArrive = pointAlong(neAll, neLen - 8);
+  // Výjezd na Raškovice: silnice na severozápad v levém horním rohu.
+  const exitAt = pointAlong(NW, 2);
+  const exitArrive = pointAlong(NW, 8);
   const crosswalks: Crosswalk[] = [
     { road: 0, along: polylineLength(NW) - 4.2 },
     { road: 1, along: 4.2 },
@@ -324,18 +326,16 @@ export function buildMoravka(): WorldMap {
       prev: null,
     },
     spots: {
-      ecoGiver: { x: 53, y: 67 },
+      ecoGiver: { x: 49, y: 57 },
       dam: { x: 84, y: 67 },
       camp,
       smg: { x: 60, y: DAM_ROW },
       damParking: { x: 64, y: 67 },
       hriste: { x: 74, y: 50 },
+      dealer: { x: OMYX[0], y: OMYX[1] },
     },
-    ecoSpawn: [
-      { name: 'Les', x: 1, y: 20, w: 6, h: 36 },
-      { name: 'Hráz', x: 54, y: DAM_ROW, w: 58, h: 1 },
-      zones.find((z) => z.name === 'Náves')!,
-    ],
+    // Biomatky se drží kolem školky.
+    ecoSpawn: [zones.find((z) => z.name === 'Školka')!],
     busStops: [
       { x: 40 * TILE + 3, y: 34 * TILE + 2 },
       { x: 45 * TILE + 3, y: 37 * TILE + 2 },

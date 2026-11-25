@@ -40,17 +40,17 @@ export const MISSIONS: MissionInfo[] = [
   {
     area: 'moravka', id: 'drevari-pepa', group: 'drevari', tier: 'yellow', type: 'killBoss',
     title: 'Zelený Pepa',
-    brief: 'Šéf Ekologů, Zelený Pepa, nám přivázal dělníka ke smrku. Najdi ho u hráze a vyřeš to.',
+    brief: 'Zelený Pepa, jedinej chlap v kroužku Biomatek, nám přivázal dělníka ke smrku. Najdi ho u hráze a vyřeš to.',
   },
   {
     area: 'moravka', id: 'drevari-franta', group: 'drevari', tier: 'yellow', type: 'protectMember',
     title: 'Franta jde domů',
-    brief: 'Franta je v hospodě sťatej a musí na pilu. Ekologové na něj číhají. Doprovoď ho.',
+    brief: 'Franta je v hospodě sťatej a musí na pilu. Biomatky na něj číhají s chia semínky. Doprovoď ho.',
   },
   {
     area: 'moravka', id: 'drevari-tabor', group: 'drevari', tier: 'red', type: 'sabotage',
     title: 'Protestní tábor',
-    brief: 'Ekologové si postavili tábor v lese a nedají nám kácet. Polož k nim nálož a zmiz.',
+    brief: 'Biomatky si postavily tábor v lese a nedají nám kácet. Polož k nim nálož a zmiz.',
   },
   // Štamgasti
   {
@@ -68,7 +68,7 @@ export const MISSIONS: MissionInfo[] = [
     title: 'Konkurenční pivovar',
     brief: 'Dvě dodávky konkurenčního pivovaru jedou přes Morávku. Ať nedojedou. Nikam.',
   },
-  // Ekologové
+  // Biomatky
   {
     area: 'moravka', id: 'ekologove-traktor', group: 'ekologove', tier: 'green', type: 'destroyVehicle',
     title: 'Smrdutý traktor',
@@ -84,7 +84,7 @@ export const MISSIONS: MissionInfo[] = [
     title: 'Mistr Kazimír',
     brief: 'Mistr pily Kazimír pokácel posvátný buk. Je na pile se svými chlapy. Ať je to poslední buk.',
   },
-  // Škola
+  // Omladina
   {
     area: 'moravka', id: 'skola-auto', group: 'skola', tier: 'green', type: 'stealVehicle',
     title: 'Auto pro třídu',

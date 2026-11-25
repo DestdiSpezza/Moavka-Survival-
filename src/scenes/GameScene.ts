@@ -10,7 +10,6 @@ import { WEAPONS } from '../systems/combat';
 import { explosionDamageAt, EXPLOSION_RADIUS } from '../systems/damage';
 import { findPath } from '../systems/pathfind';
 import { createRng } from '../systems/rng';
-import { lineOfSight } from '../systems/sight';
 import { isAhead, type Point, steerToward } from '../systems/trafficAi';
 import { type DriveInput, lateralSpeed, surfaceFor, toKmh } from '../systems/vehicleModel';
 import { T } from '../texts/cs';
@@ -29,6 +28,8 @@ import { Missions } from './Missions';
 import { Progression } from './Progression';
 import { Tutorial } from './Tutorial';
 import { Animals } from './Animals';
+import { Dealer } from './Dealer';
+import { Speech } from './Speech';
 import { Announcer } from './Announcer';
 import { Incidents } from './Incidents';
 import { Witnesses } from './Witnesses';
@@ -119,6 +120,8 @@ export class GameScene extends Phaser.Scene {
   incidents!: Incidents;
   animals!: Animals;
   announcer!: Announcer;
+  speech!: Speech;
+  dealer!: Dealer;
   /** Deník událostí světa (řetězce příčin, ladicí překryv F9, automatické testy). */
   eventLog = new EventLog();
   private debugKey!: Phaser.Input.Keyboard.Key;
@@ -275,6 +278,8 @@ export class GameScene extends Phaser.Scene {
     this.police = new Police(this);
     this.gangs = new Gangs(this);
     this.missions = new Missions(this);
+    this.speech = new Speech(this);
+    this.dealer = new Dealer(this);
     this.economy = new Economy(this);
     this.progression = new Progression(this);
     this.tutorial = new Tutorial(this);
@@ -697,7 +702,7 @@ export class GameScene extends Phaser.Scene {
       (this.player.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     } else {
       const tile = this.tileAt(this.player.x, this.player.y);
-      this.player.tick(dt, speedFactor(tile), this.input.activePointer);
+      this.player.tick(dt, speedFactor(tile) * this.dealer.walkFactor, this.input.activePointer);
     }
 
     // Za jízdy se kamera trochu oddálí, ať je vidět, kam se řítíš.
@@ -725,6 +730,8 @@ export class GameScene extends Phaser.Scene {
     this.witnesses.update();
     this.incidents.update(dt);
     this.animals.update(dt);
+    this.dealer.update(dt);
+    this.speech.update();
     this.announcer.update();
     this.updateDebugOverlay(dt);
     this.updateNight();
@@ -750,10 +757,41 @@ export class GameScene extends Phaser.Scene {
    * Chůze k cíli: když je cesta volná, jde přímo; jinak si naplánuje cestu
    * kolem domů a řeky (přepočítá ji, když se cíl pohne nebo uplyne chvíle).
    */
+  /**
+   * Chůze k bodu: rovně, když cesta pro celé tělo vede volně, jinak po naplánované
+   * cestě kolem domů a stromů. Kdo se zasekne (strom, roh, jiná postava),
+   * udělá krok stranou a naplánuje to znovu.
+   */
   walkTo(p: Pedestrian, to: Point, speed: number): void {
     const now = this.time.now / 1000;
+    const body = p.body as Phaser.Physics.Arcade.Body;
+    const far = Phaser.Math.Distance.Between(p.x, p.y, to.x, to.y) > 10;
+    if (now - p.walkAt > 0.4) {
+      const moved = Math.hypot(p.x - p.walkX, p.y - p.walkY);
+      if (far && speed > 0 && p.walkAt > 0 && moved < speed * 0.4 * 0.25) p.stuckHits++;
+      else p.stuckHits = 0;
+      if (p.stuckHits >= 2) {
+        p.stuckHits = 0;
+        p.navPath = null;
+        p.navAt = -100;
+        const ahead = Phaser.Math.Angle.Between(p.x, p.y, to.x, to.y);
+        const free = (a: number) => !isSolid(this.tileAt(p.x + Math.cos(a) * 11, p.y + Math.sin(a) * 11));
+        const sides = this.random() < 0.5 ? [Math.PI / 2, -Math.PI / 2] : [-Math.PI / 2, Math.PI / 2];
+        const side = [...sides, Math.PI * 0.75, -Math.PI * 0.75, Math.PI].find((d) => free(ahead + d)) ?? Math.PI;
+        p.sideAngle = ahead + side;
+        p.sideUntil = now + 0.35;
+      }
+      p.walkX = p.x;
+      p.walkY = p.y;
+      p.walkAt = now;
+    }
+    if (now < p.sideUntil) {
+      p.setRotation(p.sideAngle);
+      this.physics.velocityFromRotation(p.sideAngle, speed, body.velocity);
+      return;
+    }
     let target: Point = to;
-    if (!lineOfSight(this.world.tiles, TILE, p, to, isSolid)) {
+    if (!this.clearWalk(p, to)) {
       const stale = !p.navPath || now - p.navAt > 1.5 || !p.navGoal || Phaser.Math.Distance.Between(p.navGoal.x, p.navGoal.y, to.x, to.y) > 32;
       if (stale) {
         const path = findPath(
@@ -771,14 +809,51 @@ export class GameScene extends Phaser.Scene {
       const path = p.navPath;
       if (path?.length) {
         while (p.navIdx < path.length - 1 && Phaser.Math.Distance.Between(p.x, p.y, path[p.navIdx].x, path[p.navIdx].y) < 8) p.navIdx++;
+        // Zkratka: nejvzdálenější bod cesty, ke kterému je volno pro celé tělo.
         target = path[Math.min(p.navIdx + 1, path.length - 1)];
+        for (let k = Math.min(p.navIdx + 4, path.length - 1); k > p.navIdx + 1; k--) {
+          if (this.clearWalk(p, path[k])) {
+            target = path[k];
+            break;
+          }
+        }
       }
     } else {
       p.navPath = null;
     }
     const angle = Phaser.Math.Angle.Between(p.x, p.y, target.x, target.y);
     p.setRotation(angle);
-    this.physics.velocityFromRotation(angle, speed, (p.body as Phaser.Physics.Arcade.Body).velocity);
+    this.physics.velocityFromRotation(angle, speed, body.velocity);
+  }
+
+  /** Projde postava (kruh o poloměru r) rovně z a do b, aniž by zavadila o strom nebo dům? */
+  clearWalk(a: Point, b: Point, r = 6): boolean {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1) return true;
+    const nx = (-dy / len) * r;
+    const ny = (dx / len) * r;
+    const n = Math.ceil(len / 4);
+    for (let i = 1; i <= n; i++) {
+      const x = a.x + (dx * i) / n;
+      const y = a.y + (dy * i) / n;
+      if (isSolid(this.tileAt(x, y)) || isSolid(this.tileAt(x + nx, y + ny)) || isSolid(this.tileAt(x - nx, y - ny))) return false;
+    }
+    return true;
+  }
+
+  /** Kam utéct: bod kus od hrozby, na který se dá dojít (zkouší i šikmo do stran). */
+  fleeSpot(p: Point, threat: Point, dist: number): Point {
+    const base = Math.atan2(p.y - threat.y, p.x - threat.x);
+    const W = this.world.width * TILE;
+    const H = this.world.height * TILE;
+    for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.3, -2.3, Math.PI]) {
+      const x = p.x + Math.cos(base + da) * dist;
+      const y = p.y + Math.sin(base + da) * dist;
+      if (x > TILE && y > TILE && x < W - TILE && y < H - TILE && !isSolid(this.tileAt(x, y))) return { x, y };
+    }
+    return { x: p.x, y: p.y };
   }
 
   tileAt(x: number, y: number): number {

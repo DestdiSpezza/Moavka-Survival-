@@ -37,7 +37,7 @@ export const TUTORIAL: TutorialStep[] = [
     text: 'Zbraně leží po vesnici: pistole za hospodou, pálka u školy. Levé tlačítko = útok, 1–5 = zbraň.',
     done: (s) => s.armed || s.shownFor > 20,
   },
-  { id: 'missions', text: 'Práci dávají skupiny. Najdi „!“: Dřevaři u pily, Štamgasti u hospody, Škola u hřiště, Ekologové na hrázi.', done: (s) => s.missionStarted || s.shownFor > 20 },
+  { id: 'missions', text: 'Práci dávají skupiny. Najdi „!“: Dřevaři u pily, Štamgasti u hospody, Omladina u školy, Biomatky u školky.', done: (s) => s.missionStarted || s.shownFor > 20 },
   { id: 'respect', text: 'Vlevo je respekt. Komu pomůžeš, ten tě má rád. Jeho nepřátelé už míň.', done: (s) => s.shownFor > READ_TIME },
   {
     id: 'police',
