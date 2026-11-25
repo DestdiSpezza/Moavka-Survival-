@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { type Arsenal, newArsenal, WEAPONS } from '../systems/combat';
 import { computeMove, type MoveState, STAMINA_MAX } from '../systems/movement';
+import { animateWalk } from './walk';
 
 type Keys = Record<'up' | 'down' | 'left' | 'right' | 'sprint', Phaser.Input.Keyboard.Key>;
 
@@ -19,6 +20,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');
+    this.setOrigin(8 / 24, 0.5);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     const body = this.body as Phaser.Physics.Arcade.Body;
@@ -31,14 +33,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.arrows = kb.createCursorKeys(); // šipky jako alternativa k WASD
   }
 
+  private walkPhase = 0;
+
+  preUpdate(time: number, delta: number): void {
+    super.preUpdate(time, delta);
+    if (!this.dead) this.walkPhase = animateWalk(this, this.walkPhase, delta / 1000);
+  }
+
   /** Textura podle zbraně v ruce. Střed rotace zůstává na ramenou (8 px zleva). */
   updateLook(): void {
     const w = WEAPONS[this.arsenal.current];
     const key = w.id === 'fists' ? 'player' : w.id === 'bat' ? 'player-bat' : w.id === 'pistol' ? 'player-pistol' : 'player-long';
-    if (this.texture.key !== key) {
-      this.setTexture(key);
-      this.setOrigin(8 / this.width, 0.5);
-    }
+    if (this.texture.key !== key) this.setTexture(key);
+    this.setOrigin(8 / 24, 0.5);
   }
 
   /** dt v sekundách, terrainFactor podle dlaždice pod hráčem. */

@@ -96,7 +96,7 @@ export class Police {
     this.driveCost = tiles.map((row, y) =>
       row.map((t, x) => {
         if (isSolid(t)) return Infinity;
-        let c = t === Tile.Road || t === Tile.Bridge || t === Tile.Dam ? 1 : t === Tile.Dirt ? 2 : t === Tile.ForestFloor ? 6 : 2.5;
+        let c = t === Tile.Road || t === Tile.Bridge || t === Tile.Dam ? 1 : t === Tile.Sidewalk ? 1.5 : t === Tile.Dirt ? 2 : t === Tile.ForestFloor ? 6 : 2.5;
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isSolid(tiles[y + dy]?.[x + dx] ?? Tile.Rock)) c += 4;
         return c;
       }),

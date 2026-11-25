@@ -125,6 +125,15 @@ export function buildArea(seed: number, phase: number): WorldMap {
   // Cesta na pilu a k přehradě po západním břehu.
   for (let y = CROSS_ROAD_Y + 2; y < DAM_Y; y++) fill(26, y, 2, 1, Tile.Road);
 
+  // Chodníky podél silnic ve vesnici (ne v lese a ne přes pole u přehrady).
+  for (let y = 1; y < DAM_Y - 1; y++) {
+    for (let x = 16; x < 100; x++) {
+      if (t[y][x] !== Tile.Grass) continue;
+      const nearRoad = [t[y - 1][x], t[y + 1][x], t[y][x - 1], t[y][x + 1]].some((n) => n === Tile.Road);
+      if (nearRoad) t[y][x] = Tile.Sidewalk;
+    }
+  }
+
   const buildings: Building[] = [];
   const building = (name: string, x: number, y: number, w: number, h: number, roof: number) => {
     fill(x, y, w, h, roof);

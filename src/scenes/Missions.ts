@@ -127,7 +127,7 @@ export class Missions {
     const spec = GROUPS[group];
     const ring = this.game.add.circle(0, 0, 9, spec.color, 0.35).setStrokeStyle(2, spec.color);
     const mark = this.game.add.text(0, 0, '!', pixelFont(28, '#ffffff')).setOrigin(0.5).setScale(0.5).setStroke('#000', 5);
-    const label = this.game.add.text(0, -16, groupName(this.game.area.id, group), pixelFont(14, spec.css)).setOrigin(0.5).setScale(0.5).setStroke('#000', 4);
+    const label = this.game.add.text(0, -16, groupName(this.game.area.id, group), pixelFont(14, spec.css)).setOrigin(0.5).setScale(0.5).setStroke('#000', 3);
     const marker = this.game.add.container(at.x, at.y, [ring, mark, label]).setDepth(5);
     this.game.tweens.add({ targets: ring, scale: 1.3, duration: 700, yoyo: true, repeat: -1 });
     this.game.cameras.getCamera('minimap')?.ignore(marker);
@@ -306,7 +306,7 @@ export class Missions {
   // ---------- Sestavení zakázek ----------
 
   private label(ped: Pedestrian, name: string, css: string): void {
-    const text = this.game.add.text(ped.x, ped.y - 12, name, pixelFont(14, css)).setOrigin(0.5, 1).setScale(0.5).setStroke('#000', 4).setDepth(20);
+    const text = this.game.add.text(ped.x, ped.y - 12, name, pixelFont(14, css)).setOrigin(0.5, 1).setScale(0.5).setStroke('#000', 3).setDepth(20);
     this.game.cameras.getCamera('minimap')?.ignore(text);
     this.pendingLabels.push({ ped, text });
   }

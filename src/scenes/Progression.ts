@@ -59,7 +59,7 @@ export class Progression {
   private addExit(to: AreaId, at: { x: number; y: number }, arrive: { x: number; y: number }, arrow: string): void {
     const g = this.game;
     const name = AREAS[to].name;
-    const sign = g.add.text(0, 0, `${arrow} ${name}`, pixelFont(16, '#ffd23f')).setOrigin(0.5).setScale(0.5).setStroke('#000', 4);
+    const sign = g.add.text(0, 0, `${arrow} ${name}`, pixelFont(16, '#ffd23f')).setOrigin(0.5).setScale(0.5).setStroke('#000', 3);
     const pad = g.add.rectangle(0, 0, 30, 30, 0xffd23f, 0.15).setStrokeStyle(2, 0xffd23f);
     const marker = g.add.container(at.x, at.y, [pad, sign]).setDepth(5);
     g.cameras.getCamera('minimap')?.ignore(marker);

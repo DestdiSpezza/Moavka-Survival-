@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PED_HP, TOUGH_PED_HP } from '../systems/crowd';
+import { animateWalk } from './walk';
 import type { GroupId } from '../systems/respect';
 
 export type PedState = 'idle' | 'wander' | 'flee' | 'fight' | 'dead';
@@ -48,7 +49,16 @@ export class Pedestrian extends Phaser.Physics.Arcade.Sprite {
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setCircle(5, 3, 3);
     body.setCollideWorldBounds(true);
+    // Všechny postavy mají snímky 24×16 s rameny v bodě (8, 8).
+    this.setOrigin(8 / 24, 0.5);
     this.setDepth(9);
+  }
+
+  private walkPhase = 0;
+
+  preUpdate(time: number, delta: number): void {
+    super.preUpdate(time, delta);
+    if (this.alive) this.walkPhase = animateWalk(this, this.walkPhase, delta / 1000);
   }
 
   get alive(): boolean {

@@ -59,15 +59,15 @@ export class UIScene extends Phaser.Scene {
     const { x, y, w, h } = MINIMAP;
     // Noc: tmavý závoj pod HUDem (HUD se kreslí až po něm, takže zůstane čitelný).
     this.add.rectangle(x - 2, y - 2, w + 4, h + 4).setOrigin(0).setStrokeStyle(3, 0xf2e9d0);
-    this.zoneText = this.add.text(x, y + h + 10, '', pixelFont(18, '#ffd23f')).setStroke('#000', 4);
+    this.zoneText = this.add.text(x, y + h + 10, '', pixelFont(18, '#ffd23f')).setStroke('#000', 3);
 
-    this.add.text(x, y + h + 38, T.stamina, pixelFont(14)).setStroke('#000', 4);
+    this.add.text(x, y + h + 38, T.stamina, pixelFont(14)).setStroke('#000', 3);
     this.add.rectangle(x + 70, y + h + 41, 124, 12, 0x000000, 0.6).setOrigin(0);
     this.staminaBar = this.add.rectangle(x + 72, y + h + 43, 120, 8, 0x6fd16a).setOrigin(0);
 
     // Zdraví a vesta pod dechem.
     const bar = (label: string, row: number, color: number) => {
-      this.add.text(x, y + h + 38 + row * 20, label, pixelFont(14)).setStroke('#000', 4);
+      this.add.text(x, y + h + 38 + row * 20, label, pixelFont(14)).setStroke('#000', 3);
       this.add.rectangle(x + 70, y + h + 41 + row * 20, 124, 12, 0x000000, 0.6).setOrigin(0);
       return this.add.rectangle(x + 72, y + h + 43 + row * 20, 120, 8, color).setOrigin(0);
     };
@@ -76,14 +76,14 @@ export class UIScene extends Phaser.Scene {
 
     // Peníze a zbraň vpravo nahoře.
     this.moneyText = this.add.text(width - 16, 16, '', pixelFont(24, '#6fd16a')).setOrigin(1, 0).setStroke('#000', 5);
-    this.weaponText = this.add.text(width - 16, 50, '', pixelFont(18, '#f2e9d0')).setOrigin(1, 0).setStroke('#000', 4);
-    this.ammoText = this.add.text(width - 16, 74, '', pixelFont(16, '#ffd23f')).setOrigin(1, 0).setStroke('#000', 4);
-    this.scoreText = this.add.text(width - 16, 96, '', pixelFont(14, '#c8c0a8')).setOrigin(1, 0).setStroke('#000', 4);
-    this.goalText = this.add.text(width - 16, 116, '', { ...pixelFont(13, '#c8c0a8'), align: 'right' }).setOrigin(1, 0).setStroke('#000', 4);
+    this.weaponText = this.add.text(width - 16, 50, '', pixelFont(18, '#f2e9d0')).setOrigin(1, 0).setStroke('#000', 3);
+    this.ammoText = this.add.text(width - 16, 74, '', pixelFont(16, '#ffd23f')).setOrigin(1, 0).setStroke('#000', 3);
+    this.scoreText = this.add.text(width - 16, 96, '', pixelFont(14, '#c8c0a8')).setOrigin(1, 0).setStroke('#000', 3);
+    this.goalText = this.add.text(width - 16, 116, '', { ...pixelFont(13, '#c8c0a8'), align: 'right' }).setOrigin(1, 0).setStroke('#000', 3);
 
     // Zakázka: název a úkol pod hodinami, šipka k cíli na okraji obrazovky.
-    this.missionTitle = this.add.text(width / 2, 70, '', pixelFont(16, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 4);
-    this.missionObjective = this.add.text(width / 2, 92, '', pixelFont(15, '#ffffff')).setOrigin(0.5, 0).setStroke('#000', 4);
+    this.missionTitle = this.add.text(width / 2, 70, '', pixelFont(16, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 3);
+    this.missionObjective = this.add.text(width / 2, 92, '', pixelFont(15, '#ffffff')).setOrigin(0.5, 0).setStroke('#000', 3);
     this.arrow = this.add.triangle(0, 0, 0, -9, 18, 0, 0, 9, 0xffd23f).setStrokeStyle(2, 0x000000).setVisible(false);
 
     // Nápovědy tutoriálu vlevo dole.
@@ -94,7 +94,7 @@ export class UIScene extends Phaser.Scene {
     // Nabídka zakázek u zadavatele.
     const panel = this.add.rectangle(0, 0, 520, 250, 0x111111, 0.88).setOrigin(0.5, 0).setStrokeStyle(2, 0xf2e9d0);
     this.boardPanel = panel;
-    this.boardTitle = this.add.text(0, 12, '', pixelFont(20, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 4);
+    this.boardTitle = this.add.text(0, 12, '', pixelFont(20, '#ffd23f')).setOrigin(0.5, 0).setStroke('#000', 3);
     this.boardBody = this.add.text(-245, 46, '', { ...pixelFont(14), wordWrap: { width: 490 }, lineSpacing: 4 });
     // Vpravo od panelu respektu, aby ho nezakrývala.
     this.boardBox = this.add.container(width / 2 + 110, 130, [panel, this.boardTitle, this.boardBody]).setVisible(false);
@@ -110,32 +110,32 @@ export class UIScene extends Phaser.Scene {
     GROUP_IDS.forEach((id, i) => {
       const spec = GROUPS[id];
       const rowY = ry + i * 20;
-      this.respectNames.push(this.add.text(x, rowY - 3, spec.name, pixelFont(14, spec.css)).setStroke('#000', 4));
+      this.respectNames.push(this.add.text(x, rowY - 3, spec.name, pixelFont(14, spec.css)).setStroke('#000', 3));
       this.add.rectangle(x + 100, rowY, 124, 12, 0x000000, 0.6).setOrigin(0);
       this.add.rectangle(x + 162, rowY - 1, 2, 14, 0xf2e9d0).setOrigin(0.5, 0);
       this.respectBars.push(this.add.rectangle(x + 162, rowY + 2, 0, 8, spec.color).setOrigin(0, 0));
-      this.respectValues.push(this.add.text(x + 230, rowY - 3, '0', pixelFont(14)).setStroke('#000', 4));
+      this.respectValues.push(this.add.text(x + 230, rowY - 3, '0', pixelFont(14)).setStroke('#000', 3));
     });
-    this.clockText = this.add.text(width / 2, 46, '', pixelFont(16, '#f2e9d0')).setOrigin(0.5, 0).setStroke('#000', 4);
+    this.clockText = this.add.text(width / 2, 46, '', pixelFont(16, '#f2e9d0')).setOrigin(0.5, 0).setStroke('#000', 3);
 
     // Hvězdičky hledanosti nahoře uprostřed.
     this.stars = [];
     for (let i = 0; i < 5; i++) {
-      this.stars.push(this.add.text(width / 2 + (i - 2) * 30, 22, '★', pixelFont(26, '#ffd23f')).setOrigin(0.5).setStroke('#000', 4));
+      this.stars.push(this.add.text(width / 2 + (i - 2) * 30, 22, '★', pixelFont(26, '#ffd23f')).setOrigin(0.5).setStroke('#000', 3));
     }
 
     // Panel vozidla vpravo dole.
     const px = width - 220;
     const py = height - 110;
-    this.carName = this.add.text(0, 0, '', pixelFont(16, '#ffd23f')).setStroke('#000', 4);
+    this.carName = this.add.text(0, 0, '', pixelFont(16, '#ffd23f')).setStroke('#000', 3);
     this.carSpeed = this.add.text(0, 22, '', pixelFont(28)).setStroke('#000', 5);
     const hpBack = this.add.rectangle(0, 62, 204, 12, 0x000000, 0.6).setOrigin(0);
     this.carHp = this.add.rectangle(2, 64, 200, 8, 0x6fd16a).setOrigin(0);
     this.carPanel = this.add.container(px, py, [this.carName, this.carSpeed, hpBack, this.carHp]).setVisible(false);
 
-    this.controlsText = this.add.text(width - 12, height - 12, T.controls, pixelFont(14, '#f2e9d0')).setOrigin(1).setStroke('#000', 4).setAlpha(0.8);
-    this.promptText = this.add.text(width / 2, height / 2 + 40, '', pixelFont(16, '#ffffff')).setOrigin(0.5).setStroke('#000', 4);
-    this.toastText = this.add.text(width / 2, height - 60, '', pixelFont(18, '#ffffff')).setOrigin(0.5).setStroke('#000', 4);
+    this.controlsText = this.add.text(width - 12, height - 12, T.controls, pixelFont(14, '#f2e9d0')).setOrigin(1).setStroke('#000', 3).setAlpha(0.8);
+    this.promptText = this.add.text(width / 2, height / 2 + 40, '', pixelFont(16, '#ffffff')).setOrigin(0.5).setStroke('#000', 3);
+    this.toastText = this.add.text(width / 2, height - 60, '', pixelFont(18, '#ffffff')).setOrigin(0.5).setStroke('#000', 3);
 
     const game = this.scene.get('Game');
     game.events.on('toast', (text: string) => this.say(text));

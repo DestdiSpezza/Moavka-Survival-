@@ -40,6 +40,7 @@ const SURFACES: Record<number, Surface> = {
   [Tile.Road]: ROAD,
   [Tile.Bridge]: ROAD,
   [Tile.Dam]: ROAD,
+  [Tile.Sidewalk]: { speed: 0.9, grip: 0.95, accel: 1 },
   [Tile.Grass]: { speed: 0.6, grip: 0.7, accel: 0.8 },
   [Tile.Dirt]: { speed: 0.75, grip: 0.8, accel: 0.9 },
   [Tile.ForestFloor]: { speed: 0.35, grip: 0.6, accel: 0.6 },

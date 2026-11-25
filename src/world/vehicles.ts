@@ -18,23 +18,23 @@ export interface VehicleType {
 
 export const VEHICLE_TYPES: Record<VehicleKind, VehicleType> = {
   osobak: {
-    kind: 'osobak', name: 'Osobák', length: 20, width: 10, maxHp: 100,
+    kind: 'osobak', name: 'Osobák', length: 24, width: 12, maxHp: 100,
     params: { maxSpeed: 190, reverseSpeed: 60, accel: 150, brake: 260, turnRate: 2.6, grip: 7, offroad: false },
   },
   dodavka: {
-    kind: 'dodavka', name: 'Dodávka', length: 24, width: 12, maxHp: 150,
+    kind: 'dodavka', name: 'Dodávka', length: 28, width: 13, maxHp: 150,
     params: { maxSpeed: 150, reverseSpeed: 50, accel: 100, brake: 200, turnRate: 2.0, grip: 6, offroad: false },
   },
   terenak: {
-    kind: 'terenak', name: 'Teréňák', length: 22, width: 12, maxHp: 140,
+    kind: 'terenak', name: 'Teréňák', length: 26, width: 13, maxHp: 140,
     params: { maxSpeed: 170, reverseSpeed: 60, accel: 130, brake: 230, turnRate: 2.4, grip: 6.5, offroad: true },
   },
   traktor: {
-    kind: 'traktor', name: 'Traktor', length: 18, width: 12, maxHp: 200,
+    kind: 'traktor', name: 'Traktor', length: 22, width: 14, maxHp: 200,
     params: { maxSpeed: 75, reverseSpeed: 35, accel: 70, brake: 200, turnRate: 2.2, grip: 9, offroad: true },
   },
   policie: {
-    kind: 'policie', name: 'Policejní auto', length: 20, width: 10, maxHp: 120,
+    kind: 'policie', name: 'Policejní auto', length: 24, width: 12, maxHp: 120,
     params: { maxSpeed: 210, reverseSpeed: 65, accel: 170, brake: 280, turnRate: 2.8, grip: 7.5, offroad: false },
   },
   skutr: {
@@ -46,7 +46,7 @@ export const VEHICLE_TYPES: Record<VehicleKind, VehicleType> = {
     params: { maxSpeed: 95, reverseSpeed: 20, accel: 120, brake: 240, turnRate: 3.5, grip: 8, offroad: true },
   },
   zasahovka: {
-    kind: 'zasahovka', name: 'Zásahovka', length: 24, width: 12, maxHp: 240,
+    kind: 'zasahovka', name: 'Zásahovka', length: 28, width: 13, maxHp: 240,
     params: { maxSpeed: 175, reverseSpeed: 55, accel: 130, brake: 230, turnRate: 2.2, grip: 6.5, offroad: true },
   },
 };

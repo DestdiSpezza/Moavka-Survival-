@@ -14,9 +14,10 @@ export const Tile = {
   RoofGray: 11,
   RoofBrown: 12,
   Logs: 13,
+  Sidewalk: 14,
 } as const;
 export type TileId = (typeof Tile)[keyof typeof Tile];
-export const TILE_COUNT = 14;
+export const TILE_COUNT = 15;
 
 const SOLID = new Set<number>([Tile.Water, Tile.Tree, Tile.Rock, Tile.Wall, Tile.RoofRed, Tile.RoofGray, Tile.RoofBrown, Tile.Logs]);
 
@@ -38,6 +39,7 @@ export function speedFactor(tile: number): number {
     case Tile.Dirt:
       return 0.85;
     case Tile.Road:
+    case Tile.Sidewalk:
     case Tile.Bridge:
     case Tile.Dam:
       return 1.1;

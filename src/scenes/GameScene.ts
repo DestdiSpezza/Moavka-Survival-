@@ -3,6 +3,8 @@ import { TILE, WORLD_ZOOM } from '../config';
 import { Player } from '../entities/Player';
 import type { Pedestrian } from '../entities/Pedestrian';
 import { Sound } from '../audio/Sound';
+import { paintGround } from '../art/ground';
+import { paintWater } from '../art/water';
 import { Vehicle } from '../entities/Vehicle';
 import { WEAPONS } from '../systems/combat';
 import { explosionDamageAt, EXPLOSION_RADIUS } from '../systems/damage';
@@ -10,13 +12,13 @@ import { findPath } from '../systems/pathfind';
 import { createRng } from '../systems/rng';
 import { lineOfSight } from '../systems/sight';
 import { isAhead, type Point, steerToward } from '../systems/trafficAi';
-import { type DriveInput, surfaceFor, toKmh } from '../systems/vehicleModel';
+import { type DriveInput, lateralSpeed, surfaceFor, toKmh } from '../systems/vehicleModel';
 import { T } from '../texts/cs';
 import { type AreaDef, type AreaId, AREAS, placeLabel } from '../world/areas';
 import { buildArea, type WorldMap, zoneAt } from '../world/moravka';
 import { newProgress, type Progress, respectIn, writeSave } from '../systems/save';
 import { isSolid, speedFactor, TILE_COUNT } from '../world/tiles';
-import { CAR_COLORS } from '../world/tileset';
+import { CAR_PAINT as CAR_COLORS } from '../art/sprites';
 import { parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicles';
 import { pixelFont } from './BootScene';
 import { Combat } from './Combat';
@@ -81,6 +83,9 @@ export class GameScene extends Phaser.Scene {
   progression!: Progression;
   tutorial!: Tutorial;
   private night!: Phaser.GameObjects.Rectangle;
+  private water!: Phaser.GameObjects.TileSprite;
+  private decals!: Phaser.GameObjects.RenderTexture;
+  private skidTick = 0;
   private headlights = new Map<Vehicle, Phaser.GameObjects.Image>();
   /** Postup celé hry (sdílený mezi oblastmi, ukládá se). */
   progress!: Progress;
@@ -113,11 +118,19 @@ export class GameScene extends Phaser.Scene {
     const tileset = map.addTilesetImage('tiles', 'tiles', TILE, TILE, 0, 0)!;
     this.layer = map.createLayer(0, tileset, 0, 0)!;
     this.layer.setCollision(Array.from({ length: TILE_COUNT }, (_, i) => i).filter(isSolid));
+    // Vrstva dlaždic slouží jen pro kolize; vidět je malba mapy a pod ní plynoucí voda.
+    this.layer.setVisible(false);
 
     const wPx = this.world.width * TILE;
     const hPx = this.world.height * TILE;
     this.physics.world.setBounds(0, 0, wPx, hPx);
-    this.decorateBuildings();
+    if (!this.textures.exists('water')) this.textures.addCanvas('water', paintWater());
+    this.water = this.add.tileSprite(0, 0, wPx, hPx, 'water').setOrigin(0).setDepth(0);
+    const groundKey = `ground-${this.area.id}`;
+    if (!this.textures.exists(groundKey)) this.textures.addCanvas(groundKey, paintGround(this.world, this.area.seed));
+    this.add.image(0, 0, groundKey).setOrigin(0).setDepth(0.5);
+    // Trvalé stopy na zemi: smyky, krev, ohořelá místa (jako v GTA 2 zůstávají).
+    this.decals = this.add.renderTexture(0, 0, wPx, hPx).setOrigin(0).setDepth(0.6);
 
     const labels = this.world.buildings
       .filter((b) => b.name !== 'Dům')
@@ -127,6 +140,7 @@ export class GameScene extends Phaser.Scene {
           .setOrigin(0.5)
           .setScale(1 / WORLD_ZOOM)
           .setStroke('#2a1d12', 4)
+          .setAlpha(0.8)
           .setDepth(5),
       );
 
@@ -190,23 +204,27 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('UI');
   }
 
-  /** Stíny budov (střechy vypadají vyvýšené) a komíny na domech. */
-  private decorateBuildings(): void {
-    const g = this.add.graphics().setDepth(1);
-    const rnd = this.random;
-    for (const b of this.world.buildings) {
-      const x = b.x * TILE;
-      const y = b.y * TILE;
-      const w = b.w * TILE;
-      const h = b.h * TILE;
-      g.fillStyle(0x000000, 0.28).fillRect(x + w, y + 5, 5, h).fillRect(x + 5, y + h, w, 5);
-      // Hřeben střechy uprostřed.
-      g.fillStyle(0xffffff, 0.08).fillRect(x, y + Math.floor(h / 2) - 1, w, 2);
-      if (b.name === 'Dům' || b.name === 'Hospoda' || b.name === 'Chata') {
-        const cx = x + 4 + Math.floor(rnd() * (w - 10));
-        const cy = y + 3 + Math.floor(rnd() * (h / 2 - 4));
-        g.fillStyle(0x3a2a22).fillRect(cx, cy, 4, 4);
-        g.fillStyle(0x1a1412).fillRect(cx + 1, cy + 1, 2, 2);
+  /** Otisk na zem (krev, smyk, spálenina). */
+  stampDecal(key: string, x: number, y: number, angle = 0, alpha = 1): void {
+    this.decals.stamp(key, undefined, x, y, { angle, alpha, originX: 0.5, originY: 0.5 });
+  }
+
+  /** Smyky: auta ve smyku nebo při prudkém brzdění nechávají černé stopy zadních kol. */
+  private paintSkids(): void {
+    this.skidTick++;
+    if (this.skidTick % 2) return;
+    for (const v of this.vehicles) {
+      if (v.wrecked || v.driver === 'none' || v.spec.kind === 'kolo') continue;
+      const lat = Math.abs(lateralSpeed(v.drive));
+      const braking = v === this.driving && this.keys.handbrake.isDown && Math.abs(v.speed) > 40;
+      if (lat < 40 && !braking) continue;
+      const a = v.rotation;
+      const back = -v.spec.length / 2 + 4;
+      const side = v.spec.width / 2 - 2;
+      for (const s of [-1, 1]) {
+        const x = v.x + Math.cos(a) * back - Math.sin(a) * side * s;
+        const y = v.y + Math.sin(a) * back + Math.cos(a) * side * s;
+        this.stampDecal('skid', x, y, 0, Math.min(0.6, 0.2 + lat / 300));
       }
     }
   }
@@ -451,6 +469,10 @@ export class GameScene extends Phaser.Scene {
     this.progression.update(dt);
     this.tutorial.update(dt);
     this.updateNight();
+    this.paintSkids();
+    // Voda pomalu plyne a třpytí se.
+    this.water.tilePositionY += dt * 6;
+    this.water.tilePositionX = Math.sin(this.time.now / 1500) * 2;
     this.updateAudio();
     if (Phaser.Input.Keyboard.JustDown(this.keys.pause) && !this.player.dead) this.openPause();
     const a = this.player.arsenal;
@@ -720,6 +742,7 @@ export class GameScene extends Phaser.Scene {
   /** Výbuch na místě (auto, nálož): efekt, zranění lidí a řetězová reakce aut. */
   explodeAt(x: number, y: number, source?: Vehicle): void {
     Sound.explosion(this.audioVol({ x, y }));
+    this.stampDecal('scorch', x, y, this.random() * 360, 0.9);
     const flash = this.add.circle(x, y, EXPLOSION_RADIUS * 0.6, 0xfff0a0, 0.9).setDepth(15).setBlendMode('ADD');
     this.tweens.add({ targets: flash, scale: 1.8, alpha: 0, duration: 380, onComplete: () => flash.destroy() });
     const burst = this.add.particles(x, y, 'puff', {
@@ -762,7 +785,7 @@ export class GameScene extends Phaser.Scene {
       .text(x, y, text, pixelFont(14, color))
       .setOrigin(0.5, 1)
       .setScale(1 / WORLD_ZOOM)
-      .setStroke('#000', 4)
+      .setStroke('#000', 3)
       .setDepth(45);
     this.cameras.getCamera('minimap')?.ignore(t);
     this.tweens.add({ targets: t, y: y - 10, alpha: 0, delay: ms * 0.6, duration: ms * 0.4, onComplete: () => t.destroy() });

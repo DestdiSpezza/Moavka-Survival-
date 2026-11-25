@@ -50,9 +50,9 @@ export class Economy {
       const t = findFreeTile(map, b.x + Math.floor(b.w / 2) + dx, b.y + b.h, taken);
       return { x: (t.tx + 0.5) * TILE, y: (t.ty + 0.5) * TILE };
     };
-    this.addPlace('garage', door('Garáž'), 'GARÁŽ', 0x8a8a9a);
+    this.addPlace('garage', door('Garáž'), '', 0x8a8a9a);
     this.addPlace('shop', door('Obchod', -2), 'POD PULTEM', 0xd8b030);
-    this.addPlace('hideout', door('Chata'), 'CHATA', 0x7a5236);
+    this.addPlace('hideout', door('Chata'), '', 0x7a5236);
     const kb = game.input.keyboard!;
     this.keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'].map((k) => kb.addKey(k));
   }
@@ -60,7 +60,7 @@ export class Economy {
   private addPlace(kind: PlaceKind, at: { x: number; y: number }, name: string, color: number): void {
     const g = this.game;
     const ring = g.add.rectangle(0, 0, 16, 16, color, 0.35).setStrokeStyle(2, color);
-    const label = g.add.text(0, -16, name, pixelFont(14, '#f2e9d0')).setOrigin(0.5).setScale(0.5).setStroke('#000', 4);
+    const label = g.add.text(0, -16, name, pixelFont(14, '#f2e9d0')).setOrigin(0.5).setScale(0.5).setStroke('#000', 3);
     const marker = g.add.container(at.x, at.y, [ring, label]).setDepth(5);
     g.tweens.add({ targets: ring, angle: 90, duration: 2000, repeat: -1 });
     g.cameras.getCamera('minimap')?.ignore(marker);

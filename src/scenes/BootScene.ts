@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import { T } from '../texts/cs';
+import { generateEffectSprites, generateHumanSprites, generateVehicleSprites } from '../art/sprites';
 import { generateCombat, generatePedestrian, generatePlayer, generateTileset, generateVehicles } from '../world/tileset';
 
 /**
@@ -26,7 +27,16 @@ export class BootScene extends Phaser.Scene {
     generateVehicles(this);
     generatePedestrian(this, 'driver', 0x4a6a8a, 0x5a3a22);
     generateCombat(this);
-    this.scene.start('Title');
+    // Pixel-art sprity přepíšou jednodušší verze výše (stejné klíče).
+    generateVehicleSprites(this);
+    generateHumanSprites(this);
+    generateEffectSprites(this);
+    // Pixelové písmo z Google Fonts; když nepřijde včas (offline), jede se s náhradním.
+    const fontReady = document.fonts
+      ? document.fonts.load('20px "Jersey 10"', 'ěščřžýáíéůúĚŠČŘŽ0123456789').catch(() => [])
+      : Promise.resolve([]);
+    const timeout = new Promise((resolve) => setTimeout(resolve, 2500));
+    void Promise.race([fontReady, timeout]).then(() => this.scene.start('Title'));
   }
 }
 
@@ -43,5 +53,7 @@ function makeTile(scene: Phaser.Scene, key: string, base: number, speck: number)
 }
 
 export function pixelFont(size: number, color = '#f2e9d0'): Phaser.Types.GameObjects.Text.TextStyle {
-  return { fontFamily: 'monospace', fontSize: `${size}px`, color, fontStyle: 'bold' };
+  // Jersey 10: úzké pixelové písmo s čitelnými číslicemi a českou diakritikou.
+  // Je opticky menší, proto se velikost násobí (rozložení HUDu počítá s původní velikostí).
+  return { fontFamily: '"Jersey 10", monospace', fontSize: `${Math.round(size * 1.35)}px`, color };
 }

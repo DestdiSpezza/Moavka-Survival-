@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Sound } from '../audio/Sound';
-import { TILE } from '../config';
+import { paintGround } from '../art/ground';
+import { paintWater } from '../art/water';
+import { buildArea } from '../world/moravka';
 import { newProgress, type Progress, readSave } from '../systems/save';
 import { T } from '../texts/cs';
 import { AREAS } from '../world/areas';
@@ -15,11 +17,29 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
-    this.add.tileSprite(0, 0, width, height, 'tile-grass').setOrigin(0).setTileScale(2);
-    this.add.tileSprite(0, 150 - TILE * 2, width, TILE * 4, 'tile-road').setOrigin(0).setTileScale(2);
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.35).setOrigin(0);
+    // Pozadí: skutečná malba Morávky, kamera pomalu pluje nad vesnicí.
+    const area = AREAS.moravka;
+    if (!this.textures.exists('ground-moravka')) this.textures.addCanvas('ground-moravka', paintGround(buildArea(area.seed, area.phase), area.seed));
+    if (!this.textures.exists('water')) this.textures.addCanvas('water', paintWater());
+    const bg = this.add.container(0, 0);
+    const ground = this.textures.get('ground-moravka').getSourceImage() as HTMLCanvasElement;
+    const water = this.add.tileSprite(0, 0, ground.width, ground.height, 'water').setOrigin(0);
+    bg.add([water, this.add.image(0, 0, 'ground-moravka').setOrigin(0)]);
+    bg.setScale(2);
+    const path = { t: 0 };
+    this.tweens.add({
+      targets: path, t: 1, duration: 60000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        bg.setPosition(-(600 + path.t * 900) * 2 + width / 2, -(380 + path.t * 300) * 2 + height / 2);
+        water.tilePositionY += 0.1;
+      },
+    });
+    // Ztmavení s vinětou, ať je menu čitelné.
+    this.add.rectangle(0, 0, width, height, 0x0a0a10, 0.45).setOrigin(0);
+    this.add.rectangle(0, 0, width, 210, 0x0a0a10, 0.35).setOrigin(0);
 
-    const title = this.add.text(width / 2, 110, T.title, pixelFont(56, '#ffd23f')).setOrigin(0.5).setStroke('#2a1d12', 8);
+    this.add.text(width / 2 + 5, 115, T.title, pixelFont(64, '#000000')).setOrigin(0.5).setAlpha(0.6);
+    const title = this.add.text(width / 2, 110, T.title, pixelFont(64, '#ffd23f')).setOrigin(0.5).setStroke('#2a1d12', 8);
     this.tweens.add({ targets: title, angle: { from: -1.5, to: 1.5 }, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.add.text(width / 2, 160, T.subtitle, pixelFont(18)).setOrigin(0.5).setStroke('#000', 4);
 

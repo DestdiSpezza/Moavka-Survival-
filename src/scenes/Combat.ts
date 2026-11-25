@@ -185,7 +185,9 @@ export class Combat {
     const muzzle = own ? 12 : 10;
     const start = { x: origin.x + Math.cos(angle) * muzzle, y: origin.y + Math.sin(angle) * muzzle };
     for (const a of pelletAngles(angle, def.pellets, def.spread, this.game.random)) this.fireRay(start, a, def.range, def.damage, own);
-    this.fx.fillStyle(0xfff2a0, 0.9).fillCircle(start.x, start.y, 3);
+    const flash = this.game.add.image(start.x, start.y, 'flash').setRotation(angle).setDepth(15).setBlendMode('ADD');
+    this.game.cameras.getCamera('minimap')?.ignore(flash);
+    this.game.time.delayedCall(50, () => flash.destroy());
     Sound.shot(id as ShotKind);
     this.noise(origin, def.noise, 'shooting');
   }
@@ -351,6 +353,7 @@ export class Combat {
     if (!p.alive || damage <= 0) return;
     p.hp -= damage;
     this.blood.explode(4, p.x, p.y);
+    if (damage >= 8) this.game.stampDecal(`blood-${Math.floor(this.game.random() * 3)}`, p.x + (this.game.random() - 0.5) * 6, p.y + (this.game.random() - 0.5) * 6, this.game.random() * 360, 0.8);
     const cop = p.role === 'cop';
     const attacker = from instanceof Pedestrian ? from : null;
     if (p.hp <= 0) {

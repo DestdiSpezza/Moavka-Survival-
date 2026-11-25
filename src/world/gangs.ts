@@ -87,7 +87,7 @@ export function inZones(zones: Zone[], tx: number, ty: number): boolean {
 
 /** Dá se tam postavit člen skupiny? */
 export function standable(tile: number | undefined): boolean {
-  return tile === Tile.Grass || tile === Tile.Dirt || tile === Tile.ForestFloor || tile === Tile.Dam;
+  return tile === Tile.Grass || tile === Tile.Dirt || tile === Tile.ForestFloor || tile === Tile.Dam || tile === Tile.Sidewalk;
 }
 
 /** Všechna místa ve spawn oblastech, kde může člen stát. */

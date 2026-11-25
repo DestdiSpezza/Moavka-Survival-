@@ -33,6 +33,7 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
   private fire?: Phaser.GameObjects.Particles.ParticleEmitter;
   private sirenTimer = 0;
   private variant: number;
+  private shadow: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene, kind: VehicleKind, x: number, y: number, angle: number, variant = 0) {
     const key = kind === 'osobak' ? `osobak-${variant}` : `${kind}-0`;
@@ -46,12 +47,19 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     const body = this.body as Phaser.Physics.Arcade.Body;
     // Arcade tělo se neotáčí, takže auto je v kolizích kruh přes jeho střed.
     // Poloměr podle šířky, aby se auta v sousedních pruzích (16 px) nedotýkala.
-    const r = Math.ceil(this.spec.width / 2) + 1;
+    const r = Math.floor(this.spec.width / 2) + 1;
     body.setCircle(r, this.spec.length / 2 - r, this.spec.width / 2 - r);
     body.setMass(this.spec.maxHp / 50);
     body.setCollideWorldBounds(true);
     body.setDrag(0, 0);
     this.setRotation(angle).setDepth(8);
+    // Stín pod autem, posunutý od slunce (zleva shora).
+    this.shadow = scene.add.image(x + 2, y + 3, `shadow-${kind}`).setDepth(7.9).setRotation(angle);
+  }
+
+  preUpdate(time: number, delta: number): void {
+    super.preUpdate(time, delta);
+    this.shadow.setPosition(this.x + 2, this.y + 3).setRotation(this.rotation);
   }
 
   get speed(): number {
@@ -166,6 +174,7 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
   }
 
   destroy(fromScene?: boolean): void {
+    this.shadow?.destroy();
     this.smoke?.destroy();
     this.fire?.destroy();
     super.destroy(fromScene);
