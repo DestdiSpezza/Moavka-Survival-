@@ -26,9 +26,10 @@ export const DRIVER_LINES: Record<DriverTrait, string> = {
 
 export function rollDriver(rnd: () => number, evening: boolean): Driver {
   const r = rnd();
-  if (evening && r < 0.08) return { trait: 'drunk', cruise: 105 + rnd() * 25, reaction: 1.1, swerve: 0.6 };
-  if (r < 0.2) return { trait: 'speeder', cruise: 112 + rnd() * 15, reaction: 0.22, swerve: 0 };
-  if (r < 0.29) return { trait: 'distracted', cruise: 80 + rnd() * 10, reaction: 0.7, swerve: 0 };
+  // Opilců a mobilů je málo (ať je vesnice živá, ale nebourá se každou minutu).
+  if (evening && r < 0.04) return { trait: 'drunk', cruise: 100 + rnd() * 20, reaction: 0.9, swerve: 0.45 };
+  if (r < 0.16) return { trait: 'speeder', cruise: 110 + rnd() * 12, reaction: 0.2, swerve: 0 };
+  if (r < 0.22) return { trait: 'distracted', cruise: 75 + rnd() * 10, reaction: 0.35, swerve: 0 };
   return { trait: 'normal', cruise: 80 + rnd() * 15, reaction: 0.15, swerve: 0 };
 }
 

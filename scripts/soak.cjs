@@ -41,7 +41,13 @@ async function waitForServer(url, ms) {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(url);
+    // Uložená hra po úvodu (bez autobusu a rozhovoru, ať běh nestojí na dialogu).
+    await page.evaluate(() => localStorage.setItem('survive-moravka-save-v1', JSON.stringify({ version: 2, area: 'moravka', unlocked: ['moravka'], money: 500, score: 0, areaScore: {}, respect: {}, hideouts: [], health: 100, armor: 0, clock: 0, tutorial: [],
+      arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 } }, hero: { gender: 'm', name: 'Soak' },
+      story: { act: 1, mission: '', introDone: true, flags: ['enteredPub', 'pubEntryDone'], rel: {}, known: [], counts: {}, job: '' } })));
+    await page.reload();
     await page.waitForFunction(() => window.__game?.scene.getScene('Title')?.sys.isActive(), null, { timeout: 20000 });
+    await page.keyboard.press('KeyS');
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => window.__game?.scene.getScene('Game')?.sys.isActive(), null, { timeout: 20000 });
 
@@ -98,6 +104,7 @@ async function waitForServer(url, ms) {
     }
 
     const res = await page.evaluate(() => ({ kinds: window.__soak.kinds, chains: [...window.__soak.chains.values()] }));
+    if (process.env.SOAK_DETAIL) console.log(await page.evaluate(() => window.__game.scene.getScene('Game').eventLog.all.filter((e) => e.kind === 'crash' || e.kind === 'run-over').map((e) => `${e.kind}: ${e.text}`).join('\n')));
     console.log('\nUdálosti:', JSON.stringify(res.kinds));
     console.log(`\nŘetězce se 3+ systémy bez hráče: ${res.chains.length}`);
     for (const c of res.chains.sort((a, b) => b.length - a.length).slice(0, 8)) {

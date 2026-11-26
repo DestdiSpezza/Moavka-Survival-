@@ -433,7 +433,8 @@ export class Combat {
       const y = p.y + (rnd() - 0.5) * 160;
       const t = this.game.tileAt(x, y);
       // Chodci se silnici spíš vyhýbají, ale občas ji přejdou.
-      if (isSolid(t) || (t === Tile.Road && rnd() < 0.8)) continue;
+      // Na silnici si chodec cíl nevybere (přejde ji jen cestou, viz walkTo).
+      if (isSolid(t) || t === Tile.Road || t === Tile.Bridge) continue;
       p.target = { x, y };
       p.mood = 'wander';
       p.stuckFor = 0;
@@ -542,7 +543,8 @@ export class Combat {
 
   private onRunOver(p: Pedestrian, v: Vehicle): void {
     if (!p.alive || v.wrecked) return;
-    const dmg = runOverDamage(v.speed);
+    // Auto v provozu, které jede krokem, chodce jen odstrčí (řidič stejně brzdí).
+    const dmg = v.driver === 'npc' && Math.abs(v.speed) < 55 ? 0 : runOverDamage(v.speed);
     if (dmg <= 0) {
       if (p.mood !== 'flee' && p.role === 'civil') this.panic(p, v);
       return;

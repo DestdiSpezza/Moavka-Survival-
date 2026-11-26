@@ -158,7 +158,8 @@ export class Incidents {
     for (const c of this.playerCrashes) this.updatePlayerCrash(c, now);
     this.playerCrashes = this.playerCrashes.filter((c) => now < c.until);
     this.drunkTimer += dt;
-    if (this.drunkTimer > 60) {
+    // Opilec od hospody jen občas (dřív každou minutu šance; bourali pořád).
+    if (this.drunkTimer > 150) {
       this.drunkTimer = 0;
       this.maybeDrunk();
     }
@@ -288,7 +289,7 @@ export class Incidents {
     if (v.driver !== 'npc') return;
     if (this.now - (this.runOverAt.get(victim) ?? -100) < 3) return;
     this.runOverAt.set(victim, this.now);
-    const id = g.logEvent('run-over', 'auto srazilo chodce', victim, ['traffic', 'crowd'], [g.causeOf(v), g.causeOf(victim)], [v]);
+    const id = g.logEvent('run-over', `auto srazilo chodce (${g.driverLabel(v)}, ${Math.round(Math.abs(v.speed))} px/s, chodec ${victim.mood}${victim.scripted ? ' skript' : ''})`, victim, ['traffic', 'crowd'], [g.causeOf(v), g.causeOf(victim)], [v]);
     const label = `řidiče ${vehicleGenitive({ kind: v.spec.kind, color: v.paint })}`;
     if (g.isFleeing(v) || g.random() < 0.45) {
       g.releaseTraffic(v, true);

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { TILE, WORLD_ZOOM } from '../config';
 import { Player } from '../entities/Player';
-import type { Pedestrian } from '../entities/Pedestrian';
+import { Pedestrian } from '../entities/Pedestrian';
 import { Sound } from '../audio/Sound';
 import { paintGround } from '../art/ground';
 import { paintWater } from '../art/water';
@@ -17,7 +17,7 @@ import { type AreaDef, type AreaId, AREAS, placeLabel } from '../world/areas';
 import { type WorldMap, zoneAt } from '../world/moravka';
 import { buildWorld } from '../world/world';
 import { newProgress, type Progress, respectIn, writeSave } from '../systems/save';
-import { isSolid, speedFactor, TILE_COUNT } from '../world/tiles';
+import { isSolid, speedFactor, Tile, TILE_COUNT } from '../world/tiles';
 import { CAR_PAINT as CAR_COLORS } from '../art/sprites';
 import { type ParkedVehicle, parkedVehicles, trafficPaths, type VehicleKind } from '../world/vehicles';
 import { pixelFont } from './BootScene';
@@ -69,6 +69,8 @@ interface Traffic {
   driver: Driver;
   /** Odkdy řidič vidí překážku před sebou (reakční doba). */
   seenSince: number;
+  /** Chodec u silnice před autem: jede pomaleji. */
+  caution?: boolean;
   /** Stojí (hádka, nehoda, zatýkání) do tohoto času. */
   hold: number;
   /** Ujíždí (od nehody, před policií). */
@@ -810,14 +812,17 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     let target: Point = to;
-    if (!this.clearWalk(p, to)) {
+    // Chodci a klidní členové skupin silnici obcházejí a přecházejí ji jen nakrátko a kolmo
+    // (cesta přes silnici je při plánování drahá). Kdo honí nebo utíká před policií, ten ne.
+    const careful = p.role === 'civil' || (p.role === 'gang' && !p.foe);
+    if (!this.clearWalk(p, to) || (careful && this.roadAhead(p, to))) {
       const stale = !p.navPath || now - p.navAt > 1.5 || !p.navGoal || Phaser.Math.Distance.Between(p.navGoal.x, p.navGoal.y, to.x, to.y) > 32;
       if (stale) {
         const path = findPath(
           this.world.tiles,
           [Math.floor(p.x / TILE), Math.floor(p.y / TILE)],
           [Math.floor(to.x / TILE), Math.floor(to.y / TILE)],
-          (t) => (isSolid(t) ? Infinity : 1),
+          (t) => (isSolid(t) ? Infinity : careful && (t === Tile.Road || t === Tile.Bridge) ? 7 : 1),
           4000,
         );
         p.navPath = path ? path.map(([x, y]) => ({ x: (x + 0.5) * TILE, y: (y + 0.5) * TILE })) : null;
@@ -831,7 +836,7 @@ export class GameScene extends Phaser.Scene {
         // Zkratka: nejvzdálenější bod cesty, ke kterému je volno pro celé tělo.
         target = path[Math.min(p.navIdx + 1, path.length - 1)];
         for (let k = Math.min(p.navIdx + 4, path.length - 1); k > p.navIdx + 1; k--) {
-          if (this.clearWalk(p, path[k])) {
+          if (this.clearWalk(p, path[k]) && !(careful && this.roadAhead(p, path[k]))) {
             target = path[k];
             break;
           }
@@ -843,6 +848,18 @@ export class GameScene extends Phaser.Scene {
     const angle = Phaser.Math.Angle.Between(p.x, p.y, target.x, target.y);
     p.setRotation(angle);
     this.physics.velocityFromRotation(angle, speed, body.velocity);
+  }
+
+  /** Vede rovná cesta z a do b přes kus silnice (víc než pár kroků)? */
+  roadAhead(a: Point, b: Point): boolean {
+    const len = Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y);
+    const n = Math.ceil(len / 8);
+    let road = 0;
+    for (let i = 1; i <= n; i++) {
+      const t = this.tileAt(a.x + ((b.x - a.x) * i) / n, a.y + ((b.y - a.y) * i) / n);
+      if (t === Tile.Road || t === Tile.Bridge) road++;
+    }
+    return road > 2;
   }
 
   /** Projde postava (kruh o poloměru r) rovně z a do b, aniž by zavadila o strom nebo dům? */
@@ -867,10 +884,15 @@ export class GameScene extends Phaser.Scene {
     const base = Math.atan2(p.y - threat.y, p.x - threat.x);
     const W = this.world.width * TILE;
     const H = this.world.height * TILE;
-    for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.3, -2.3, Math.PI]) {
-      const x = p.x + Math.cos(base + da) * dist;
-      const y = p.y + Math.sin(base + da) * dist;
-      if (x > TILE && y > TILE && x < W - TILE && y < H - TILE && !isSolid(this.tileAt(x, y))) return { x, y };
+    // Nejdřív místo mimo silnici (kdo utíká, neběží pod auta), teprve pak cokoli volného.
+    for (const offRoad of [true, false]) {
+      for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.3, -2.3, Math.PI]) {
+        const x = p.x + Math.cos(base + da) * dist;
+        const y = p.y + Math.sin(base + da) * dist;
+        const t = this.tileAt(x, y);
+        if (offRoad && (t === Tile.Road || t === Tile.Bridge)) continue;
+        if (x > TILE && y > TILE && x < W - TILE && y < H - TILE && !isSolid(t)) return { x, y };
+      }
     }
     return { x: p.x, y: p.y };
   }
@@ -1033,11 +1055,16 @@ export class GameScene extends Phaser.Scene {
     // Kdo ujíždí, brzdí pozdě (ale přece jen brzdí, jinak by ujel jen do prvního auta).
     if (this.elapsed > t.ignoreUntil) {
       // Dívá se tím dál, čím rychleji jede; pozornému řidiči to na zastavení stačí.
-      const look = 34 + Math.max(0, v.speed) * 0.35;
+      const look = 40 + Math.max(0, v.speed) * 0.45;
       const obstacles: Array<Point & { lastEventId: number | null; lastEventAt: number }> = this.vehicles.filter((o) => o !== v);
       if (!this.driving && !this.player.dead) obstacles.push(this.player);
       for (const p of this.combat.peds) if (p.alive && Math.abs(p.x - v.x) < look + 6 && Math.abs(p.y - v.y) < look + 6) obstacles.push(p);
-      const ahead = obstacles.find((o) => isAhead(v, v.drive.angle, o, look, 9)) ?? null;
+      // Chodce řidič hlídá v širším pruhu (vkročí z chodníku) a víc dopředu.
+      const ahead = obstacles.find((o) => (o instanceof Pedestrian ? isAhead(v, v.drive.angle, o, look + 14, 15) : isAhead(v, v.drive.angle, o, look, 9))) ?? null;
+      // Chodec u silnice před autem, nebo auto, které křižuje cestu: řidič zpomalí.
+      t.caution =
+        this.combat.peds.some((p) => p.alive && p.visible && isAhead(v, v.drive.angle, p, 70, 26)) ||
+        this.vehicles.some((o) => o !== v && !o.wrecked && Math.abs(o.speed) > 20 && isAhead(v, v.drive.angle, o, 80, 26) && Math.abs(Phaser.Math.Angle.Wrap(o.drive.angle - v.drive.angle)) > 0.6);
       // Řidič brzdí až po své reakční době (mobil, opilost → náraz zezadu).
       const r = reactToObstacle(!!ahead, t.seenSince, this.elapsed, t.flee ? Math.max(0.5, t.driver.reaction) : t.driver.reaction);
       t.seenSince = r.seenSince;
@@ -1052,6 +1079,8 @@ export class GameScene extends Phaser.Scene {
       }
     } else {
       t.blocker = null;
+      // Když objíždí překážku, auta ignoruje, ale chodce (třeba hádající se řidiče) ne.
+      if (this.combat.peds.some((p) => p.alive && isAhead(v, v.drive.angle, p, 26, 12))) blocked = true;
     }
     if (blocked) {
       t.waited += dt;
@@ -1087,7 +1116,7 @@ export class GameScene extends Phaser.Scene {
     }
     // Když se protahuje kolem překážky, jede krokem (ťuknutí není nehoda).
     const creeping = this.elapsed < t.ignoreUntil && !t.flee;
-    const input = steerToward(v, v.drive.angle, v.speed, target, creeping ? CREEP_SPEED : t.cruise, blocked);
+    const input = steerToward(v, v.drive.angle, v.speed, target, creeping ? CREEP_SPEED : t.caution ? Math.min(t.cruise, 55) : t.cruise, blocked);
     // Opilec kličkuje.
     if (t.driver.swerve > 0) input.steer = Math.max(-1, Math.min(1, input.steer + Math.sin(this.elapsed * 1.4 + v.x * 0.01) * t.driver.swerve));
     return input;

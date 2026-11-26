@@ -144,3 +144,13 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 - **Vesta má červenou mikinu** místo saka (postavička i dialog).
 - **Kibi – Schovej mě:** Zuzka, Monika a Jarka jdou z různých stran k eRku. Odvést je dřív, než dojdou ke dveřím: lež (60 %, když nevyjde, už nevěří a zrychlí), panák za 60 Kč (jistota), nebo je odvézt autem dál než 420 px od eRka. 300 Kč.
 - **Plotková – Flašky pro Omladinu:** šest flašek na čtyři místa (hřiště, školka, náves, Omyx) za 110 s. Plotková jede s hráčem a každých 18 s jednu vypije (−1 flaška, −8 s). Když flašek zbude míň než zastávek, konec. 400 Kč.
+
+## ADR-027: Méně přejetých chodců a bouraček
+- **Stav:** přijato
+- **Proč:** Měření (soak, 6 herních minut bez hráče): 10–13 přejetých chodců a 7–14 bouraček. Většina přejetých byli řidiči, kteří po nehodě vystoupili a hádali se na silnici, a auta, která je „objížděla“, je srazila; každá nehoda tak plodila další.
+- **Rozhodnutí:**
+  - Chodci a klidní členové skupin silnici obcházejí: při plánování cesty je silnice drahá (přejdou ji nakrátko a kolmo), náhodný cíl na silnici si nevyberou, kdo utíká, utíká mimo silnici.
+  - Řidič hlídá chodce v širším pruhu a dál, u chodce nebo křižujícího auta zpomalí; když objíždí překážku, chodce dál hlídá.
+  - Auto v provozu, které jede krokem (pod 55 px/s), chodce jen odstrčí.
+  - Míň opilců a řidičů s mobilem, rychlejší reakce, řidiči se dívají dál dopředu.
+- **Výsledek:** zhruba 5 bouraček a 1–2 přejetí za 6 herních minut; hádky, rvačky, divočáci a policie zůstávají.
