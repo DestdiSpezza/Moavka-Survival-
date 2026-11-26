@@ -56,8 +56,8 @@ export class SettingsScene extends Phaser.Scene {
 const TOUCH_CONTROLS = [
   ['Pěšky', 'joystick vlevo: jdeš, kam ukazuje; málo vychýlit = pomalu · SPRINT'],
   ['Útok', 'ÚTOK míří sám na nejbližšího, kdo jde po tobě · ZBRAŇ přepne'],
-  ['Auto', 'vlevo volant ◀ ▶ (jde po něm přejet prstem)'],
-  ['', 'vpravo PLYN, BRZDA (i couvání), RUČKA = drift · E vystoupit'],
+  ['Auto', 'vlevo volant: otáčej palcem po půlkruhu'],
+  ['', 'vpravo PLYN, BRZDA, RUČKA = drift · D/R = zpátečka · E vystoupit'],
   ['Akce', 'E: promluvit, vejít do eRka, nastoupit'],
   ['Rozhovor', 'ťukni na volbu · obchod: tlačítka 1–5'],
   ['Hra', 'II pauza · telefon drž na šířku'],

@@ -94,11 +94,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const c0 = await G(() => { const v = window.__game.scene.getScene('Game').driving; return { x: v.x, y: v.y }; });
     const deg = () => G(() => Math.round((window.__game.scene.getScene('Game').driving.drive.angle * 180) / Math.PI));
     const car = () => G(() => { const v = window.__game.scene.getScene('Game').driving; return { x: Math.round(v.x), y: Math.round(v.y), speed: Math.round(v.speed) }; });
-    /** V autě: PLYN (vpravo) drží, volant (vlevo) posunutý o dx, drží ms. */
-    const driveTouch = async (steerDx, ms, btn = { x: 960 - 95, y: 540 - 115 }) => {
+    /** V autě: PLYN (vpravo) drží, volant (půlkruh vlevo) otočený o deg stupňů, drží ms. */
+    const driveTouch = async (deg, ms, btn = { x: 960 - 95, y: 540 - 115 }) => {
       const g = await scr(btn.x, btn.y);
-      const w0 = await scr(175, 435);
-      const w1 = await scr(175 + steerDx, 435);
+      const at = (d) => scr(170 + Math.sin((d * Math.PI) / 180) * 100, 552 - Math.cos((d * Math.PI) / 180) * 100);
+      const w0 = await at(0);
+      const w1 = await at(deg);
       await tdown([{ ...g, id: 7 }, { ...w0, id: 8 }]);
       await sleep(50);
       await tmove([{ ...g, id: 7 }, { ...w1, id: 8 }]);
@@ -112,13 +113,37 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await driveTouch(0, 1200);
     const c1 = await car();
     console.log('gas straight', JSON.stringify({ c0, c1, a0, a1: await deg() }));
-    await driveTouch(75, 1000);
+    await driveTouch(70, 1000);
     console.log('gas + right', JSON.stringify({ c: await car(), angle: await deg() }));
-    await driveTouch(-75, 1000);
+    await driveTouch(-70, 1000);
     console.log('gas + left', JSON.stringify({ c: await car(), angle: await deg() }));
-    // Brzda (couvání) bez volantu.
-    await driveTouch(0, 1500, { x: 960 - 235, y: 540 - 70 });
-    console.log('brake/reverse', JSON.stringify(await car()));
+    // Volant: prst držený na 45° vpravo → rejd ~0,64, volant natočený.
+    {
+      const p0 = await scr(170, 452);
+      const p1 = await scr(170 + 70.7, 552 - 70.7);
+      await tdown([{ ...p0, id: 9 }]);
+      await sleep(50);
+      await tmove([{ ...p1, id: 9 }]);
+      await sleep(400);
+      console.log('wheel 45°', JSON.stringify(await G(() => ({ steer: Math.round(window.__touch.steer * 100) / 100, rot: Math.round(window.__game.scene.getScene('Touch').wheel.rotation * 100) / 100 }))));
+      await shot('06d-volant');
+      await tup();
+      await sleep(400);
+      console.log('wheel released', await G(() => window.__touch.steer));
+    }
+    // Volant v jízdě na volném místě: auto se otočí.
+    await G((c) => { const v = window.__game.scene.getScene('Game').driving; v.body.reset(c.x, c.y - 60); v.drive = { angle: -Math.PI / 2, vx: 0, vy: 0 }; v.setRotation(-Math.PI / 2); for (const o of window.__game.scene.getScene('Game').vehicles) if (o !== v && Math.hypot(o.x - c.x, o.y - c.y) < 150) o.body.reset(o.x + 3000, o.y); }, c0);
+    await driveTouch(60, 1300);
+    console.log('turn on open road', JSON.stringify({ c: await car(), angle: await deg() }));
+    // Zpátečka: ťuknout R, pak PLYN couvá; BRZDA zastaví.
+    await tapAt(960 - 345, 540 - 160);
+    console.log('reverse on', await G(() => window.__game.scene.getScene('Touch').car.find((b) => b.id === 'reverse').text.text));
+    await driveTouch(0, 1200);
+    console.log('reverse gas', JSON.stringify(await car()));
+    await driveTouch(0, 800, { x: 960 - 235, y: 540 - 70 });
+    console.log('brake after reverse', JSON.stringify(await car()));
+    await shot('06c-zpatecka');
+    await tapAt(960 - 345, 540 - 160);
     // Odtlačování: hráč v autě na volné silnici, fízl stojí před ním.
     const pushTest = async (kind) => {
       await G((kind) => {

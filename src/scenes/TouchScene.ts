@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { tap, touch } from '../input/touch';
+import { wheelSteer } from '../systems/stick';
 import { pixelFont } from './BootScene';
 
 interface Button {
@@ -15,9 +16,11 @@ interface Button {
 }
 
 const STICK_R = 62;
-/** Volant vlevo dole (v autě): střed a kolik px od středu je plný rejd. */
-const WHEEL_X = 175;
-const WHEEL_FULL = 75;
+/** Volant vlevo dole (v autě, ADR-033): střed pod okrajem obrazovky, je vidět horní půlka. */
+const WHEEL_X = 170;
+const WHEEL_R = 125;
+/** Jak moc se nakreslený volant otočí při plném rejdu. */
+const WHEEL_TURN = 1.6;
 
 /**
  * Dotykové ovladače přes hru (ADR-024): vlevo plovoucí joystick (kde se dotkneš,
@@ -34,7 +37,7 @@ export class TouchScene extends Phaser.Scene {
   private held = new Map<number, Button>();
   private numbers: Button[] = [];
   private car: Button[] = [];
-  private wheel: Button[] = [];
+  private wheel!: Phaser.GameObjects.Container;
   private wheelId = -1;
   private wasDriving = false;
   private skip!: Button;
@@ -49,7 +52,6 @@ export class TouchScene extends Phaser.Scene {
     this.buttons = [];
     this.numbers = [];
     this.car = [];
-    this.wheel = [];
     this.wheelId = -1;
     this.held.clear();
     this.stickId = -1;
@@ -74,12 +76,10 @@ export class TouchScene extends Phaser.Scene {
       b('handbrake', width - 225, height - 195, 36, 'RUČKA', true),
       b('fire', width - 85, height - 270, 34, 'ÚTOK', true, 0xd83a3a),
       b('action', width - 345, height - 55, 32, 'E', false, 0xffd23f),
+      b('reverse', width - 345, height - 160, 32, 'R', false, 0xff9a3a),
     );
     this.car[3].text.setFontSize(13);
-    this.wheel.push(
-      b('left', WHEEL_X - WHEEL_FULL, height - 105, 58, '◀', false),
-      b('right', WHEEL_X + WHEEL_FULL, height - 105, 58, '▶', false),
-    );
+    this.wheel = this.add.container(WHEEL_X, height + 12, [drawWheel(this)]).setVisible(false);
     for (let i = 0; i < 5; i++) this.numbers.push(b(String(i + 1), width / 2 - 160 + i * 80, height - 70, 30, String(i + 1), false, 0xffd23f));
     this.skip = b('skip', width - 110, height - 40, 30, 'PŘESKOČIT', false);
     this.skip.text.setFontSize(12);
@@ -120,6 +120,10 @@ export class TouchScene extends Phaser.Scene {
 
   private down(p: Phaser.Input.Pointer): void {
     const btn = this.visibleButtons().find((x) => Phaser.Math.Distance.Between(p.x, p.y, x.x, x.y) < x.r * 1.25);
+    if (btn?.id === 'reverse') {
+      touch.reverse = !touch.reverse;
+      return;
+    }
     if (btn) {
       if (btn.hold) {
         this.held.set(p.id, btn);
@@ -147,8 +151,7 @@ export class TouchScene extends Phaser.Scene {
 
   private move(p: Phaser.Input.Pointer): void {
     if (p.id === this.wheelId) {
-      const dx = p.x - WHEEL_X;
-      touch.steer = Math.abs(dx) < 12 ? 0 : Phaser.Math.Clamp(dx / WHEEL_FULL, -1, 1);
+      touch.steer = wheelSteer(p.x - WHEEL_X, p.y - (this.scale.height + 12));
       return;
     }
     if (p.id !== this.stickId) return;
@@ -194,6 +197,7 @@ export class TouchScene extends Phaser.Scene {
     touch.brake = false;
     touch.handbrake = false;
     touch.steer = 0;
+    touch.reverse = false;
     this.held.clear();
     this.stickId = -1;
     this.wheelId = -1;
@@ -214,12 +218,14 @@ export class TouchScene extends Phaser.Scene {
       btn.text.setVisible(vis.has(btn));
     }
     const showWheel = m === 'play' && driving;
-    for (const btn of this.wheel) {
-      btn.circle.setVisible(showWheel);
-      btn.text.setVisible(showWheel);
-      const on = btn.id === 'left' ? touch.steer < 0 : touch.steer > 0;
-      btn.circle.setFillStyle(0xffffff, on ? 0.15 + 0.35 * Math.abs(touch.steer) : 0.12);
-    }
+    // Volant se otáčí s prstem a pomalu se vrací, zpátečka svítí, když je zařazená.
+    this.wheel.setVisible(showWheel);
+    const target = touch.steer * WHEEL_TURN;
+    this.wheel.rotation += (target - this.wheel.rotation) * (this.wheelId >= 0 ? 0.5 : 0.2);
+    this.wheel.setAlpha(this.wheelId >= 0 ? 0.95 : 0.7);
+    const rev = this.car.find((x) => x.id === 'reverse')!;
+    rev.circle.setFillStyle(rev.circle.fillColor, touch.reverse ? 0.75 : 0.18);
+    rev.text.setText(touch.reverse ? 'R' : 'D');
     const showStick = (m === 'play' && !driving) || m === 'menu';
     const { height } = this.scale;
     const cx = this.stickId >= 0 ? this.stickAt.x : 130;
@@ -227,4 +233,21 @@ export class TouchScene extends Phaser.Scene {
     this.stickBase.setVisible(showStick).setPosition(cx, cy).setAlpha(this.stickId >= 0 ? 1 : 0.6);
     this.stickKnob.setVisible(showStick).setPosition(cx + touch.stickX * STICK_R, cy + touch.stickY * STICK_R);
   }
+}
+
+/** Volant shora: věnec, tři ramena, střed s logem a značka nahoře. */
+function drawWheel(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  const R = WHEEL_R;
+  g.lineStyle(26, 0x1a1a1a, 0.55).strokeCircle(0, 0, R);
+  g.lineStyle(18, 0x3a3a3a, 0.7).strokeCircle(0, 0, R);
+  g.lineStyle(2, 0xffffff, 0.35).strokeCircle(0, 0, R + 9);
+  // Ramena: doleva, doprava a dolů (dolní půlka je pod okrajem).
+  g.lineStyle(14, 0x2a2a2a, 0.65);
+  for (const a of [Math.PI, 0, Math.PI / 2]) g.lineBetween(0, 0, Math.cos(a) * R, Math.sin(a) * R);
+  g.fillStyle(0x2a2a2a, 0.8).fillCircle(0, 0, 34);
+  g.fillStyle(0xd83a3a, 0.9).fillCircle(0, 0, 14);
+  // Značka „rovně“ nahoře na věnci.
+  g.fillStyle(0xffd23f, 0.95).fillRect(-6, -R - 11, 12, 22);
+  return g;
 }

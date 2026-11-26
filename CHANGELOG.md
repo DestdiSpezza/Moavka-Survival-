@@ -4,6 +4,10 @@ Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech
 
 ## 2026-11-26
 
+### Volant a zpátečka na mobilu (ADR-033)
+- Místo šipek půlkruhový volant vlevo dole, otáčí se palcem a vrací se.
+- Tlačítko D/R: se zpátečkou PLYN couvá; BRZDA jen brzdí.
+
 ### Auto na mobilu tlačítky, odtlačování aut (ADR-032)
 - V autě vlevo volant ◀ ▶, vpravo PLYN, BRZDA (i couvání), RUČKA; pěšky zůstává joystick.
 - Těžší auto odtlačí lehčí (dodávka, traktor, zásahovka odsunou fízly), osobák stojícího fízla nepřetlačí.

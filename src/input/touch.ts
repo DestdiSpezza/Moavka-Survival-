@@ -17,9 +17,11 @@ export interface TouchState {
   brake: boolean;
   handbrake: boolean;
   steer: number;
+  /** Zařazená zpátečka (PLYN couvá). */
+  reverse: boolean;
 }
 
-export const touch: TouchState = { enabled: false, stickX: 0, stickY: 0, fire: false, sprint: false, gas: false, brake: false, handbrake: false, steer: 0 };
+export const touch: TouchState = { enabled: false, stickX: 0, stickY: 0, fire: false, sprint: false, gas: false, brake: false, handbrake: false, steer: 0, reverse: false };
 
 /** Jednorázová ťuknutí (akce, zbraň, pauza, přeskočit, 1–5) a kdy přišla. */
 const taps = new Map<string, number>();

@@ -42,6 +42,7 @@ import type { Appearance } from '../systems/witness';
 import { Police } from './Police';
 import { Pals } from './Pals';
 import { took, touch } from '../input/touch';
+import { carPedals } from '../systems/stick';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
 const ENTER_RANGE = 26;
@@ -926,9 +927,9 @@ export class GameScene extends Phaser.Scene {
     const keyThrottle = (up ? 1 : 0) - (down ? 1 : 0);
     const keySteer = (right ? 1 : 0) - (left ? 1 : 0);
     if (touch.enabled && !keyThrottle && !keySteer) {
-      // Prsty (ADR-032): vlevo volant, vpravo PLYN, BRZDA (i couvání) a RUČKA.
-      const throttle = (touch.gas ? 1 : 0) - (touch.brake ? 1 : 0);
-      return { throttle, steer: touch.steer, handbrake: k.handbrake.isDown || touch.handbrake };
+      // Prsty (ADR-033): vlevo volant, vpravo PLYN, BRZDA, RUČKA a zpátečka R.
+      const pedals = carPedals(touch.gas, touch.brake, touch.reverse, this.driving!.speed);
+      return { throttle: pedals.throttle, steer: touch.steer, handbrake: k.handbrake.isDown || touch.handbrake || pedals.hold };
     }
     return { throttle: keyThrottle, steer: keySteer, handbrake: k.handbrake.isDown || (touch.enabled && touch.handbrake) };
   }
