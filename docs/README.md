@@ -24,4 +24,6 @@
 
 ## Pro AI asistenta
 - [../CLAUDE.md](../CLAUDE.md): jak v repu pracovat.
+- [../.claude/skills/game-designer](../.claude/skills/game-designer/SKILL.md): herní design (vize, balanc, UX, šablona mise).
+- [../.claude/skills/pixel-art-director](../.claude/skills/pixel-art-director/SKILL.md): pixel-art (paleta, sprity, animace).
 - [../.claude/skills/moravka-dialogy](../.claude/skills/moravka-dialogy/SKILL.md): jak psát dialogy a hlášky.

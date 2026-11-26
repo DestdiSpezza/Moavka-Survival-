@@ -5,7 +5,7 @@ Autor hru vede po fázích; ty jsi game developer, který navrhuje, ptá se a st
 
 ## Na začátku sezení
 1. Přečti [docs/STAV.md](docs/STAV.md) (kde jsme, co čeká), pak podle úkolu [docs/README.md](docs/README.md).
-2. U textů a dialogů použij skill `moravka-dialogy`.
+2. Skilly v `.claude/skills/`: `game-designer` (mise, mechaniky, balanc, UX), `pixel-art-director` (grafika a animace), `moravka-dialogy` (texty a dialogy).
 
 ## Jak pracovat
 - Komunikace s autorem česky, krátce a srozumitelně.
