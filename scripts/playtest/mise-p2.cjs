@@ -46,7 +46,7 @@ const want = (k) => ARG === 'all' || ARG.split(',').includes(k);
     return active('Dialog');
   };
   const leavePub = async () => {
-    await G(() => { const s = window.__game.scene.getScene('Pub'); s.player.body.reset(15 * 16, 14.2 * 16); });
+    await G(() => { const s = window.__game.scene.getScene('Pub'); s.player.body.reset(8 * 16, 14.2 * 16); });
     await sleep(250);
     await press('KeyE', 700);
   };

@@ -102,7 +102,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       await sleep(300);
     }
     // ven
-    await page.evaluate(() => { const s = window.__game.scene.getScene('Pub'); s.player.body.reset(15 * 16, 14.2 * 16); });
+    await page.evaluate(() => { const s = window.__game.scene.getScene('Pub'); s.player.body.reset(8 * 16, 14.2 * 16); });
     await sleep(300);
     await page.keyboard.press('KeyE');
     await sleep(800);

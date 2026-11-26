@@ -33,3 +33,4 @@ Architecture Decision Records: proč je hra takhle, jak je. Každé rozhodnutí 
 | [ADR-027](0027-mene-prejetych-chodcu-a-bouracek.md) | Méně přejetých chodců a bouraček | přijato |
 | [ADR-028](0028-logo-studia-titulni-malba-a-prolog.md) | Logo studia, titulní malba a prolog | přijato |
 | [ADR-029](0029-parkoviste-u-erka.md) | Parkoviště u eRka | přijato |
+| [ADR-030](0030-nove-rozlozeni-erka.md) | Nové rozložení eRka | přijato |

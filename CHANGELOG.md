@@ -4,6 +4,10 @@ Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech
 
 ## 2026-11-26
 
+### Nové rozložení eRka (ADR-030)
+- Hospoda podle náčrtu autora: salonek, kuchyň a WC, bar do L s regálem lahví, kulečník dole, dveře vlevo dole.
+- Víc stolů a židlí, šipky, paroží, koberec, bedny od piva, hrací automat, sudy za barem.
+
 ### Parkoviště u eRka (ADR-029)
 - Asfaltové parkoviště vlevo od hospody: srovnaná stání, traktor s vlečkou, volno před dveřmi.
 

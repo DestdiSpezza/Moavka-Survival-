@@ -11,6 +11,7 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 - [x] Fáze P3: následky volby „s nikým se bavit nechci“ (těžší start, ADR-006).
 - [x] Fáze P3: mise od Metějky, Vesty, Kibiho a Plotkové (ADR-026).
 - [x] Fáze P3: Denny sochař musí dostat pár ran pěstí, než odejde (ADR-015).
+- [ ] Playtest `scripts/playtest/partaci.cjs` je zastaralý: Metějka teď nejdřív nabízí kulečník, takže nejde rovnou jako parťák (padá na `pals.ped`).
 - [ ] Omyx je v eRku jen večer (17–5); přes den u řeky zatím misi nenabízí.
 - [ ] Vlečka s ničím nekoliduje (projede zdí); fyzika vlečky a padající náklad v ostrých zatáčkách.
 - [ ] Hospoda v Raškovicích otevírá interiér eRka (do Raškovic se zatím nedá, ADR-011).

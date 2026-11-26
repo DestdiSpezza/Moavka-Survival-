@@ -80,19 +80,19 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 
 ### 6. Interiér hospody eRko
 - Samostatná scéna s vlastní malou mapou (svět venku se mezitím zastaví).
-- Návrh rozložení (shora):
+- Rozložení podle náčrtu autora (ADR-030), shora:
 
 ```
-┌───────────────────────────────────────────┐
-│  WC   │      kulečník         │  šipky (o) │
-│───────┘      [══════]          │            │
-│                                           │
-│  ═══════ BAR ═══════      ┌───┐   ┌───┐   │
-│  pípa  Prchard  ▒ Plotková│stůl│  │stůl│   │
-│  židle × 4 u baru         └───┘   └───┘   │
-│                           Štamgasti        │
-│  věšák        stůl s mapou Morávky         │
-└──────────────────[dveře]──────────────────┘
+┌──────────────────────────────────────────────────┐
+│ salonek │  KUCHYŇ   │ WC │ regál s lahvemi  Prchard │
+│ (stůl)  │           │    │══════ BAR ══════════╗ sud│
+│         └───────────┴────┘ židle u baru     o ║ sud│
+│ Kibi (o)            Denny V.    (kulatý)     o ║ sud│
+│ koberec    ┌──┐   Plotková ↔               ═══╝   │
+│ Vesta  │   │st│   [══ kulečník ══]   Zjebal        │
+│ (stůl) │   ┌──┐ Omyx   Metějka     [štamg. stůl] ▓ │
+│        │bedny └──┘                       kytka  jukebox│
+└───────[dveře]──────────────────────────────────────┘
 ```
 
 - Uvnitř: Prchard za barem, Plotková obsluhuje mezi stoly, osm Štamgastů u dvou stolů a u kulečníku (Metějka „hraje“).

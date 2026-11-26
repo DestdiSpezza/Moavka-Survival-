@@ -17,7 +17,7 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Mise (Akt 1):** *Jeřáb pro Vestu.* Ukrást autojeřáb na stavbě v Raškovicích a dovézt ho k jeho domu bez hvězd; celou cestu volá, jak to děláš špatně (ADR-026).
 - **Výhoda:** Pomůže vždycky.
 - **Nevýhoda:** Blbé kecy, do očí.
-- **Kde:** U stolu u okna, objednává za všechny a pak to všem připomíná.
+- **Kde:** U stolu v salonku, objednává za všechny a pak to všem připomíná.
 - **Plotková:** „Vesta. Má prachy, chytrej není. Kdyby se kecy daly prodat, koupil by celou Morávku. Dvakrát.“
 - **Hlášky:** „Já bych to koupil, ale nechci, aby ses cítil chudej.“ / „Moje auto má víc koní než celý Raškovice.“ / „Pomůžu ti. Ale řeknu to všem.“
 - **Obchod:** Je to zároveň dealer u obecního úřadu: pod pultem prodává zbraně, vestu a lékárničky (dřív „Veseta“, ADR-009). Přes den v obchodě, večer v eRku.
@@ -53,7 +53,7 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Kdo:** Tichý přátelský mechanik, majitel Autoúprav Dan (Dan = Denny, stejná postava). Umí zmizet auto. I člověka.
 - **Výhoda:** Přebarví a opraví auto, vykoupí auto. Dřívější garáž je teď rozhovor s ním (3 volby).
 - **Nevýhoda:** Moc neporadí.
-- **Kde:** Mezi 13:00 a 17:00 v eRku (u zdi u kulečníku, opřený, mlčí), jinak stojí před svou garáží.
+- **Kde:** Mezi 13:00 a 17:00 v eRku (opřený o zeď kuchyně, mlčí), jinak stojí před svou garáží.
 - **Plotková:** „Vysoký Denny. Spraví ti auto, přelakuje, a kdyby bylo potřeba, tak i zmizí. Na co se ho zeptáš, odpoví ‚hm‘.“
 - **Hlášky:** „Hm.“ / „Dovez ho. Udělám.“ / „Co auto? Jaký auto?“
 - **Mise (Akt 1):** *Auto pro Dennyho.* Ukrást nepolicejní auto a dovézt ho do dílny aspoň na 90 % a bez hvězd; auto samo vjede do garáže. 600 Kč (ADR-022).
@@ -79,7 +79,7 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 - **Kdo:** Divnostvor, lamač ženských srdcí.
 - **Výhoda:** Přátelský, pomůže.
 - **Nevýhoda:** Chodí za ním ženy.
-- **Kde:** U šipek, kolem něj vždycky nějaká návštěva.
+- **Kde:** V salonku u šipek, kolem něj vždycky nějaká návštěva.
 - **Plotková:** „Kibi. Nevím, co na něm ženský vidí. Teda vím. Neřeknu.“
 - **Hlášky:** „Pomůžu ti, jasně. Jen jestli někdo bude hledat Kibiho, nejsem tu.“ / „Šipky jsou jako láska. Většinou se netrefíš.“
 

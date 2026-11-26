@@ -34,7 +34,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   };
   const toPub = async () => { await G(() => { const g = window.__game.scene.getScene('Game'); if (g.driving) g.exitVehicle(); g.player.body.reset(g.story.pubDoor.x, g.story.pubDoor.y + 4); }); await sleep(300); await press('KeyE', 700); };
   const pubTalk = async (id) => { await G((id) => { const s = window.__game.scene.getScene('Pub'); const n = s.npcs.find((x) => x.id === id); s.player.body.reset(n.sprite.x, n.sprite.y + 15); }, id); await sleep(250); await press('KeyE', 450); };
-  const leave = async () => { await G(() => { const s = window.__game.scene.getScene('Pub'); s.player.body.reset(15 * 16, 14.2 * 16); }); await sleep(250); await press('KeyE', 900); };
+  const leave = async () => { await G(() => { const s = window.__game.scene.getScene('Pub'); s.player.body.reset(8 * 16, 14.2 * 16); }); await sleep(250); await press('KeyE', 900); };
   const close = async (k = 'Digit1') => { for (let i = 0; i < 12 && (await active('Dialog')); i++) await press(k); };
   try {
     await page.goto('http://localhost:4188/');
