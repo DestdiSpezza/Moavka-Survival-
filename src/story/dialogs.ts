@@ -4,7 +4,7 @@ import { STAMGASTI } from './npcs';
 /**
  * Dialogy Aktu 1. Každý uzel má tři volby (ADR-003). Texty hráče mají mužský
  * a ženský tvar „{Vypil|Vypila}“, {jmeno} je jméno hrdiny nebo hrdinky.
- * Postavy a jejich povahy: NPC.md.
+ * Postavy a jejich povahy: docs/hra/POSTAVY.md.
  */
 
 export const BEER = 45;

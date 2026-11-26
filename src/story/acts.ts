@@ -1,5 +1,5 @@
 /**
- * Akty a jejich mise (plán v docs/PRIBEH.md). Mise jdou po sobě; prázdné id
+ * Akty a jejich mise (plán v docs/hra/PRIBEH.md). Mise jdou po sobě; prázdné id
  * znamená volnou hru, dokud nepřijde další mise.
  */
 

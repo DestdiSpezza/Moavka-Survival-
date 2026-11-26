@@ -11,8 +11,8 @@ texty seděly ke starým a prošly testy.
 
 ## Nejdřív si přečti
 
-- `NPC.md` – kdo je kdo, jak mluví, výhody a nevýhody, mise.
-- `ADR.md` – rozhodnutí, která texty omezují (hlavně ADR-007, ADR-012, ADR-018, ADR-019).
+- `docs/hra/POSTAVY.md` – kdo je kdo, jak mluví, výhody a nevýhody, mise.
+- `docs/adr/` – rozhodnutí, která texty omezují (hlavně ADR-007, ADR-012, ADR-018, ADR-019).
 - Blízký existující dialog stejné postavy v `src/story/dialogs.ts` nebo `src/scenes/jobs/offers.ts`,
   ať navážeš na její hlas, ne na obecný „vtipný“ tón.
 
@@ -29,7 +29,7 @@ texty seděly ke starým a prošly testy.
   rivalita s Raškovicemi („Kdo nepřijde, je Raškovák“), Foop obchod, Kofola, slivovice,
   fernet, hasičský bál a požární útok, kůrovec, divočáci, Kobyla, která všechno vidí,
   fízlové a jejich svačina.
-- **Hlas postav** (stručně; víc v NPC.md):
+- **Hlas postav** (stručně; víc v docs/hra/POSTAVY.md):
   - Prchard: úsečně, ceny piva („Čtyřicet pět. Pro tebe padesát.“)
   - Plotková: opilá, upřímná, chce panáky, „Plotičko“ smí jen Kibi
   - Vysoký Denny: „Hm.“ a co nejmíň slov
@@ -80,13 +80,13 @@ argumenty, drž se struktury:
 
 ## Postup
 
-1. Přečti NPC.md, ADR a sousední dialogy postavy.
+1. Přečti docs/hra/POSTAVY.md, ADR a sousední dialogy postavy.
 2. Napiš uzly: nejdřív pointy, pak volby. Každá volba má jinou „náladu“ (slušně / drze /
    zvídavě), ať je výběr skutečný.
 3. Projdi checklist: tři volby, jedna bez podmínky, oba tvary, délky, nikdo neútočí na
    skupinu lidí, Omladina plnoletá.
 4. Spusť testy: `npx vitest run src/story` (validace dialogů, oba tvary, handlování).
-5. Nové postavy nebo mise zapiš do NPC.md, rozhodnutí do ADR.md.
+5. Nové postavy nebo mise zapiš do docs/hra/POSTAVY.md, rozhodnutí jako nový soubor v docs/adr/.
 
 ## Příklad
 

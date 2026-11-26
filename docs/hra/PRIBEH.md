@@ -5,7 +5,7 @@ každý akt má **mise** a mise se skládají z **kroků** (jdi, dojeď, promluv
 Dosavadní herní mechaniky zůstávají: chůze a řízení, boj, policie se svědky, skupiny
 a respekt, provoz, nehody, divočáci, rozhlas, garáž, Veseta, Omyx, chata, den a noc.
 
-Rozhodnutí jsou v [ADR.md](../ADR.md), postavy v [NPC.md](../NPC.md), odložené věci v [TODO.md](../TODO.md).
+Rozhodnutí jsou v [docs/adr/](../adr/README.md), postavy v [POSTAVY.md](POSTAVY.md), odložené věci v [TODO.md](../../TODO.md).
 Po dokončení každé fáze se zastavíme, probereme ji a teprve pak jde další.
 
 ---
@@ -68,7 +68,7 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 - Na zastávce před eRkem přibude přístřešek a cedule (nová zastávka „Morávka, eRko“).
 
 ### 4. NPC na zastávce
-- Na zastávce stojí **Slečna Kobyla** (viz NPC.md), otočí se a sarkasticky poradí, kde je hospoda. Bublina nad hlavou, pak dialogové okno se 3 odpověďmi.
+- Na zastávce stojí **Slečna Kobyla** (viz POSTAVY.md), otočí se a sarkasticky poradí, kde je hospoda. Bublina nad hlavou, pak dialogové okno se 3 odpověďmi.
 - Návrhy hlášek (vybereme jednu nebo se budou střídat):
   - „Vypadáš žíznivě. Nejbližší hospoda je eRko. Nejvzdálenější taky, jiná tu není.“
   - „S takovým čírem tě do kostela nepustí. Do eRka jo, tam pustí i prase.“
@@ -115,7 +115,7 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 Plotková se představí („Plotková. Neříkej mi Plotičko, to smí jen Kibi.“) a nabídne tři cesty:
 1. **Pozvat ji na panáka** (stojí peníze) → vztah +, rozpovídá se, chce další (její nevýhoda).
 2. **Lichotky a flirt** („Máš krásný oči.“, „Co tady dělá taková princezna?“, „Ty tady obsluhuješ, nebo vládneš?“) → reaguje podle toho, kolik vypila.
-3. **„Kdo jsou ti chlapi u stolu?“** → popíše Štamgasty jednoho po druhém (obsah podle NPC.md). Po tomhle u každého Štamgasta svítí jméno.
+3. **„Kdo jsou ti chlapi u stolu?“** → popíše Štamgasty jednoho po druhém (obsah podle POSTAVC.md). Po tomhle u každého Štamgasta svítí jméno.
 
 ### 10. Štamgasti
 - Náhodný Štamgast z osmi (Vesta, Omyx, Metějka, Zjebal, Vysoký Denny, Denny sochař, Kibi; Prchard je za barem) má vlastní krátký dialog podle povahy, vždy 3 volby.

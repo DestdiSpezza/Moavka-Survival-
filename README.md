@@ -4,7 +4,7 @@
 
 Černý humor, nadsázka, trochu punk. Pixel-art. Česky.
 
-Plán vývoje po fázích: [docs/PLAN.md](docs/PLAN.md), příběh: [docs/PRIBEH.md](docs/PRIBEH.md), postavy: [NPC.md](NPC.md), rozhodnutí: [ADR.md](ADR.md)
+Dokumentace: [docs/README.md](docs/README.md) (stav projektu, příběh, postavy, mise, mechaniky, architektura, rozhodnutí). Co přibylo: [CHANGELOG.md](CHANGELOG.md).
 
 Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 
@@ -27,7 +27,7 @@ Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 - Příběh po aktech. Akt 1 (Příjezd): autobus tě vysadí před eRkem, Slečna Kobyla tě pošle do hospody, uvnitř Prchard, servírka Plotková a osm štamgastů, se kterými jde mluvit.
 - Štamgasti jako parťáci: vezmeš si jednoho z eRka s sebou (Metějka odhání fízly, ale chce pivo; Kibi se pere za tebe; Vysoký Denny opravuje auto…).
 - Mise od štamgastů: prodej beskydského čaje Omladině s handlováním o cenu (Omyx), odvoz Zjebala domů na čas a výslech od Ajiny, kradené auto pro Vysokého Dennyho, lešení traktorem s vlečkou pro Dennyho sochaře, kulečník s Metějkou, jeřáb z Raškovic pro Vestu, schovávaná Kibiho před třemi ženskými a flašky pro Omladinu s Plotkovou.
-- Dvě oblasti: Morávka a Raškovice. Do Raškovic tě pustí až příběh. Mapa Morávky vychází ze skutečné vesnice ([náhled](docs/mapa-moravka.jpg)).
+- Dvě oblasti: Morávka a Raškovice. Do Raškovic tě pustí až příběh. Mapa Morávky vychází ze skutečné vesnice ([náhled](docs/hra/img/mapa-moravka.jpg)).
 - Čtyři skupiny v každé oblasti a respekt.
 - Policie s pěti úrovněmi hledanosti, zátarasy a zásahovkou. Hledanost roste, jen když tě někdo viděl: svědci volají policii a podle jejich popisu tě hledají.
 - Živá vesnice: nehody v provozu, hádky a rvačky řidičů, opilci, divočáci na silnici, policie honí i NPC, obecní rozhlas hlásí, co se právě stalo. Členové skupin spolu kecají v bublinách, chodci chodí po chodnících.

@@ -514,7 +514,7 @@ export function generateHumanSprites(scene: Phaser.Scene): void {
   sh('player-f-bat', { ...HEROINE, tool: 'bat' });
   sh('player-f-pistol', { ...HEROINE, tool: 'pistol' });
   sh('player-f-long', { ...HEROINE, tool: 'long' });
-  // Postavy příběhu (NPC.md).
+  // Postavy příběhu (docs/hra/POSTAVY.md).
   for (const [id, look] of Object.entries(NPC_LOOKS)) sh(`npc-${id}`, look);
   // Dealer Omyx: zelená mikina s pruhy, čepice.
   sh('dealer', { jacket: 0x2f6a2a, pants: 0x3a3a3a, hair: 'beanie', hairColor: 0xd8b030, skin: SKIN[1], tool: 'none', pattern: 'stripes' });

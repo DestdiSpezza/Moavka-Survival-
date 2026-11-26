@@ -1,5 +1,5 @@
 /**
- * Postavy příběhu (podrobnosti v NPC.md): jméno, barva v dialogu,
+ * Postavy příběhu (podrobnosti v docs/hra/POSTAVY.md): jméno, barva v dialogu,
  * postavička a kde jsou podle hodin.
  */
 

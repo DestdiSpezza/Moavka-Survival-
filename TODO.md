@@ -3,7 +3,7 @@
 Co se nevešlo do fáze 9 (Živá vesnice) z dokumentu Game Update 1, ze starších plánů a co čeká příběhovku.
 U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 
-## Příběh (plán v docs/PRIBEH.md, rozhodnutí v ADR.md, postavy v NPC.md)
+## Příběh (plán v docs/hra/PRIBEH.md, rozhodnutí v docs/adr/, postavy v docs/hra/POSTAVY.md)
 
 - [x] **Fáze P1: Akt 1 – Příjezd** (zrušení zakázek, autobus a úvodní scéna, NPC na zastávce, mise do hospody, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti).
 - [x] **Fáze P2: Akt 1 – Mise v eRku** (Hasiči místo Dřevařů, bez Biomatek, mise Omyxe, Zjebala, Vysokého Dennyho a Dennyho sochaře).

@@ -4,7 +4,7 @@ Hrdina nebo hrdinka (volba na začátku, jméno si hráč napíše sám) přijí
 
 Postavy z hospody eRko a okolí. U každé: kdo to je, výhoda a nevýhoda pro hráče, kde ji najdeš,
 co o ní řekne Plotková (dialog „Kdo jsou ti chlapi u stolu?“) a pár hlášek.
-Výhody a nevýhody se jako mechaniky zapnou ve fázi P2 (viz [docs/PRIBEH.md](docs/PRIBEH.md)).
+Výhody a nevýhody se jako mechaniky zapnou ve fázi P2 (viz [PRIBEH.md](PRIBEH.md)).
 
 Hlášky jsou návrhy, doladíme je při implementaci.
 

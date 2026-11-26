@@ -1,6 +1,6 @@
 # Survive Morávka: plán vývoje po fázích
 
-> **Hra přechází na příběhovku.** Fáze 0–9 níže jsou hotový základ (mechaniky). Plán příběhu po aktech je v [PRIBEH.md](PRIBEH.md), rozhodnutí v [ADR.md](../ADR.md), postavy v [NPC.md](../NPC.md).
+> **Historie.** Tohle je původní plán technických fází 0–9 (základ mechanik). Hra pak přešla na příběhovku: plán příběhu je v [docs/hra/PRIBEH.md](../hra/PRIBEH.md), rozhodnutí v [docs/adr/](../adr/README.md), postavy v [docs/hra/POSTAVY.md](../hra/POSTAVY.md).
 
 Hra s pohledem shora (2D) z obce Morávka v Beskydech a jejího okolí. Hráč chodí pěšky, krade a řídí auta, bojuje, plní zakázky pro soupeřící skupiny a utíká policii. Do další oblasti postoupí, když v té současné vydělá dost peněz a nasbírá cílové skóre. Splnit všechny mise k tomu není potřeba.
 
@@ -100,7 +100,7 @@ Hra poběží v prohlížeči na PC, ovládání klávesnice + myš. Gamepad a m
 
 ## Fáze 6: Mise a zakázky ✅ (nahrazeno příběhem)
 
-> Od fáze P1 zakázky ve hře nejsou: nahradil je příběh po aktech ([PRIBEH.md](PRIBEH.md), ADR-001). Kroky misí, ukazatel cíle a text úkolu v HUDu zůstaly a používá je příběh. Popis níže je historie.
+> Od fáze P1 zakázky ve hře nejsou: nahradil je příběh po aktech ([PRIBEH.md](../hra/PRIBEH.md), ADR-001). Kroky misí, ukazatel cíle a text úkolu v HUDu zůstaly a používá je příběh. Popis níže je historie.
 
 - Místa se zakázkami na mapě (u každé skupiny).
 - Obtížnosti podle respektu: 🟢 zelená (vždy), 🟡 žlutá (respekt od cca +30), 🔴 červená (od cca +60).
@@ -156,7 +156,7 @@ Zbývá do budoucna:
 
 ## Fáze 9: Živá vesnice ✅
 
-Z dokumentu Game Update 1 jen to, co má největší přínos a jde udělat bez přestavby mapy. Zbytek je v [TODO.md](../TODO.md).
+Z dokumentu Game Update 1 jen to, co má největší přínos a jde udělat bez přestavby mapy. Zbytek je v [TODO.md](../../TODO.md).
 
 - **Svědci a popis:** zločin zvedne hledanost, jen když ho vidí policie, nebo ho nahlásí svědek. Svědek telefonuje 5–10 s (hovor jde přerušit: zastrašit zbraní, zranit ho). Popis se může plést (barva, typ auta); policie hráče pozná podle popisu, zblízka vždy. Na HUDu je „Hledají: …“. Skupiny už policii nevolají samy, jdou přes stejné svědky (spojenci mlčí, nepřátelé volají rádi).
 - **Omezený počet policistů:** dvě hlídky na obchůzce, posily přijíždějí z okrajů mapy, policisté se po akci vracejí na stanici a doplňují se.
@@ -174,7 +174,7 @@ Dlouhý běh: `npm run build && npm run soak` přehraje 30 minut herního času 
 
 ## Mapa Morávky podle skutečné vesnice ✅
 
-![Mapa Morávky](mapa-moravka.jpg)
+![Mapa Morávky](../hra/img/mapa-moravka.jpg)
 
 - Rozložení podle mapy obce (ne na sto procent): křižovatka u **hospody eRko** (hospoda stojí hned západně od ní), silnice na severozápad, na Raškovice (severovýchod), na jihozápad a na jih ke **škole** s hřištěm a oválem.
 - Vlaský potok na západě (most na silnici na severozápad), řeka Morávka na severovýchodě a východě, podél ní silnice s cyklostezkou až k hrázi přehrady. Vznikla smyčka: na jih → po hrázi → podél řeky → zpátky na silnici na Raškovice.
