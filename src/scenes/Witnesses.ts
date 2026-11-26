@@ -168,7 +168,9 @@ export class Witnesses {
       if (this.calls.some((c) => c.witness === p)) continue;
       const kind = p.role === 'gang' ? 'gang' : p.tough ? 'tough' : 'civil';
       const attitude = p.group ? g.gangs.attitudeOf(p.group) : null;
-      if (g.random() >= callChance(kind, attitude, againstPlayer)) continue;
+      // Po „s nikým se bavit nechci“ je vesnice podezíravější (ADR-006).
+      const wary = g.story?.has('refusedTalk') ? 1.25 : 1;
+      if (g.random() >= callChance(kind, attitude, againstPlayer) * wary) continue;
       this.startCall(p, crime);
       callers++;
     }

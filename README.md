@@ -25,6 +25,7 @@ Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 ## Co ve hře je
 
 - Příběh po aktech. Akt 1 (Příjezd): autobus tě vysadí před eRkem, Slečna Kobyla tě pošle do hospody, uvnitř Prchard, servírka Plotková a osm štamgastů, se kterými jde mluvit.
+- Štamgasti jako parťáci: vezmeš si jednoho z eRka s sebou (Metějka odhání fízly, ale chce pivo; Kibi se pere za tebe; Vysoký Denny opravuje auto…).
 - Mise od štamgastů: prodej beskydského čaje Omladině s handlováním o cenu (Omyx), odvoz Zjebala domů na čas a výslech od Ajiny, kradené auto pro Vysokého Dennyho, lešení traktorem s vlečkou pro Dennyho sochaře.
 - Dvě oblasti: Morávka a Raškovice. Do Raškovic tě pustí až příběh. Mapa Morávky vychází ze skutečné vesnice ([náhled](docs/mapa-moravka.jpg)).
 - Čtyři skupiny v každé oblasti a respekt.

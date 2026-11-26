@@ -54,3 +54,27 @@ export function detectTouch(): boolean {
     return false;
   }
 }
+
+/**
+ * Celá obrazovka na mobilu: zkusí se při každém ťuknutí, dokud v ní hra není
+ * (telefon ji ruší při zadávání jména, přepnutí aplikace nebo otočení). iPhone
+ * v prohlížeči neumí; tam pomůže „Přidat na plochu“ (manifest s display: fullscreen).
+ */
+export function keepFullscreen(): void {
+  const d = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+  const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
+  const isFull = () => !!(d.fullscreenElement || d.webkitFullscreenElement);
+  const go = () => {
+    if (!touch.enabled || isFull()) return;
+    try {
+      const p = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen?.();
+      void Promise.resolve(p)
+        .then(() => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.('landscape'))
+        .catch(() => {});
+    } catch {
+      // Prohlížeč celou obrazovku neumí; hra jede i tak.
+    }
+  };
+  window.addEventListener('pointerup', go, { passive: true });
+  window.addEventListener('touchend', go, { passive: true });
+}

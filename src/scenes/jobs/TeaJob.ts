@@ -167,7 +167,7 @@ export class TeaJob extends Job {
         ];
         break;
       case 'handl':
-        text = `${b.line}\n(Nabízí ${b.offer} Kč. Plná cena je ${BASE_PRICE} Kč.)`;
+        text = `${b.line}\n(Nabízí ${b.offer} Kč. Plná cena je ${BASE_PRICE} Kč.)${this.g.pals.whisper(b.type.weak)}`;
         options = [step(b.argLines[0], (x) => pitch(x, 0, rnd)), step(b.argLines[1], (x) => pitch(x, 1, rnd)), step(`Plácnem si za ${b.offer} Kč.`, (x) => strike(x, rnd))];
         break;
       case 'strop':

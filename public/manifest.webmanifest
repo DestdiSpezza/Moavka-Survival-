@@ -1,0 +1,10 @@
+{
+  "name": "Survive Morávka",
+  "short_name": "Morávka",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#111111",
+  "theme_color": "#111111"
+}

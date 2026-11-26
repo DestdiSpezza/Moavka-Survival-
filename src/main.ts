@@ -8,10 +8,11 @@ import { DialogScene } from './scenes/DialogScene';
 import { HeroScene } from './scenes/HeroScene';
 import { PubScene } from './scenes/PubScene';
 import { TouchScene } from './scenes/TouchScene';
-import { detectTouch, touch } from './input/touch';
+import { detectTouch, keepFullscreen, touch } from './input/touch';
 import { ControlsScene, PauseScene, SettingsScene } from './scenes/OverlayScenes';
 
 touch.enabled = detectTouch();
+keepFullscreen();
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

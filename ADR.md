@@ -32,7 +32,8 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 - **Rozhodnutí:** Autobus k eRku a vystoupení trvají asi 15 s, Mezerník nebo Esc přeskočí. Úvodní scéna se hraje jen u nové hry.
 
 ## ADR-006: Volba „S nikým se bavit nechci“ = těžší start
-- **Stav:** otevřeno, probereme ve fázi P2
+- **Stav:** přijato (fáze P3): štamgasti začínají na vztahu −15 a dokud jsou v minusu, chtějí nejdřív pivo (45 Kč, +20) nebo omluvu (+5); svědci volají policii o čtvrtinu častěji.
+- **Původně:** otevřeno
 - **Rozhodnutí zatím:** Volba nastaví příznak `refusedTalk`. Hra pokračuje dál, žádné NPC hráče nenasměruje.
 - **Nápady na později:** dražší pivo u Prcharda, Plotková nic neprozradí, Štamgasti jsou chladnější (vztah začíná níž), policie víc podezíravá, žádná pomoc v první misi.
 
@@ -75,7 +76,7 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 - **Rozhodnutí:** Autoúpravy Dan patří Vysokému Dennymu (Dan = Denny). Garáž se ovládá rozhovorem s ním (oprava, přelakování, výkup), Denny stojí před garáží. Mezi 13:00 a 17:00 sedí v eRku a garáž je zavřená.
 
 ## ADR-015: Denny sochař se dá vyhodit
-- **Stav:** přijato (mechanika ve fázi P2)
+- **Stav:** hotovo (fáze P3): občas se po odchodu z eRka přidá sám jako parťák, každých 40 s si „půjčí“ stovku; po třech ranách pěstí odejde.
 - **Rozhodnutí:** Když Dennyho sochaře nechceš, musí dostat pár ran pěstí, pak odejde pryč.
 
 ## ADR-016: Dřevaři jsou Hasiči
@@ -122,3 +123,16 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 - **Míření:** ÚTOK míří sám na nejbližšího, kdo jde po hráči (policajt, rváč, naštvaná skupina); zblízka pěstí na toho, kdo je před tebou; jinak rovně. Čaj se nabídne nejbližšímu.
 - **Menu a rozhovory:** ťuknutí na položku nebo celý řádek volby; v obchodě tlačítka 1–5; v úvodu PŘESKOČIT; jméno hrdiny přes klávesnici telefonu.
 - **Obrazovka:** na výšku se ukáže „Otoč telefon na šířku“; po prvním ťuknutí hra zkusí celou obrazovku (iPhone to neumí, hra jede i tak). Tutoriál s klávesami a nápověda kláves se na mobilu neukazují; ovládání je popsané v menu Ovládání.
+
+## ADR-025: Štamgasti jako parťáci
+- **Stav:** přijato (fáze P3)
+- **Rozhodnutí:** V eRku jde štamgastovi říct „Pojď se mnou ven“ (Prchard zůstává za barem). Parťák je jeden, chodí za hráčem, sedá do auta; venku ho E pošle zpátky. Výhoda i nevýhoda platí, dokud je u hráče (do 150 px nebo v autě):
+  - Metějka: hlášení o zločinech se ztratí (fízl radši odjede) · každých 50 s pivo za 45 Kč, jinak odejde.
+  - Plotková: každých 25 s řekne směr k cíli mise · každou minutu panák za 60 Kč, jinak odejde.
+  - Kibi: pere se s každým, kdo jde po hráči · občas přijde jeho naštvaná bejvalka a facku dostane hráč.
+  - Vesta: lékárnička, když je hráči zle (jednou za 90 s), zaplatí pokutu při zatčení · urážky, skupiny ztrácí respekt.
+  - Omyx: při handlování šeptá slabinu kupce · hráč pořád mluví o hulení.
+  - Zjebal: traktor a dodávka se nehlásí jako krádež · ve 22:00 jde domů.
+  - Vysoký Denny: za jízdy opravuje auto · úkol mise ukazuje jen „Hm.“
+  - Denny sochař: jde se ho zbavit pěstí · půjčuje si stovky.
+- **Uložení:** parťák se neukládá (po načtení je v eRku).

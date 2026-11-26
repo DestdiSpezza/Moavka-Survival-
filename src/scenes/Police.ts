@@ -149,6 +149,8 @@ export class Police {
   /** Hlášení o zločinu hráče: přidá hledanost a popis, jak pachatel vypadá. */
   report(r: Report): void {
     if (this.game.player.dead) return;
+    // Metějka u hráče: nikdo nechce mít s Metějkou nic společného (ADR-025).
+    if (this.game.pals?.shieldsFromPolice()) return;
     const last = this.lastCrime.get(r.kind) ?? -10;
     if (this.now - last < CRIME_THROTTLE) return;
     this.lastCrime.set(r.kind, this.now);

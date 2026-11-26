@@ -16,6 +16,8 @@ import { Intro } from './Intro';
 import { createJob } from './jobs';
 import type { Job } from './jobs/Job';
 import { jobActiveDialog, jobOfferDialog } from './jobs/offers';
+import { PAL_IDS, PAL_INFO, type PalId } from './Pals';
+import { STAMGASTI } from '../story/npcs';
 
 export interface MissionHud {
   title: string;
@@ -111,6 +113,7 @@ export class Story {
   inPub(id: NpcId): boolean {
     if (id === 'zjebal' && this.state.job === 'zjebal-domu') return false;
     if (id === 'dennySochar' && this.state.job === 'sochar-leseni') return false;
+    if (this.game.pals.id === id) return false;
     return inPub(id, this.game.gangs.minute, this.festival);
   }
 
@@ -165,11 +168,66 @@ export class Story {
       baseId = `base:${npc}`;
       this.setDynamic(baseId, () => base);
     }
+    this.hardStart();
     const def = jobBy(npc);
     const status = def ? jobStatus(def.id, this.state.job, this.state.flags) : 'done';
+    // Těžší start (ADR-006): kdo se s nikým nebavil, musí štamgastům nejdřív koupit pivo.
+    if (this.has('refusedTalk') && (this.state.rel[npc] ?? 0) < 0 && (STAMGASTI as string[]).includes(npc)) {
+      this.talk(this.makeUpDialog(npc, baseId), caller, onDone);
+      return;
+    }
     if (def && status === 'open') this.talk(jobOfferDialog(this, def.id, baseId), caller, onDone);
     else if (def && status === 'active') this.talk(jobActiveDialog(this, def.id, baseId), caller, onDone);
+    else if (caller === 'Pub' && (PAL_IDS as string[]).includes(npc)) this.talk(this.palDialog(npc as PalId, baseId), caller, onDone);
     else this.talk(baseId, caller, onDone);
+  }
+
+  /** „Pojď se mnou“: štamgast jde s hráčem ven jako parťák (ADR-025). */
+  private palDialog(npc: PalId, base: string): Dialog {
+    const info = PAL_INFO[npc];
+    return {
+      id: 'pal-offer',
+      start: 'p',
+      nodes: {
+        p: {
+          speaker: npc,
+          text: npc === 'dennyVysoky' ? 'Hm?' : npc === 'dennySochar' ? 'Jo? Nemáš stovku? Nebo něco?' : 'Co potřebuješ, {jmeno}?',
+          options: [
+            { text: 'Pojď se mnou ven.', next: 'info' },
+            { text: 'Radši pokecáme.', then: base },
+            { text: 'Nic, jen jsem tě {pozdravil|pozdravila}.' },
+          ],
+        },
+        info: {
+          speaker: npc,
+          text: `S tebou? Proč ne. (+ ${info.plus} − ${info.minus})`,
+          options: [
+            { text: 'Jdem.', do: () => this.game.pals.take(npc) },
+            { text: 'Ještě ne.' },
+            { text: 'Radši pokecáme.', then: base },
+          ],
+        },
+      },
+    };
+  }
+
+  /** Smír po „s nikým se bavit nechci“: pivo, nebo omluva. */
+  private makeUpDialog(npc: NpcId, base: string): Dialog {
+    return {
+      id: 'make-up',
+      start: 'm',
+      nodes: {
+        m: {
+          speaker: npc,
+          text: npc === 'dennyVysoky' ? 'Hm. Ty ses s nikým nebavil{|a}. Hm.' : 'Á, {ten|ta}, co se s nikým nebaví. Teď by ses bavil{|a}, co? Nejdřív pivo.',
+          options: [
+            { text: 'Dám ti pivo. (45 Kč)', cost: 45, do: (c) => c.rel(npc, 20), then: base },
+            { text: 'Promiň, byl{|a} jsem unavená z cesty.', do: (c) => c.rel(npc, 5) },
+            { text: 'Tak nic.' },
+          ],
+        },
+      },
+    };
   }
 
   /** Otevře dialog; scéna `caller` mezitím stojí. */
@@ -242,6 +300,13 @@ export class Story {
     this.trailer.ignoreOn(g.cameras.getCamera('minimap') ?? undefined);
   }
 
+  /** Těžší start (ADR-006): po „s nikým se bavit nechci“ štamgasti začínají naštvaní. */
+  private hardStart(): void {
+    if (!this.has('refusedTalk') || this.has('hardStart')) return;
+    this.flag('hardStart');
+    for (const id of STAMGASTI) this.state.rel[id] = Math.min(this.state.rel[id] ?? 0, -15);
+  }
+
   /** Banner a hláška; když je hráč v hospodě, počkají, až vyjde ven. */
   announce(banner: string, toast: string): void {
     this.pending.push({ banner, toast });
@@ -307,6 +372,7 @@ export class Story {
   update(dt: number): void {
     const g = this.game;
     this.intro?.update(dt);
+    this.hardStart();
     this.trailer?.update();
     if (this.pending.length && !this.cutscene && !this.dialogOpen) {
       const p = this.pending.shift()!;
@@ -342,6 +408,8 @@ export class Story {
     let hud: MissionHud | null = null;
     if (m && step) hud = { title: `AKT ${act.num} · ${m.title.toUpperCase()}`, objective: step.objective(), target };
     else if (job) hud = { title: `AKT ${act.num} · ${jobOf(job.id)!.title.toUpperCase()}`, objective: job.objective(), target };
+    // Vysoký Denny jako parťák moc neporadí.
+    if (hud && g.pals.near('dennyVysoky')) hud.objective = 'Hm.';
     g.registry.set('mission', hud);
     this.marker.setVisible(!!target);
     this.miniMarker.setVisible(!!target);
@@ -383,5 +451,8 @@ export class Story {
     g.scene.wake('UI');
     g.scene.resume('Game');
     (g.player.body as Phaser.Physics.Arcade.Body).reset(this.pubDoor.x, this.pubDoor.y + 10);
+    // Denny sochař se občas přidá sám (zbavíš se ho jen pěstí, ADR-015).
+    if (this.has('pubEntryDone') && this.state.job !== 'sochar-leseni' && g.pals.maybeSocharTagsAlong(0.2)) g.toast('Denny sochař: „Jdu s tebou, stejně nemám co dělat.“ (Zbavíš se ho pár ranami pěstí.)');
+    g.pals.spawnAt(this.pubDoor.x + 14, this.pubDoor.y + 14);
   }
 }

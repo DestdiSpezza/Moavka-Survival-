@@ -460,6 +460,7 @@ export class Combat {
   /** Zranění chodce nebo policisty. byPlayer=false: zásah od policie (není to tvůj zločin). */
   hurtPed(p: Pedestrian, damage: number, from: Point, byPlayer = true): void {
     if (!p.alive || damage <= 0) return;
+    if (byPlayer) this.game.pals?.onHit(p);
     p.hp -= damage;
     this.blood.explode(4, p.x, p.y);
     if (damage >= 8) this.game.stampDecal(`blood-${Math.floor(this.game.random() * 3)}`, p.x + (this.game.random() - 0.5) * 6, p.y + (this.game.random() - 0.5) * 6, this.game.random() * 360, 0.8);
@@ -606,7 +607,9 @@ export class Combat {
   /** Zatčení: noc na služebně (obecní úřad), pokuta a zbraně pryč. */
   arrest(fine: number, station: { x: number; y: number }): void {
     if (this.player.dead) return;
+    const vesta = this.game.pals?.paysFine();
     this.knockout(T.busted, [0, 0, 40], station, () => {
+      if (vesta) return `Pokutu ${fine} Kč zaplatil Vesta. A řekne to všem.`;
       this.player.money -= fine;
       return T.bustedInfo.replace('{fine}', String(fine));
     });

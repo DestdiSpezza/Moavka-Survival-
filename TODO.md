@@ -7,10 +7,10 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 
 - [x] **Fáze P1: Akt 1 – Příjezd** (zrušení zakázek, autobus a úvodní scéna, NPC na zastávce, mise do hospody, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti).
 - [x] **Fáze P2: Akt 1 – Mise v eRku** (Hasiči místo Dřevařů, bez Biomatek, mise Omyxe, Zjebala, Vysokého Dennyho a Dennyho sochaře).
-- [ ] Fáze P3: výhody a nevýhody Štamgastů jako mechaniky (Metějka odpuzuje policii, Vysoký Denny opravuje a přelakuje, Omyx a touha hulit, Zjebal řídí náklaďák a musí domů, Denny sochař si půjčuje, Prchard určuje cenu piva, Kibi a ženy, Vesta pomáhá s kecama, Plotková naviguje a chce panáky).
-- [ ] Fáze P3: následky volby „s nikým se bavit nechci“ (těžší start, ADR-006).
+- [x] Fáze P3: výhody a nevýhody Štamgastů jako mechaniky (parťáci, ADR-025) (Metějka odpuzuje policii, Vysoký Denny opravuje a přelakuje, Omyx a touha hulit, Zjebal řídí náklaďák a musí domů, Denny sochař si půjčuje, Prchard určuje cenu piva, Kibi a ženy, Vesta pomáhá s kecama, Plotková naviguje a chce panáky).
+- [x] Fáze P3: následky volby „s nikým se bavit nechci“ (těžší start, ADR-006).
 - [ ] Fáze P3: mise od Metějky, Vesty, Kibiho a Plotkové (zadání dodáš).
-- [ ] Fáze P3: Denny sochař musí dostat pár ran pěstí, než odejde (ADR-015); v eRku se zatím nebojuje.
+- [x] Fáze P3: Denny sochař musí dostat pár ran pěstí, než odejde (ADR-015).
 - [ ] Omyx je v eRku jen večer (17–5); přes den u řeky zatím misi nenabízí.
 - [ ] Vlečka s ničím nekoliduje (projede zdí); fyzika vlečky a padající náklad v ostrých zatáčkách.
 - [ ] Hospoda v Raškovicích otevírá interiér eRka (do Raškovic se zatím nedá, ADR-011).

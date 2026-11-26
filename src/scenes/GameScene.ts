@@ -40,6 +40,7 @@ import { CRASH_SPEED, type Driver, drunkDriver, HARD_BRAKE, reactToObstacle, rol
 import { isEvening } from '../systems/clock';
 import type { Appearance } from '../systems/witness';
 import { Police } from './Police';
+import { Pals } from './Pals';
 import { stickDrive, took, touch } from '../input/touch';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
@@ -119,6 +120,7 @@ export class GameScene extends Phaser.Scene {
   gangs!: Gangs;
   story!: Story;
   townsfolk!: Townsfolk;
+  pals!: Pals;
   economy!: Economy;
   progression!: Progression;
   tutorial!: Tutorial;
@@ -295,6 +297,7 @@ export class GameScene extends Phaser.Scene {
     this.incidents = new Incidents(this);
     this.animals = new Animals(this);
     this.townsfolk = new Townsfolk(this);
+    this.pals = new Pals(this);
     this.story = new Story(this);
     if (touch.enabled) this.time.delayedCall(1200, () => this.toast('Vlevo joystick, vpravo ÚTOK, E (akce), SPRINT a ZBRAŇ. II = pauza.'));
     this.debugKey = this.input.keyboard!.addKey('F9');
@@ -688,6 +691,7 @@ export class GameScene extends Phaser.Scene {
       const folk = this.townsfolk.nearby();
       if (this.story.nearPubDoor()) this.story.enterPub();
       else if (folk) this.townsfolk.talkTo(folk);
+      else if (this.pals.talkable()) this.story.talk(this.pals.talkDialog());
       else if (this.driving) this.exitVehicle();
       else this.tryEnterVehicle();
     }
@@ -736,6 +740,7 @@ export class GameScene extends Phaser.Scene {
     this.gangs.update(dt);
     this.story.update(dt);
     this.townsfolk.update();
+    this.pals.update(dt);
     this.economy.update();
     this.progression.update(dt);
     this.tutorial.update(dt);
@@ -915,6 +920,7 @@ export class GameScene extends Phaser.Scene {
     const v = this.nearestVehicle();
     if (!v) return;
     if (v.driver === 'npc') this.yankDriver(v);
+    if (!v.stolen && this.pals.knowsOwner(v.spec.kind)) v.stolen = true;
     else if (!v.stolen) this.events.emit('crime', { x: v.x, y: v.y, kind: v.isPolice ? 'policeTheft' : 'theft', vehicle: v });
     if (v.isPolice && !v.stolen) this.toast(T.stolePolice);
     if (!v.stolen) this.gangs.onSteal(v);
