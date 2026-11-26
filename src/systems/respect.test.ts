@@ -48,9 +48,16 @@ describe('respekt', () => {
   it('postoj podle respektu, večer agresivněji', () => {
     expect(attitude(0)).toBe('neutral');
     expect(attitude(60)).toBe('ally');
-    expect(attitude(-50)).toBe('hostile');
-    expect(attitude(-90)).toBe('hunt');
-    expect(attitude(-20, 20)).toBe('hostile');
+    // Napadat začnou až od -65 (ADR-034): jeden přejetý člen (-25) nestačí.
+    expect(attitude(-50)).toBe('neutral');
+    expect(attitude(-64)).toBe('neutral');
+    expect(attitude(-65)).toBe('hostile');
+    expect(attitude(-84)).toBe('hostile');
+    expect(attitude(-85)).toBe('hunt');
+    // Večerní agresivita Štamgastů ubere přátelství, ale nepřátele z nich neudělá.
+    expect(attitude(-20, 20)).toBe('neutral');
+    expect(attitude(30, 20)).toBe('neutral');
+    expect(attitude(-70, 25)).toBe('hostile');
   });
 
 });

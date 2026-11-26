@@ -69,18 +69,23 @@ export function applyRespect(r: Respect, group: GroupId, event: RespectEvent): R
 
 export type Attitude = 'ally' | 'friendly' | 'neutral' | 'hostile' | 'hunt';
 
+/** Od kolika dolů tě skupina napadne na svém území (ADR-034), a od kolika všude. */
+export const HOSTILE_AT = -65;
+export const HUNT_AT = -85;
+
 /**
  * Postoj skupiny k hráči.
  * hostile = napadne tě na svém území, hunt = kdekoli, kde tě uvidí, ally = pomůže ti.
- * `aggression` posouvá hranice (Štamgasti večer).
+ * `aggression` (Štamgasti večer) jen ubírá přátelství; napadat začnou až od HOSTILE_AT,
+ * ať jedna nehoda (přejetý člen) neukončí hru.
  */
 export function attitude(respect: number, aggression = 0): Attitude {
+  if (respect <= HUNT_AT) return 'hunt';
+  if (respect <= HOSTILE_AT) return 'hostile';
   const r = respect - aggression;
   if (r >= 50) return 'ally';
   if (r >= 20) return 'friendly';
-  if (r >= -30) return 'neutral';
-  if (r >= -70) return 'hostile';
-  return 'hunt';
+  return 'neutral';
 }
 
 /**

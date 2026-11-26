@@ -37,3 +37,4 @@ Architecture Decision Records: proč je hra takhle, jak je. Každé rozhodnutí 
 | [ADR-031](0031-analogovy-joystick.md) | Analogový joystick | přijato |
 | [ADR-032](0032-auto-na-mobilu-a-odtlacovani.md) | Auto na mobilu tlačítky a odtlačování aut | přijato |
 | [ADR-033](0033-volant-a-zpatecka.md) | Volant jako půlkruh a zpátečka | přijato |
+| [ADR-034](0034-skupiny-napadaji-az-od-65.md) | Skupiny napadají až od respektu −65 | přijato |

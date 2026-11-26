@@ -3,7 +3,7 @@ import { STAMINA_MAX } from '../systems/movement';
 import { T } from '../texts/cs';
 import { Tile } from '../world/tiles';
 import { pixelFont } from './BootScene';
-import { GROUP_IDS } from '../systems/respect';
+import { GROUP_IDS, HOSTILE_AT } from '../systems/respect';
 import { GROUPS } from '../world/gangs';
 import type { RespectHud } from './Gangs';
 import type { AnnounceHud } from './Announcer';
@@ -243,7 +243,7 @@ export class UIScene extends Phaser.Scene {
         // Záporný respekt roste doleva od středu.
         bar.width = Math.abs(r) * 0.6;
         bar.x = r >= 0 ? MINIMAP.x + 163 : MINIMAP.x + 162 - bar.width;
-        this.respectValues[i].setText(`${r > 0 ? '+' : ''}${Math.round(r)}`).setColor(r <= -30 ? '#ff7a6a' : r >= 50 ? '#9fffa0' : '#f2e9d0');
+        this.respectValues[i].setText(`${r > 0 ? '+' : ''}${Math.round(r)}`).setColor(r <= HOSTILE_AT ? '#ff7a6a' : r <= -40 ? '#ffb86a' : r >= 50 ? '#9fffa0' : '#f2e9d0');
       });
       this.clockText.setText(gangs.clock);
     }

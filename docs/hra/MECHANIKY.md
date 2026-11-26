@@ -38,6 +38,18 @@ Hasiči (zbrojnice), Štamgasti (eRko), Omladina (hřiště za školou, plnolet�
 určuje postoj skupiny: od spojence až po „honí tě všude“. Hasiči se Štamgasty jsou kamarádi,
 oba nesnáší Omladinu (ADR-016, ADR-017).
 
+| Respekt | Postoj |
+|---|---|
+| 50 a víc | spojenec (pomůže proti policii) |
+| 20 až 49 | kamarád |
+| −64 až 19 | neutrální (nenapadne tě) |
+| −65 až −84 | napadne tě na svém území |
+| −85 a míň | honí tě všude |
+
+Napadat začnou až od −65 (ADR-034): přejetý člen (−25) nebo dva nestačí. Štamgasti jsou večer
+nevrlejší, ale to jim ubírá jen přátelství, ne hranici napadení. Na HUD je respekt od −40 oranžový,
+od −65 červený.
+
 ## Policie
 
 Pět hvězd hledanosti. Svědci volají policii a popisují pachatele i auto. Přibývají hlídky,

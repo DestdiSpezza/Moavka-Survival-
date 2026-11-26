@@ -4,6 +4,9 @@ Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech
 
 ## 2026-11-26
 
+### Skupiny napadají až od −65 (ADR-034)
+- Přejetý člen skupiny už neznamená, že tě hned napadnou; útočí až od respektu −65, všude od −85.
+
 ### Volant a zpátečka na mobilu (ADR-033)
 - Místo šipek půlkruhový volant vlevo dole, otáčí se palcem a vrací se.
 - Tlačítko D/R: se zpátečkou PLYN couvá; BRZDA jen brzdí.
