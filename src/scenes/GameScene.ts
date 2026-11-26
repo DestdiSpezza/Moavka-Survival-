@@ -5,13 +5,13 @@ import { Pedestrian } from '../entities/Pedestrian';
 import { Sound } from '../audio/Sound';
 import { paintGround } from '../art/ground';
 import { paintWater } from '../art/water';
-import { Vehicle } from '../entities/Vehicle';
+import { pushApart, Vehicle } from '../entities/Vehicle';
 import { WEAPONS } from '../systems/combat';
 import { explosionDamageAt, EXPLOSION_RADIUS } from '../systems/damage';
 import { findPath } from '../systems/pathfind';
 import { createRng } from '../systems/rng';
 import { isAhead, type Point, steerToward } from '../systems/trafficAi';
-import { type DriveInput, forwardSpeed, lateralSpeed, surfaceFor, toKmh } from '../systems/vehicleModel';
+import { type DriveInput, lateralSpeed, surfaceFor, toKmh } from '../systems/vehicleModel';
 import { T } from '../texts/cs';
 import { type AreaDef, type AreaId, AREAS, placeLabel } from '../world/areas';
 import { type WorldMap, zoneAt } from '../world/moravka';
@@ -42,7 +42,6 @@ import type { Appearance } from '../systems/witness';
 import { Police } from './Police';
 import { Pals } from './Pals';
 import { took, touch } from '../input/touch';
-import { stickDrive } from '../systems/stick';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
 const ENTER_RANGE = 26;
@@ -240,23 +239,21 @@ export class GameScene extends Phaser.Scene {
 
     this.spawnVehicles();
     this.physics.add.collider(this.vehicles, this.layer);
-    this.physics.add.collider(this.vehicles, this.vehicles, (a, b) => {
-      // Naražení do policejního auta je útok na policii.
-      const va = a as Vehicle;
-      const vb = b as Vehicle;
-      const other = va === this.driving ? vb : vb === this.driving ? va : null;
-      if (other && Math.abs(this.driving!.speed) > 40) {
-        other.playerHitAt = this.time.now / 1000;
-        if (other.isPolice) this.events.emit('crime', { x: this.driving!.x, y: this.driving!.y, kind: 'rammedCop' });
-      }
-      // Síla nárazu: rozdíl rychlostí před srážkou.
-      const la = va.lastVelocity;
-      const lb = vb.lastVelocity;
-      const impact = Math.hypot(la.x - lb.x, la.y - lb.y);
-      if (impact < CRASH_SPEED) return;
-      if (va.driver === 'npc' && vb.driver === 'npc') this.incidents.onCrash(va, vb, impact);
-      else if (other && other.driver === 'npc') this.incidents.onPlayerCrash(other, impact);
-    });
+    this.physics.add.collider(
+      this.vehicles,
+      this.vehicles,
+      (a, b) => this.onVehicleHit(a as Vehicle, b as Vehicle),
+      (a, b) => {
+        // Hráč a policie (ADR-032): těžší auto odsune lehčí, stojící auto drží na brzdě.
+        // Phaser dělil překryv napůl, takže se fízlové o hráče zasekávali. Ostatní provoz beze změny.
+        const va = a as Vehicle;
+        const vb = b as Vehicle;
+        const special = va === this.driving || vb === this.driving || va.isPolice || vb.isPolice;
+        if (!special) return true;
+        if (pushApart(va, vb)) this.onVehicleHit(va, vb);
+        return false;
+      },
+    );
     this.physics.add.collider(this.player, this.vehicles);
 
     const kb = this.input.keyboard!;
@@ -347,7 +344,7 @@ export class GameScene extends Phaser.Scene {
     for (const v of this.vehicles) {
       if (v.wrecked || v.driver === 'none' || v.spec.kind === 'kolo') continue;
       const lat = Math.abs(lateralSpeed(v.drive));
-      const braking = v === this.driving && (this.keys.handbrake.isDown || (touch.enabled && touch.sprint)) && Math.abs(v.speed) > 40;
+      const braking = v === this.driving && (this.keys.handbrake.isDown || (touch.enabled && touch.handbrake)) && Math.abs(v.speed) > 40;
       if (lat < 40 && !braking) continue;
       const a = v.rotation;
       const back = -v.spec.length / 2 + 4;
@@ -902,6 +899,23 @@ export class GameScene extends Phaser.Scene {
     return this.world.tiles[Math.floor(y / TILE)]?.[Math.floor(x / TILE)] ?? 0;
   }
 
+  /** Náraz dvou aut: útok na policii, nehody a hádky řidičů. */
+  private onVehicleHit(va: Vehicle, vb: Vehicle): void {
+    // Naražení do policejního auta je útok na policii.
+    const other = va === this.driving ? vb : vb === this.driving ? va : null;
+    if (other && Math.abs(this.driving!.speed) > 40) {
+      other.playerHitAt = this.time.now / 1000;
+      if (other.isPolice) this.events.emit('crime', { x: this.driving!.x, y: this.driving!.y, kind: 'rammedCop' });
+    }
+    // Síla nárazu: rozdíl rychlostí před srážkou.
+    const la = va.lastVelocity;
+    const lb = vb.lastVelocity;
+    const impact = Math.hypot(la.x - lb.x, la.y - lb.y);
+    if (impact < CRASH_SPEED) return;
+    if (va.driver === 'npc' && vb.driver === 'npc') this.incidents.onCrash(va, vb, impact);
+    else if (other && other.driver === 'npc') this.incidents.onPlayerCrash(other, impact);
+  }
+
   private playerDriveInput(): DriveInput {
     const k = this.keys;
     const a = this.arrows;
@@ -912,12 +926,11 @@ export class GameScene extends Phaser.Scene {
     const keyThrottle = (up ? 1 : 0) - (down ? 1 : 0);
     const keySteer = (right ? 1 : 0) - (left ? 1 : 0);
     if (touch.enabled && !keyThrottle && !keySteer) {
-      // Joystick ukazuje, kam má auto jet (ADR-031); tlačítko BRZDA = ruční brzda.
-      const v = this.driving!;
-      const t = stickDrive(touch.stickX, touch.stickY, v.drive.angle, forwardSpeed(v.drive));
-      return { throttle: t.throttle, steer: t.steer, handbrake: k.handbrake.isDown || touch.sprint };
+      // Prsty (ADR-032): vlevo volant, vpravo PLYN, BRZDA (i couvání) a RUČKA.
+      const throttle = (touch.gas ? 1 : 0) - (touch.brake ? 1 : 0);
+      return { throttle, steer: touch.steer, handbrake: k.handbrake.isDown || touch.handbrake };
     }
-    return { throttle: keyThrottle, steer: keySteer, handbrake: k.handbrake.isDown || (touch.enabled && touch.sprint) };
+    return { throttle: keyThrottle, steer: keySteer, handbrake: k.handbrake.isDown || (touch.enabled && touch.handbrake) };
   }
 
   // ---------- Nastupování a krádeže ----------

@@ -15,10 +15,14 @@ interface Button {
 }
 
 const STICK_R = 62;
+/** Volant vlevo dole (v autě): střed a kolik px od středu je plný rejd. */
+const WHEEL_X = 175;
+const WHEEL_FULL = 75;
 
 /**
  * Dotykové ovladače přes hru (ADR-024): vlevo plovoucí joystick (kde se dotkneš,
- * tam vznikne), vpravo tlačítka. Při rozhovoru, pauze a v menu se schovají;
+ * tam vznikne), vpravo tlačítka. V autě (ADR-032) je vlevo volant (◀ ▶, jde po něm
+ * přejet prstem) a vpravo PLYN, BRZDA, RUČKA. Při rozhovoru, pauze a v menu se schovají;
  * v obchodě se objeví čísla 1–5, v úvodní scéně „Přeskočit“.
  */
 export class TouchScene extends Phaser.Scene {
@@ -29,6 +33,10 @@ export class TouchScene extends Phaser.Scene {
   private stickAt = { x: 0, y: 0 };
   private held = new Map<number, Button>();
   private numbers: Button[] = [];
+  private car: Button[] = [];
+  private wheel: Button[] = [];
+  private wheelId = -1;
+  private wasDriving = false;
   private skip!: Button;
 
   constructor() {
@@ -40,6 +48,9 @@ export class TouchScene extends Phaser.Scene {
     this.input.addPointer(3);
     this.buttons = [];
     this.numbers = [];
+    this.car = [];
+    this.wheel = [];
+    this.wheelId = -1;
     this.held.clear();
     this.stickId = -1;
     this.stickBase = this.add.circle(130, height - 120, STICK_R, 0xffffff, 0.08).setStrokeStyle(3, 0xffffff, 0.35);
@@ -56,6 +67,18 @@ export class TouchScene extends Phaser.Scene {
       b('sprint', width - 80, height - 215, 36, 'SPRINT', true),
       b('cycle', width - 190, height - 165, 32, 'ZBRAŇ', false),
       b('pause', width - 32, 214, 22, 'II', false),
+    );
+    this.car.push(
+      b('gas', width - 95, height - 115, 60, 'PLYN', true, 0x3ad83a),
+      b('brake', width - 235, height - 70, 46, 'BRZDA', true, 0xd83a3a),
+      b('handbrake', width - 225, height - 195, 36, 'RUČKA', true),
+      b('fire', width - 85, height - 270, 34, 'ÚTOK', true, 0xd83a3a),
+      b('action', width - 345, height - 55, 32, 'E', false, 0xffd23f),
+    );
+    this.car[3].text.setFontSize(13);
+    this.wheel.push(
+      b('left', WHEEL_X - WHEEL_FULL, height - 105, 58, '◀', false),
+      b('right', WHEEL_X + WHEEL_FULL, height - 105, 58, '▶', false),
     );
     for (let i = 0; i < 5; i++) this.numbers.push(b(String(i + 1), width / 2 - 160 + i * 80, height - 70, 30, String(i + 1), false, 0xffd23f));
     this.skip = b('skip', width - 110, height - 40, 30, 'PŘESKOČIT', false);
@@ -80,9 +103,13 @@ export class TouchScene extends Phaser.Scene {
     return 'play';
   }
 
+  private driving(): boolean {
+    return !!this.registry.get('vehicle') && this.scene.manager.isActive('Game');
+  }
+
   private visibleButtons(): Button[] {
     const m = this.mode();
-    if (m === 'play') return this.buttons;
+    if (m === 'play') return this.driving() ? [...this.car, this.buttons.find((x) => x.id === 'pause')!] : this.buttons;
     if (m === 'cutscene') return [this.skip];
     if (m === 'menu') {
       const menu = this.registry.get('menu') as { lines: string[] } | null;
@@ -103,6 +130,14 @@ export class TouchScene extends Phaser.Scene {
       return;
     }
     const m = this.mode();
+    // Volant: prst kdekoli vlevo dole, rejd podle vzdálenosti od středu.
+    if (m === 'play' && this.driving()) {
+      if (this.wheelId < 0 && p.x < this.scale.width * 0.45 && p.y > 180) {
+        this.wheelId = p.id;
+        this.move(p);
+      }
+      return;
+    }
     if ((m === 'play' || m === 'menu') && this.stickId < 0 && p.x < this.scale.width * 0.45 && p.y > 180) {
       this.stickId = p.id;
       this.stickAt = { x: p.x, y: p.y };
@@ -111,6 +146,11 @@ export class TouchScene extends Phaser.Scene {
   }
 
   private move(p: Phaser.Input.Pointer): void {
+    if (p.id === this.wheelId) {
+      const dx = p.x - WHEEL_X;
+      touch.steer = Math.abs(dx) < 12 ? 0 : Phaser.Math.Clamp(dx / WHEEL_FULL, -1, 1);
+      return;
+    }
     if (p.id !== this.stickId) return;
     const dx = p.x - this.stickAt.x;
     const dy = p.y - this.stickAt.y;
@@ -121,6 +161,10 @@ export class TouchScene extends Phaser.Scene {
   }
 
   private up(p: Phaser.Input.Pointer): void {
+    if (p.id === this.wheelId) {
+      this.wheelId = -1;
+      touch.steer = 0;
+    }
     if (p.id === this.stickId) {
       this.stickId = -1;
       touch.stickX = 0;
@@ -136,6 +180,9 @@ export class TouchScene extends Phaser.Scene {
   private setHold(id: string, on: boolean): void {
     if (id === 'fire') touch.fire = on;
     else if (id === 'sprint') touch.sprint = on;
+    else if (id === 'gas') touch.gas = on;
+    else if (id === 'brake') touch.brake = on;
+    else if (id === 'handbrake') touch.handbrake = on;
   }
 
   private reset(): void {
@@ -143,8 +190,13 @@ export class TouchScene extends Phaser.Scene {
     touch.stickY = 0;
     touch.fire = false;
     touch.sprint = false;
+    touch.gas = false;
+    touch.brake = false;
+    touch.handbrake = false;
+    touch.steer = 0;
     this.held.clear();
     this.stickId = -1;
+    this.wheelId = -1;
   }
 
   update(): void {
@@ -152,17 +204,23 @@ export class TouchScene extends Phaser.Scene {
     const sm = this.scene.manager;
     if (sm.getIndex('Touch') !== sm.scenes.length - 1) this.scene.bringToTop();
     const m = this.mode();
-    if (m === 'hidden' && (this.stickId >= 0 || this.held.size)) this.reset();
+    const driving = this.driving();
+    // Nastoupil/vystoupil nebo se ovladače schovaly: pustit všechno, ať auto nejede samo.
+    if (driving !== this.wasDriving || (m === 'hidden' && (this.stickId >= 0 || this.wheelId >= 0 || this.held.size))) this.reset();
+    this.wasDriving = driving;
     const vis = new Set(this.visibleButtons());
-    for (const btn of [...this.buttons, ...this.numbers, this.skip]) {
+    for (const btn of [...this.buttons, ...this.numbers, ...this.car, this.skip]) {
       btn.circle.setVisible(vis.has(btn));
       btn.text.setVisible(vis.has(btn));
     }
-    // Sprint pěšky, ruční brzda v autě.
-    const driving = !!this.registry.get('vehicle');
-    const sprint = this.buttons.find((x) => x.id === 'sprint')!;
-    sprint.text.setText(driving ? 'BRZDA' : 'SPRINT');
-    const showStick = m === 'play' || m === 'menu';
+    const showWheel = m === 'play' && driving;
+    for (const btn of this.wheel) {
+      btn.circle.setVisible(showWheel);
+      btn.text.setVisible(showWheel);
+      const on = btn.id === 'left' ? touch.steer < 0 : touch.steer > 0;
+      btn.circle.setFillStyle(0xffffff, on ? 0.15 + 0.35 * Math.abs(touch.steer) : 0.12);
+    }
+    const showStick = (m === 'play' && !driving) || m === 'menu';
     const { height } = this.scale;
     const cx = this.stickId >= 0 ? this.stickAt.x : 130;
     const cy = this.stickId >= 0 ? this.stickAt.y : height - 120;

@@ -4,6 +4,10 @@ Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech
 
 ## 2026-11-26
 
+### Auto na mobilu tlačítky, odtlačování aut (ADR-032)
+- V autě vlevo volant ◀ ▶, vpravo PLYN, BRZDA (i couvání), RUČKA; pěšky zůstává joystick.
+- Těžší auto odtlačí lehčí (dodávka, traktor, zásahovka odsunou fízly), osobák stojícího fízla nepřetlačí.
+
 ### Analogový joystick na mobilu (ADR-031)
 - Pěšky jdeš přesně tam, kam joystick ukazuje, rychlost podle vychýlení.
 - V autě joystick ukazuje, kam jet: auto zatočí samo, dozadu couvá.

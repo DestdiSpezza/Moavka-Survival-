@@ -1,3 +1,4 @@
+import { resolvePush } from '../systems/push';
 import Phaser from 'phaser';
 import { damageState, type DamageState, FIRE_BURN_FRACTION, impactDamage } from '../systems/damage';
 import { type DriveInput, type DriveState, forwardSpeed, stepDrive, type Surface } from '../systems/vehicleModel';
@@ -85,6 +86,14 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     return isPoliceKind(this.spec.kind);
   }
 
+  /** Stojí a nikdo nešlape na plyn (zaparkované, stojící fízl): drží na brzdě. */
+  get braked(): boolean {
+    return Math.abs(this.speed) < 15 && !this.throttling;
+  }
+
+  /** Poslední vstup řidiče šlape na plyn (nebo couvá). */
+  throttling = false;
+
   get wrecked(): boolean {
     return this.state === 'wrecked';
   }
@@ -105,6 +114,7 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     if (this.state === 'fire') this.damage(FIRE_BURN_FRACTION * this.spec.maxHp * dt);
     if (this.wrecked) return;
 
+    this.throttling = input.throttle !== 0;
     this.drive = stepDrive({ ...this.drive, vx: body.velocity.x, vy: body.velocity.y }, input, this.spec.params, surface, dt);
     body.setVelocity(this.drive.vx, this.drive.vy);
     this.lastVx = this.drive.vx;
@@ -212,4 +222,28 @@ export class Vehicle extends Phaser.Physics.Arcade.Sprite {
     this.fire?.destroy();
     super.destroy(fromScene);
   }
+}
+
+/**
+ * Srážka dvou aut podle váhy (ADR-032): posune těla a změní rychlosti.
+ * Vrací false, když se nepřekrývají. Vrak se nehne.
+ */
+export function pushApart(a: Vehicle, b: Vehicle): boolean {
+  const ba = a.body as Phaser.Physics.Arcade.Body;
+  const bb = b.body as Phaser.Physics.Arcade.Body;
+  const res = resolvePush(
+    { x: ba.center.x, y: ba.center.y, r: ba.halfWidth, vx: ba.velocity.x, vy: ba.velocity.y, w: a.wrecked ? Infinity : a.spec.weight, braked: a.braked },
+    { x: bb.center.x, y: bb.center.y, r: bb.halfWidth, vx: bb.velocity.x, vy: bb.velocity.y, w: b.wrecked ? Infinity : b.spec.weight, braked: b.braked },
+  );
+  if (!res) return false;
+  for (const [body, r, wrecked] of [[ba, res.a, a.wrecked], [bb, res.b, b.wrecked]] as const) {
+    if (wrecked) continue;
+    body.position.x += r.dx;
+    body.position.y += r.dy;
+    body.updateCenter();
+    body.velocity.set(r.vx, r.vy);
+    // Pro výpočet poškození v tick(): auto se něčeho dotklo.
+    body.touching.none = false;
+  }
+  return true;
 }

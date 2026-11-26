@@ -93,15 +93,53 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await shot('06-v-aute');
     const c0 = await G(() => { const v = window.__game.scene.getScene('Game').driving; return { x: v.x, y: v.y }; });
     const deg = () => G(() => Math.round((window.__game.scene.getScene('Game').driving.drive.angle * 180) / Math.PI));
-    console.log('car angle start', await deg());
-    await stick(0, -60, 1800); // ukázat nahoru: auto se stočí nahoru a jede
-    const c1 = await G(() => { const v = window.__game.scene.getScene('Game').driving; return { x: v.x, y: v.y, speed: v.speed }; });
-    console.log('drive up', JSON.stringify({ c0, c1, angle: await deg() }));
-    // Zpátky na volné místo (nahoře mohl narazit) a ukázat doprava.
-    await G((c) => { const v = window.__game.scene.getScene('Game').driving; v.body.reset(c.x, c.y); v.drive = { angle: -Math.PI / 2, vx: 0, vy: 0 }; v.setRotation(-Math.PI / 2); }, c0);
-    await stick(60, 0, 1500);
-    console.log('drive right angle', await deg());
-    await tapAt(960 - 205, 540 - 60); // vystoupit
+    const car = () => G(() => { const v = window.__game.scene.getScene('Game').driving; return { x: Math.round(v.x), y: Math.round(v.y), speed: Math.round(v.speed) }; });
+    /** V autě: PLYN (vpravo) drží, volant (vlevo) posunutý o dx, drží ms. */
+    const driveTouch = async (steerDx, ms, btn = { x: 960 - 95, y: 540 - 115 }) => {
+      const g = await scr(btn.x, btn.y);
+      const w0 = await scr(175, 435);
+      const w1 = await scr(175 + steerDx, 435);
+      await tdown([{ ...g, id: 7 }, { ...w0, id: 8 }]);
+      await sleep(50);
+      await tmove([{ ...g, id: 7 }, { ...w1, id: 8 }]);
+      await sleep(ms);
+      await tup();
+      await sleep(150);
+    };
+    console.log('car buttons', await G(() => { const t = window.__game.scene.getScene('Touch'); return t.visibleButtons().map((b) => b.id).join(','); }));
+    await shot('06b-ovladani-auto');
+    const a0 = await deg();
+    await driveTouch(0, 1200);
+    const c1 = await car();
+    console.log('gas straight', JSON.stringify({ c0, c1, a0, a1: await deg() }));
+    await driveTouch(75, 1000);
+    console.log('gas + right', JSON.stringify({ c: await car(), angle: await deg() }));
+    await driveTouch(-75, 1000);
+    console.log('gas + left', JSON.stringify({ c: await car(), angle: await deg() }));
+    // Brzda (couvání) bez volantu.
+    await driveTouch(0, 1500, { x: 960 - 235, y: 540 - 70 });
+    console.log('brake/reverse', JSON.stringify(await car()));
+    // Odtlačování: hráč v autě na volné silnici, fízl stojí před ním.
+    const pushTest = async (kind) => {
+      await G((kind) => {
+        const g = window.__game.scene.getScene('Game');
+        const v = g.driving;
+        const others = g.vehicles.filter((o) => o !== v);
+        const cop = others.find((o) => o.isPolice) ?? others[0];
+        for (const o of others) if (o !== cop && Math.hypot(o.x - 300, o.y - 200) < 200) o.body.reset(o.x + 2000, o.y);
+        v.spec = { ...v.spec, kind, weight: kind === 'dodavka' ? 2.4 : 1 };
+        v.body.reset(300, 200); v.drive = { angle: 0, vx: 0, vy: 0 }; v.setRotation(0);
+        cop.body.reset(330, 200); cop.drive = { angle: Math.PI / 2, vx: 0, vy: 0 }; cop.setRotation(Math.PI / 2);
+        cop.spec = { ...cop.spec, weight: 1.2 };
+        cop.driver = 'none';
+        window.__cop = cop;
+      }, kind);
+      await driveTouch(0, 1500);
+      return G(() => ({ cop: Math.round(window.__cop.x - 330), car: Math.round(window.__game.scene.getScene('Game').driving.x - 300) }));
+    };
+    console.log('push dodavka', JSON.stringify(await pushTest('dodavka')));
+    console.log('push osobak', JSON.stringify(await pushTest('osobak')));
+    await tapAt(960 - 345, 540 - 55); // vystoupit (E v autě)
     await sleep(500);
     // Útok tlačítkem: chodec vedle hráče.
     const hit = await G(() => { const g = window.__game.scene.getScene('Game'); const p = g.combat.peds.find((p) => p.alive && p.role === 'civil'); p.body.reset(g.player.x + 12, g.player.y); p.scripted = true; return { hp: p.hp, id: g.combat.peds.indexOf(p) }; });

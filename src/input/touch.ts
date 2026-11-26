@@ -12,9 +12,14 @@ export interface TouchState {
   /** Tlačítka, která se drží. */
   fire: boolean;
   sprint: boolean;
+  /** V autě (ADR-032): plyn, brzda a couvání, ruční brzda, volant -1..1. */
+  gas: boolean;
+  brake: boolean;
+  handbrake: boolean;
+  steer: number;
 }
 
-export const touch: TouchState = { enabled: false, stickX: 0, stickY: 0, fire: false, sprint: false };
+export const touch: TouchState = { enabled: false, stickX: 0, stickY: 0, fire: false, sprint: false, gas: false, brake: false, handbrake: false, steer: 0 };
 
 /** Jednorázová ťuknutí (akce, zbraň, pauza, přeskočit, 1–5) a kdy přišla. */
 const taps = new Map<string, number>();

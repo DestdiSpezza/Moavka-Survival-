@@ -13,45 +13,47 @@ export interface VehicleType {
   length: number;
   width: number;
   maxHp: number;
+  /** Váha při srážce (osobák = 1); o 80 % těžší odtlačí lehčí (ADR-032). */
+  weight: number;
   params: VehicleParams;
 }
 
 export const VEHICLE_TYPES: Record<VehicleKind, VehicleType> = {
   osobak: {
-    kind: 'osobak', name: 'Osobák', length: 24, width: 12, maxHp: 100,
+    kind: 'osobak', name: 'Osobák', length: 24, width: 12, maxHp: 100, weight: 1,
     params: { maxSpeed: 190, reverseSpeed: 60, accel: 150, brake: 260, turnRate: 2.6, grip: 7, offroad: false },
   },
   dodavka: {
-    kind: 'dodavka', name: 'Dodávka', length: 28, width: 13, maxHp: 150,
+    kind: 'dodavka', name: 'Dodávka', length: 28, width: 13, maxHp: 150, weight: 2.4,
     params: { maxSpeed: 150, reverseSpeed: 50, accel: 100, brake: 200, turnRate: 2.0, grip: 6, offroad: false },
   },
   terenak: {
-    kind: 'terenak', name: 'Teréňák', length: 26, width: 13, maxHp: 140,
+    kind: 'terenak', name: 'Teréňák', length: 26, width: 13, maxHp: 140, weight: 1.6,
     params: { maxSpeed: 170, reverseSpeed: 60, accel: 130, brake: 230, turnRate: 2.4, grip: 6.5, offroad: true },
   },
   // Autojeřáb ze stavby v Raškovicích (mise Vesty): těžký, pomalý, zatáčí jak tanker.
   jerab: {
-    kind: 'jerab', name: 'Jeřáb', length: 34, width: 15, maxHp: 280,
+    kind: 'jerab', name: 'Jeřáb', length: 34, width: 15, maxHp: 280, weight: 6,
     params: { maxSpeed: 80, reverseSpeed: 30, accel: 55, brake: 180, turnRate: 1.5, grip: 9, offroad: true },
   },
   traktor: {
-    kind: 'traktor', name: 'Traktor', length: 22, width: 14, maxHp: 200,
+    kind: 'traktor', name: 'Traktor', length: 22, width: 14, maxHp: 200, weight: 3,
     params: { maxSpeed: 75, reverseSpeed: 35, accel: 70, brake: 200, turnRate: 2.2, grip: 9, offroad: true },
   },
   policie: {
-    kind: 'policie', name: 'Policejní auto', length: 24, width: 12, maxHp: 120,
+    kind: 'policie', name: 'Policejní auto', length: 24, width: 12, maxHp: 120, weight: 1.2,
     params: { maxSpeed: 210, reverseSpeed: 65, accel: 170, brake: 280, turnRate: 2.8, grip: 7.5, offroad: false },
   },
   skutr: {
-    kind: 'skutr', name: 'Skútr', length: 14, width: 7, maxHp: 45,
+    kind: 'skutr', name: 'Skútr', length: 14, width: 7, maxHp: 45, weight: 0.35,
     params: { maxSpeed: 150, reverseSpeed: 30, accel: 170, brake: 260, turnRate: 3.3, grip: 7, offroad: false },
   },
   kolo: {
-    kind: 'kolo', name: 'Kolo', length: 14, width: 6, maxHp: 30,
+    kind: 'kolo', name: 'Kolo', length: 14, width: 6, maxHp: 30, weight: 0.25,
     params: { maxSpeed: 95, reverseSpeed: 20, accel: 120, brake: 240, turnRate: 3.5, grip: 8, offroad: true },
   },
   zasahovka: {
-    kind: 'zasahovka', name: 'Zásahovka', length: 28, width: 13, maxHp: 240,
+    kind: 'zasahovka', name: 'Zásahovka', length: 28, width: 13, maxHp: 240, weight: 3,
     params: { maxSpeed: 175, reverseSpeed: 55, accel: 130, brake: 230, turnRate: 2.2, grip: 6.5, offroad: true },
   },
 };

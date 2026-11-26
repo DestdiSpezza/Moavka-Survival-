@@ -1,6 +1,6 @@
 # ADR-031: Analogový joystick
 
-- **Stav:** přijato (nahrazuje řízení auta z ADR-024)
+- **Stav:** přijato pro chůzi; řízení auta joystickem nahradilo ADR-032
 - **Proč:** Autor: ovládání na mobilu „bere to jako klávesnici, ne jako joystick“. Chůze se převáděla na čtyři klávesy (jen 8 směrů, pořád plná rychlost) a auto se řídilo jako na klávesnici (nahoru plyn, do stran volant), takže jet dolů po obrazovce znamenalo držet joystick nahoru a točit.
 - **Rozhodnutí:**
   - **Pěšky:** postava jde přesně tam, kam joystick ukazuje; rychlost podle vychýlení (35–100 % chůze, mrtvá zóna 20 %). Sprint dál tlačítkem.
