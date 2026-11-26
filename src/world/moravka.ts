@@ -83,6 +83,8 @@ export interface MapSpots {
   kobyla?: { x: number; y: number };
   /** Kde stojí Vysoký Denny, když je u garáže. */
   denny?: { x: number; y: number };
+  /** Parkoviště u eRka (dlaždice): srovnaná stání pro auta štamgastů a traktor s vlečkou. */
+  pubParking?: { x: number; y: number; w: number; h: number };
 }
 
 export interface WorldMap {

@@ -381,7 +381,16 @@ export function paintDecor(p: Painter, map: WorldMap): void {
       p.rect(x, y, w, h, PAL.asphalt[0]);
       p.noise(x, y, w, h, PAL.asphalt, 0.6);
       p.frame(x, y, w, h, 0x6e6658);
-      for (let j = 14; j < h - 2; j += 14) p.rect(x + 2, y + j, w - 4, 1, PAL.lineWhite, 0.9);
+      if (w >= 5 * TILE) {
+        // Velké parkoviště: dvě řady stání podél okrajů, uprostřed ulička, dole dlouhé stání.
+        for (let j = 16; j <= 64; j += 16) {
+          p.rect(x + 2, y + j, 30, 1, PAL.lineWhite, 0.9);
+          p.rect(x + w - 32, y + j, 30, 1, PAL.lineWhite, 0.9);
+        }
+        p.rect(x + 32, y + 2, 1, 63, PAL.lineWhite, 0.9);
+        p.rect(x + w - 33, y + 2, 1, 63, PAL.lineWhite, 0.9);
+        p.frame(x + 4, y + 66, w - 8, h - 68, PAL.lineWhite);
+      } else for (let j = 14; j < h - 2; j += 14) p.rect(x + 2, y + j, w - 4, 1, PAL.lineWhite, 0.9);
       p.rect(x + w / 2 - 6, y + 4, 12, 7, 0x2f5fa8);
       p.rect(x + w / 2 - 2, y + 5, 4, 5, 0xffffff);
     }

@@ -158,3 +158,8 @@ Nová rozhodnutí se přidávají na konec; staré se nemažou, jen se označí 
 ## ADR-028: Logo studia, titulní malba a prolog
 - **Stav:** přijato
 - **Rozhodnutí:** Obrázky od autora jsou v `public/img/` (logo zmenšené na 512 px, malba Morávky jako JPG). Při spuštění hry se na černé rozsvítí logo Grand Morávka Game Studios s „uvádí“ (`SplashScene`). Titulní obrazovka má za menu malbu Morávky, která pomalu pluje, a malé logo v rohu. Nová hra začíná prologem (`PrologScene`): kamera jezdí po malbě (cedule Morávka, eRko, Omladina, Hasiči, přehrada, celek) s vypisovanými titulky v duchu hry, pak volba hrdiny. Logo i prolog jdou kdykoli přeskočit (ťuknutí, mezerník, Enter).
+
+## ADR-029: Parkoviště u eRka
+- **Stav:** přijato
+- **Proč:** Auta u hospody stála náhodně (kde se našlo volné místo, i přede dveřmi).
+- **Rozhodnutí:** Vlevo od eRka (mezi potokem a hospodou, místo jednoho domu) je asfaltové parkoviště 6×5 dlaždic: dvě řady stání podél okrajů, ulička uprostřed, dole dlouhé stání pro traktor s vlečkou. Auta (dvě Štamgastů, ostatní ničí) a skútr stojí srovnaně čelem k okraji; prázdná stání se mimo dohled zase zaplní. Před dveřmi eRka se neparkuje.

@@ -105,7 +105,7 @@ const HOUSES: Pt[] = [
   [12, 37.8], [16.8, 43.4], [20.6, 45], [25.3, 46.9], [28.4, 48.1], [14, 47.5], [18.4, 50.6], [22.2, 53.75], [26.6, 55.3],
   [15.6, 58.75], [23.4, 59.7], [21.6, 64.7], [30.5, 62], [31, 52], [17, 62],
   // Západně od křižovatky
-  [17, 25], [16, 21], [21, 12], [25, 26], [21, 33],
+  [17, 25], [21, 12], [25, 26], [21, 33],
   // Jihovýchod u řeky (safe house)
   [100, 45], [100, 50], [101, 56], [102, 61], [109.5, 46.5], [109.5, 51], [110, 62], [96, 40], [104, 41], [97, 34], [109, 41],
   // Podél silnice u řeky
@@ -190,6 +190,8 @@ export function buildMoravka(): WorldMap {
     { kind: 'oval', x: 74.5, y: 50, rx: 6.5, ry: 8.5 },
     { kind: 'playground', x: 42, y: 58, w: 6, h: 3 },
     { kind: 'parking', x: 37, y: 34, w: 3, h: 4 },
+    // Parkoviště u eRka (vlevo od hospody, mezi potokem a hospodou).
+    { kind: 'parking', x: 14, y: 18, w: 6, h: 5 },
     { kind: 'court', x: 58, y: 63, w: 9, h: 3 },
   ];
   for (const d of decor) {
@@ -353,6 +355,7 @@ export function buildMoravka(): WorldMap {
       busStop,
       kobyla,
       denny: { x: garage.x + garage.w / 2 + 2, y: garage.y + garage.h + 1 },
+      pubParking: { x: 14, y: 18, w: 6, h: 5 },
     },
     busStops: [
       { x: 40 * TILE + 3, y: 34 * TILE + 2 },

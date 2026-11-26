@@ -107,20 +107,37 @@ export function parkedVehicles(map: WorldMap): ParkedVehicle[] {
     return { x: Math.floor(b.x + b.w / 2) + dx, y: b.y + b.h + 1 };
   };
   const dam = map.spots.damParking;
-  // Před dveřmi eRka se neparkuje (a traktor s vlečkou potřebuje místo za sebou).
+  // Před dveřmi eRka se neparkuje.
   const pub = map.buildings.find((x) => x.name === 'Hospoda');
   if (pub) {
     const dx = Math.floor(pub.x + pub.w / 2);
     for (let x = dx - 2; x <= dx + 1; x++) for (let y = pub.y + pub.h; y <= pub.y + pub.h + 1; y++) taken.add(`${x},${y}`);
-    for (let x = dx - 11; x <= dx - 9; x++) taken.add(`${x},${pub.y + pub.h + 1}`);
+  }
+  // Parkoviště u eRka: auta srovnaně ve stáních (čelem k okraji), dole traktor s vlečkou.
+  const lot = map.spots.pubParking;
+  const lotCars: ParkedVehicle[] = [];
+  if (lot) {
+    for (let y = lot.y; y < lot.y + lot.h; y++) for (let x = lot.x; x < lot.x + lot.w; x++) taken.add(`${x},${y}`);
+    const x0 = lot.x * TILE;
+    const y0 = lot.y * TILE;
+    const w = lot.w * TILE;
+    const stall = (col: 0 | 1, row: number) => ({ x: col ? x0 + w - 15 : x0 + 15, y: y0 + 8 + row * 16, angle: col ? 0 : Math.PI });
+    const fill: Array<[VehicleKind, GroupId | null, 0 | 1, number]> = [
+      ['osobak', 'stamgasti', 0, 0],
+      ['osobak', null, 1, 0],
+      ['osobak', null, 0, 1],
+      ['skutr', 'stamgasti', 1, 2],
+      ['osobak', 'stamgasti', 0, 3],
+      ['osobak', null, 1, 3],
+    ];
+    for (const [kind, owner, col, row] of fill) lotCars.push({ kind, owner, ...stall(col, row) });
+    // Traktor v dlouhém stání dole, čelem na východ; vlečka za ním.
+    lotCars.push({ kind: 'traktor', owner: null, x: x0 + w - 18, y: y0 + 73, angle: 0 });
   }
   // Čtvrtý údaj: natočení (traktor čelem na východ, ať má vlečka místo za sebou).
   const plan: Array<[VehicleKind, { x: number; y: number }, GroupId | null, number?]> = [
-    ['osobak', near('Hospoda'), 'stamgasti'],
-    // Traktor před eRkem (s vlečkou pro Dennyho sochaře) nikomu ze skupin nepatří.
-    // Stojí kus vlevo od dveří, ať nezaclání vchodu.
-    ['traktor', near('Hospoda', -7), null, 0],
-    ['skutr', near('Hospoda'), 'stamgasti'],
+    // U eRka bez parkoviště (jiné mapy) aspoň auto a skútr Štamgastů; traktor jen bez parkoviště.
+    ...(lot ? [] : ([['osobak', near('Hospoda'), 'stamgasti'], ['traktor', near('Hospoda', -7), null, 0], ['skutr', near('Hospoda'), 'stamgasti']] as Array<[VehicleKind, { x: number; y: number }, GroupId | null, number?]>)),
     ['dodavka', near('Hasiči'), 'hasici'],
     ['traktor', near(map.buildings.some((b) => b.name === 'Pila') ? 'Pila' : 'Hasiči'), null],
     ['osobak', near('Škola'), 'omladina'],
@@ -132,10 +149,13 @@ export function parkedVehicles(map: WorldMap): ParkedVehicle[] {
     ['terenak', dam, null],
     ['kolo', dam, null],
   ];
-  return plan.map(([kind, at, owner, angle], i) => {
-    const { tx, ty } = findParkingSpot(map, at.x, at.y, taken);
-    return { kind, owner, x: (tx + 1) * TILE, y: (ty + 0.5) * TILE, angle: angle ?? (i % 2 ? Math.PI : 0) };
-  });
+  return [
+    ...lotCars,
+    ...plan.map(([kind, at, owner, angle], i) => {
+      const { tx, ty } = findParkingSpot(map, at.x, at.y, taken);
+      return { kind, owner, x: (tx + 1) * TILE, y: (ty + 0.5) * TILE, angle: angle ?? (i % 2 ? Math.PI : 0) };
+    }),
+  ];
 }
 
 /** Trasy pro provoz (jezdí se vpravo); první vede od výjezdu na sever (konvoj od Raškovic). */
