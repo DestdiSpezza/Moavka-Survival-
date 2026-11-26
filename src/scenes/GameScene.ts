@@ -690,7 +690,9 @@ export class GameScene extends Phaser.Scene {
     if ((Phaser.Input.Keyboard.JustDown(this.keys.enter) || took('action')) && !this.player.dead && !this.story.inputBlocked) {
       const folk = this.townsfolk.nearby();
       if (this.story.nearPubDoor()) this.story.enterPub();
-      else if (folk) this.townsfolk.talkTo(folk);
+      else if (this.story.job?.interact()) {
+        // Mise si E vzala sama.
+      } else if (folk) this.townsfolk.talkTo(folk);
       else if (this.pals.talkable()) this.story.talk(this.pals.talkDialog());
       else if (this.driving) this.exitVehicle();
       else this.tryEnterVehicle();

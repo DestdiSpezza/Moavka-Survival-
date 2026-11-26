@@ -24,12 +24,13 @@ const KIND_NOUN: Record<VehicleKind, { noun: string; gen: string; gender: 'm' | 
   zasahovka: { noun: 'zásahovka', gen: 'zásahovky', gender: 'f' },
   skutr: { noun: 'skútr', gen: 'skútru', gender: 'm' },
   kolo: { noun: 'kolo', gen: 'kola', gender: 'n' },
+  jerab: { noun: 'jeřáb', gen: 'jeřábu', gender: 'm' },
 };
 
 /** Výchozí barva typů, které nemají varianty laku. */
 export const DEFAULT_COLOR: Record<VehicleKind, ColorId> = {
   osobak: 'cerveny', dodavka: 'bily', terenak: 'olivovy', traktor: 'zeleny', policie: 'policejni',
-  zasahovka: 'cerny', skutr: 'fialovy', kolo: 'zeleny',
+  zasahovka: 'cerny', skutr: 'fialovy', kolo: 'zeleny', jerab: 'zluty',
 };
 
 export interface VehicleLook {

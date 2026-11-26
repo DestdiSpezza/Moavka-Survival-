@@ -113,6 +113,7 @@ export class Story {
   inPub(id: NpcId): boolean {
     if (id === 'zjebal' && this.state.job === 'zjebal-domu') return false;
     if (id === 'dennySochar' && this.state.job === 'sochar-leseni') return false;
+    if (id === 'plotkova' && this.state.job === 'plotkova-flasky') return false;
     if (this.game.pals.id === id) return false;
     return inPub(id, this.game.gangs.minute, this.festival);
   }
@@ -329,7 +330,8 @@ export class Story {
   private resumeJob(): void {
     const id = this.state.job as JobId;
     if (!id) return;
-    if (id === 'omyx-caj' && this.game.player.arsenal.ammo.caj > 0) {
+    // Jeřáb pro Vestu přežije přejezd mezi Morávkou a Raškovicemi.
+    if ((id === 'omyx-caj' && this.game.player.arsenal.ammo.caj > 0) || id === 'vesta-jerab') {
       const job = createJob(id, this.game, this);
       this.job = job;
       job.start(true);

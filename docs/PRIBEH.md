@@ -34,7 +34,7 @@ Omyx je přes den u řeky a večer v eRku (ADR-010).
 |---|---|---|
 | P1 | Akt 1: Příjezd – zrušení zakázek, příběhový systém, autobus a úvodní scéna, NPC na zastávce, mise „Do hospody“, interiér eRka, dialogy se 3 volbami, Plotková a Štamgasti | hotovo (v main) |
 | **P2** | **Akt 1: Mise v eRku** – Dřevaři → Hasiči, bez Biomatek; mise Omyxe (beskydský čaj, handlování), Zjebala (odvoz, Ajina), Vysokého Dennyho (auto do dílny), Dennyho sochaře (lešení traktorem s vlečkou) | **hotovo, čeká na schválení** |
-| **P3** | **Štamgasti v praxi**: parťáci s výhodami a nevýhodami (ADR-025), těžší start (ADR-006), Denny sochař a pár ran (ADR-015) – hotovo; mise od Metějky, Vesty, Kibiho a Plotkové – návrh čeká na schválení | **část hotová** |
+| **P3** | **Štamgasti v praxi**: parťáci s výhodami a nevýhodami (ADR-025), těžší start (ADR-006), Denny sochař a pár ran (ADR-015) – hotovo; mise od Metějky (kulečník), Vesty (jeřáb z Raškovic), Kibiho (schovej mě) a Plotkové (flašky pro Omladinu, ADR-026) | **hotovo** |
 | P4 | Akt 1 končí: konec aktu, přechod do Aktu 2 | čeká na příběh |
 | P5+ | Další akty (Raškovice, Krásná, Lysá hora), každý jako samostatná fáze | čeká na příběh |
 | průběžně | Ladění, testy hraním, ukládání, dokumentace | – |

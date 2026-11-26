@@ -118,7 +118,7 @@ describe('nabídky misí', () => {
     const { jobOfferDialog, jobActiveDialog } = await import('../scenes/jobs/offers');
     const { JOBS } = await import('./jobs');
     const fake = { startJob: () => {}, abandonJob: () => {} } as never;
-    const ids = new Set(['base']);
+    const ids = new Set(['base', 'pool']);
     for (const j of JOBS) {
       for (const d of [jobOfferDialog(fake, j.id, 'base'), jobActiveDialog(fake, j.id, 'base')]) {
         expect(validateDialog(d, ids), d.id).toEqual([]);

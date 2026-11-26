@@ -255,10 +255,10 @@ export const DIALOGS: Record<string, Dialog> = {
     nodes: {
       v1: {
         speaker: 'vesta',
-        text: 'Nová tvář! Já jsem Vesta. Tohle sako stálo víc než tvoje auto. Jaký máš auto? Aha, žádný. To je mi líto.',
+        text: 'Nová tvář! Já jsem Vesta. Tahle červená mikina stála víc než tvoje auto. Jaký máš auto? Aha, žádný. To je mi líto.',
         enter: (c) => c.know('vesta'),
         options: [
-          { text: 'Pěkný sako.', next: 'v2', do: (c) => c.rel('vesta', 5) },
+          { text: 'Pěkná mikina.', next: 'v2', do: (c) => c.rel('vesta', 5) },
           { text: 'Nikdo se tě neptal.', next: 'v3', do: (c) => c.rel('vesta', -5) },
           { text: 'Prý prodáváš věci pod pultem.', next: 'v4' },
         ],

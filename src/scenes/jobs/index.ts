@@ -1,7 +1,11 @@
 import type { JobId } from '../../story/jobs';
 import type { GameScene } from '../GameScene';
 import type { Story } from '../Story';
+import { BottlesJob } from './BottlesJob';
 import { DennyJob } from './DennyJob';
+import { KibiJob } from './KibiJob';
+import { PoolJob } from './PoolJob';
+import { VestaJob } from './VestaJob';
 import type { Job } from './Job';
 import { TeaJob } from './TeaJob';
 import { TractorJob } from './TractorJob';
@@ -17,5 +21,13 @@ export function createJob(id: JobId, game: GameScene, story: Story): Job {
       return new DennyJob(game, story);
     case 'sochar-leseni':
       return new TractorJob(game, story);
+    case 'metejka-kulecnik':
+      return new PoolJob(game, story);
+    case 'vesta-jerab':
+      return new VestaJob(game, story);
+    case 'kibi-schovej':
+      return new KibiJob(game, story);
+    case 'plotkova-flasky':
+      return new BottlesJob(game, story);
   }
 }

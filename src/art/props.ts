@@ -63,6 +63,23 @@ export function generateStoryProps(scene: Phaser.Scene): void {
     g.fillStyle(0xc89a5a).fillRect(2, 3, 14, 2).fillRect(1, 8, 16, 2);
     g.fillStyle(0xe8e040).fillRect(15, 5, 2, 2).fillRect(3, 10, 2, 2);
   });
+  // Autojeřáb shora (čelem doprava): žlutá kabina vpředu, rameno přes celou délku.
+  make('jerab-0', 34, 15, (g) => {
+    g.fillStyle(0x151515).fillRect(3, 0, 5, 2).fillRect(3, 13, 5, 2).fillRect(12, 0, 5, 2).fillRect(12, 13, 5, 2).fillRect(25, 0, 5, 2).fillRect(25, 13, 5, 2);
+    g.fillStyle(0xd8b020).fillRect(1, 2, 32, 11);
+    g.fillStyle(0xa88010).fillRect(1, 2, 32, 1).fillRect(1, 12, 32, 1);
+    g.fillStyle(0x3a4a5a).fillRect(28, 4, 4, 7); // okno kabiny
+    g.fillStyle(0x5a5a5a).fillRect(6, 6, 24, 3); // rameno
+    g.fillStyle(0xe8e040).fillRect(6, 6, 24, 1);
+    g.fillStyle(0x2a2a2a).fillRect(4, 5, 5, 5); // točna
+    g.fillStyle(0xd83a3a).fillRect(1, 2, 2, 2).fillRect(1, 11, 2, 2);
+  });
+  make('jerab-wreck', 34, 15, (g) => {
+    g.fillStyle(0x2a2420).fillRect(1, 2, 32, 11);
+    g.fillStyle(0x1a1410).fillRect(6, 6, 24, 3);
+  });
+  make('shadow-jerab', 34, 15, (g) => g.fillStyle(0x000000, 0.35).fillRect(0, 1, 34, 14));
+
   // Vrata garáže (lamely).
   make('garaz-vrata', 32, 8, (g) => {
     g.fillStyle(0x8a8a90).fillRect(0, 0, 32, 8);

@@ -11,6 +11,7 @@ const SELL_BASE: Record<VehicleKind, number> = {
   zasahovka: 900,
   skutr: 120,
   kolo: 40,
+  jerab: 1200,
 };
 
 /** Garáž vykoupí auto podle typu a stavu; rozbité za zlomek. */

@@ -482,7 +482,8 @@ const NPC_LOOKS: Record<string, HumanLook> = {
   'ajina-bat': { jacket: 0xe07aa8, pants: 0xe07aa8, hair: 'beanie', hairColor: 0xe8e0d0, skin: SKIN[1], tool: 'bat', pattern: 'belly' },
   prchard: { jacket: 0xe8e4da, pants: 0x2a2a2a, hair: 'bald', hairColor: 0, skin: SKIN[1], tool: 'none', pattern: 'belly' },
   plotkova: { jacket: 0xc83a4a, pants: 0x1a1a1a, hair: 'long', hairColor: 0xe8c070, skin: SKIN[2], tool: 'bottle' },
-  vesta: { jacket: 0x2a3a6a, pants: 0x2a2a3a, hair: 'short', hairColor: 0x2a1a10, skin: SKIN[0], tool: 'none' },
+  // Vesta: červená mikina (inside joke).
+  vesta: { jacket: 0xc8302a, pants: 0x2a2a3a, hair: 'short', hairColor: 0x2a1a10, skin: SKIN[0], tool: 'none' },
   metejka: { jacket: 0xd8a020, pants: 0x3a3a4a, hair: 'short', hairColor: 0x1a1a1a, skin: SKIN[0], tool: 'none' },
   zjebal: { jacket: 0x2a2a2e, pants: 0x4a5a3a, hair: 'bald', hairColor: 0, skin: SKIN[2], tool: 'bottle' },
   dennyVysoky: { jacket: 0x3a5a8a, pants: 0x3a5a8a, hair: 'cap', hairColor: 0x8a2a1a, skin: SKIN[1], tool: 'none' },

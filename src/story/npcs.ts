@@ -18,7 +18,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
   kobyla: { id: 'kobyla', name: 'Slečna Kobyla', css: '#d8a0e0', sprite: 'npc-kobyla' },
   prchard: { id: 'prchard', name: 'Prchard', css: '#ffd23f', sprite: 'npc-prchard' },
   plotkova: { id: 'plotkova', name: 'Plotková', css: '#ff8a9a', sprite: 'npc-plotkova' },
-  vesta: { id: 'vesta', name: 'Vesta', css: '#9ab8ff', sprite: 'npc-vesta' },
+  vesta: { id: 'vesta', name: 'Vesta', css: '#ff7a6a', sprite: 'npc-vesta' },
   omyx: { id: 'omyx', name: 'Omyx', css: '#7fe07a', sprite: 'dealer' },
   metejka: { id: 'metejka', name: 'Metějka', css: '#e8b040', sprite: 'npc-metejka' },
   zjebal: { id: 'zjebal', name: 'Zjebal', css: '#c8c8c8', sprite: 'npc-zjebal' },

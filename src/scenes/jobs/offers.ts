@@ -1,5 +1,5 @@
 import type { Dialog, DialogOption } from '../../story/dialog';
-import type { JobId } from '../../story/jobs';
+import { jobOf, type JobId } from '../../story/jobs';
 import type { Story } from '../Story';
 
 /**
@@ -134,6 +134,101 @@ export function jobOfferDialog(story: Story, id: JobId, base: string): Dialog {
         },
       };
     }
+    case 'metejka-kulecnik': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('metejka-kulecnik'), then: 'pool' });
+      return {
+        id: 'job-metejka',
+        start: 'm0',
+        nodes: {
+          m0: {
+            speaker: 'metejka',
+            text: 'Ty! Hasič Pepa mě vyzval na kulečník. O pětistovku. Já vyhraju, jasně. Kulečník je o hlavě. Ale kdyby… kdyby náhodou… pomůžeš mi? Nenápadně.',
+            enter: (c) => c.know('metejka'),
+            options: [take('Pomůžu. Nenápadně.'), { text: 'Ty přece vždycky vyhráváš.', next: 'm1' }, chat],
+          },
+          m1: {
+            speaker: 'metejka',
+            text: 'No jasně, že vyhrávám. Jen to nikdo nevidí. Ani já. Tak pomůžeš, nebo ne?',
+            options: [take('Pomůžu.'), end('Ne.'), chat],
+          },
+        },
+      };
+    }
+    case 'vesta-jerab': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('vesta-jerab'), next: 'ok' });
+      return {
+        id: 'job-vesta',
+        start: 'v0',
+        nodes: {
+          v0: {
+            speaker: 'vesta',
+            text: 'Hele, potřebuju jeřáb. Stojí na stavbě v Raškovicích, nikdo ho nehlídá, protože v Raškovicích nikdo nic nehlídá. Dovez ho k mýmu domu. Bez fízlů. Sedm stovek.',
+            enter: (c) => c.know('vesta'),
+            options: [take('Dovezu.'), { text: 'Na co ti je jeřáb?', next: 'v1' }, chat],
+          },
+          v1: {
+            speaker: 'vesta',
+            text: 'Na bazén. Na střechu. Na to, aby sousedi viděli, že mám jeřáb. Já bych ho koupil, ale to by nebyla zábava.',
+            options: [take('Tak jo.'), end('Teď ne.'), chat],
+          },
+          ok: {
+            speaker: 'vesta',
+            text: 'Výjezd na Raškovice je vlevo nahoře. Budu ti volat, jak to děláš špatně. Neboj, to je služba zdarma.',
+            options: [end('Nevolej.'), end('Jasně.'), end('Pěkná mikina, mimochodem.')],
+          },
+        },
+      };
+    }
+    case 'kibi-schovej': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('kibi-schovej'), next: 'ok' });
+      return {
+        id: 'job-kibi',
+        start: 'k0',
+        nodes: {
+          k0: {
+            speaker: 'kibi',
+            text: 'Psst. {jmeno}. Venku jsou tři. Zuzka, Monika a Jarka. Hledají mě. Všechny tři. Najednou. Někdo jim to řekl. Odveď je od eRka, než mě najdou.',
+            enter: (c) => c.know('kibi'),
+            options: [take('Odvedu je.'), { text: 'Co jsi jim provedl?', next: 'k1' }, chat],
+          },
+          k1: {
+            speaker: 'kibi',
+            text: 'Nic! Každé jsem slíbil, že je jediná. Což byla pravda. Každý den jiná.',
+            options: [take('Tak jo, pomůžu.'), end('To si vyžer sám.'), chat],
+          },
+          ok: {
+            speaker: 'kibi',
+            text: 'Jsem pod stolem. Kdyby se ptaly, nejsem tady. A nikdy jsem tu nebyl. A to s tou Jarkou je pomluva.',
+            options: [end('Pod stolem. Jasně.'), end('Která Jarka?'), end('…')],
+          },
+        },
+      };
+    }
+    case 'plotkova-flasky': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('plotkova-flasky'), next: 'ok' });
+      return {
+        id: 'job-plotkova',
+        start: 'p0',
+        nodes: {
+          p0: {
+            speaker: 'plotkova',
+            text: 'Hele, Omladina si objednala flašky. Šest kusů, čtyři místa po vesnici. Prchard to nesmí vědět. Odvezeš to se mnou? Já budu… hlídat zboží.',
+            enter: (c) => c.know('plotkova'),
+            options: [take('Jedem.'), { text: 'Ty budeš hlídat zboží?', next: 'p1' }, chat],
+          },
+          p1: {
+            speaker: 'plotkova',
+            text: 'Jo. Zevnitř. Neboj, já se kontroluju. Teda kontroluju flašky. Jestli nejsou zkažený.',
+            options: [take('Tak jedem, rychle.'), end('To nedopadne dobře.'), chat],
+          },
+          ok: {
+            speaker: 'plotkova',
+            text: 'Hřiště za školou, školka, náves a Omyx u řeky. Jeď rychle. Čím dýl pojedeš, tím míň toho dovezem. Hehe. Hik.',
+            options: [end('Rozumím.'), end('Neotvírej to.'), end('Hik?')],
+          },
+        },
+      };
+    }
   }
 }
 
@@ -144,14 +239,22 @@ export function jobActiveDialog(story: Story, id: JobId, base: string): Dialog {
     'zjebal-domu': 'Hehe. Auto?',
     'denny-auto': 'Hm. Auto?',
     'sochar-leseni': 'Lešení? Traktor? Já tu jen tak sedím. Nemáš stovku?',
+    'metejka-kulecnik': 'Hraje se! Pomáhej. Nenápadně!',
+    'vesta-jerab': 'Kde je můj jeřáb? Sousedi se ptají. Teda neptají, ale budou.',
+    'kibi-schovej': 'Psst. Jsou pořád venku? Nejsem tady.',
+    'plotkova-flasky': 'Hik. Jedem?',
   };
   const giveUp: Record<JobId, string> = {
     'omyx-caj': 'Čaj si nech, na památku. Peníze ti nevrátím, jsem dealer, ne banka.',
     'zjebal-domu': 'Hehe… Ajina mě zabije. Tak nic.',
     'denny-auto': 'Hm.',
     'sochar-leseni': 'Aha. Tak nic. Umění počká. Umění vždycky počká.',
+    'metejka-kulecnik': 'Zbabělec. Vyhraju sám. Jako vždycky. Asi.',
+    'vesta-jerab': 'Jasně. Řeknu to všem.',
+    'kibi-schovej': 'Tak to jsem mrtvej. Pozdravuj mámu. Teda moji. Ne, radši ne.',
+    'plotkova-flasky': 'Tak je vypiju tady. Škoda by zkazit.',
   };
-  const speaker = ({ 'omyx-caj': 'omyx', 'zjebal-domu': 'zjebal', 'denny-auto': 'dennyVysoky', 'sochar-leseni': 'dennySochar' } as const)[id];
+  const speaker = jobOf(id)!.giver;
   return {
     id: `job-active-${id}`,
     start: 'a0',

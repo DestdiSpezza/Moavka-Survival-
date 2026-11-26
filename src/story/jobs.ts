@@ -5,7 +5,7 @@ import type { NpcId } from './npcs';
  * hráč má najednou jen jednu. Některé čekají na jiné (traktor až po Zjebalovi).
  */
 
-export type JobId = 'omyx-caj' | 'zjebal-domu' | 'denny-auto' | 'sochar-leseni';
+export type JobId = 'omyx-caj' | 'zjebal-domu' | 'denny-auto' | 'sochar-leseni' | 'metejka-kulecnik' | 'vesta-jerab' | 'kibi-schovej' | 'plotkova-flasky';
 
 export interface JobDef {
   id: JobId;
@@ -22,7 +22,40 @@ export const JOBS: JobDef[] = [
   { id: 'zjebal-domu', giver: 'zjebal', title: 'Zjebal domů', requires: [], reward: { money: 0, rel: 10 } },
   { id: 'denny-auto', giver: 'dennyVysoky', title: 'Auto pro Dennyho', requires: [], reward: { money: 600, rel: 15 } },
   { id: 'sochar-leseni', giver: 'dennySochar', title: 'Lešení', requires: ['zjebal-domu'], reward: { money: 250, rel: 20 } },
+  // Fáze P3 (zadání ze 26. 11. 2026).
+  { id: 'metejka-kulecnik', giver: 'metejka', title: 'Kulečník', requires: [], reward: { money: 250, rel: 15 } },
+  { id: 'vesta-jerab', giver: 'vesta', title: 'Jeřáb pro Vestu', requires: [], reward: { money: 700, rel: 15 } },
+  { id: 'kibi-schovej', giver: 'kibi', title: 'Schovej Kibiho', requires: [], reward: { money: 300, rel: 20 } },
+  { id: 'plotkova-flasky', giver: 'plotkova', title: 'Flašky pro Omladinu', requires: [], reward: { money: 400, rel: 15 } },
 ];
+
+// ---------- Metějka: kulečník ----------
+
+export type PoolMove = 'strcit' | 'rada' | 'koule';
+
+/**
+ * Jedno kolo kulečníku: hráč Metějkovi tajně „pomáhá“. Rada je bezpečná, ale nejistá;
+ * posunutá koule skoro jistá, ale Hasič si toho může všimnout; strčit do tága je něco mezi.
+ */
+export function poolRound(move: PoolMove, roll: number, catchRoll: number): { won: boolean; caught: boolean } {
+  const odds: Record<PoolMove, { win: number; caught: number }> = {
+    rada: { win: 0.55, caught: 0 },
+    strcit: { win: 0.7, caught: 0.2 },
+    koule: { win: 0.9, caught: 0.35 },
+  };
+  const o = odds[move];
+  const caught = catchRoll < o.caught;
+  return { won: !caught && roll < o.win, caught };
+}
+
+// ---------- Plotková: flašky ----------
+
+export const BOTTLES = { start: 6, stops: 4, time: 110, drinkEvery: 18, drinkPenalty: 8 };
+
+/** Stihne se to ještě? (flašek musí být aspoň tolik, kolik zbývá zastávek) */
+export function bottlesEnough(bottles: number, stopsLeft: number): boolean {
+  return bottles >= stopsLeft;
+}
 
 export function jobOf(id: string): JobDef | null {
   return JOBS.find((j) => j.id === id) ?? null;

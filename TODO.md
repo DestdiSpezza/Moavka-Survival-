@@ -9,7 +9,7 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 - [x] **Fáze P2: Akt 1 – Mise v eRku** (Hasiči místo Dřevařů, bez Biomatek, mise Omyxe, Zjebala, Vysokého Dennyho a Dennyho sochaře).
 - [x] Fáze P3: výhody a nevýhody Štamgastů jako mechaniky (parťáci, ADR-025) (Metějka odpuzuje policii, Vysoký Denny opravuje a přelakuje, Omyx a touha hulit, Zjebal řídí náklaďák a musí domů, Denny sochař si půjčuje, Prchard určuje cenu piva, Kibi a ženy, Vesta pomáhá s kecama, Plotková naviguje a chce panáky).
 - [x] Fáze P3: následky volby „s nikým se bavit nechci“ (těžší start, ADR-006).
-- [ ] Fáze P3: mise od Metějky, Vesty, Kibiho a Plotkové (zadání dodáš).
+- [x] Fáze P3: mise od Metějky, Vesty, Kibiho a Plotkové (ADR-026).
 - [x] Fáze P3: Denny sochař musí dostat pár ran pěstí, než odejde (ADR-015).
 - [ ] Omyx je v eRku jen večer (17–5); přes den u řeky zatím misi nenabízí.
 - [ ] Vlečka s ničím nekoliduje (projede zdí); fyzika vlečky a padající náklad v ostrých zatáčkách.

@@ -26,5 +26,9 @@ export abstract class Job {
   /** `resume` = mise pokračuje po načtení hry. */
   start(_resume = false): void {}
   abstract update(dt: number): JobResult;
+  /** E u něčeho, co patří k misi (ženská hledající Kibiho). Vrátí true, když to zpracovala. */
+  interact(): boolean {
+    return false;
+  }
   cleanup(): void {}
 }

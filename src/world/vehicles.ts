@@ -4,7 +4,7 @@ import type { WorldMap } from './moravka';
 import { Tile } from './tiles';
 import { TILE } from '../config';
 
-export type VehicleKind = 'osobak' | 'dodavka' | 'terenak' | 'traktor' | 'policie' | 'zasahovka' | 'skutr' | 'kolo';
+export type VehicleKind = 'osobak' | 'dodavka' | 'terenak' | 'traktor' | 'policie' | 'zasahovka' | 'skutr' | 'kolo' | 'jerab';
 
 export interface VehicleType {
   kind: VehicleKind;
@@ -28,6 +28,11 @@ export const VEHICLE_TYPES: Record<VehicleKind, VehicleType> = {
   terenak: {
     kind: 'terenak', name: 'Teréňák', length: 26, width: 13, maxHp: 140,
     params: { maxSpeed: 170, reverseSpeed: 60, accel: 130, brake: 230, turnRate: 2.4, grip: 6.5, offroad: true },
+  },
+  // Autojeřáb ze stavby v Raškovicích (mise Vesty): těžký, pomalý, zatáčí jak tanker.
+  jerab: {
+    kind: 'jerab', name: 'Jeřáb', length: 34, width: 15, maxHp: 280,
+    params: { maxSpeed: 80, reverseSpeed: 30, accel: 55, brake: 180, turnRate: 1.5, grip: 9, offroad: true },
   },
   traktor: {
     kind: 'traktor', name: 'Traktor', length: 22, width: 14, maxHp: 200,

@@ -13,7 +13,8 @@ Hlášky jsou návrhy, doladíme je při implementaci.
 ## Štamgasti eRka
 
 ### Vesta
-- **Kdo:** Bohatý čurák, pořád má nějaké blbé řeči.
+- **Kdo:** Bohatý čurák v červené mikině, pořád má nějaké blbé řeči.
+- **Mise (Akt 1):** *Jeřáb pro Vestu.* Ukrást autojeřáb na stavbě v Raškovicích a dovézt ho k jeho domu bez hvězd; celou cestu volá, jak to děláš špatně (ADR-026).
 - **Výhoda:** Pomůže vždycky.
 - **Nevýhoda:** Blbé kecy, do očí.
 - **Kde:** U stolu u okna, objednává za všechny a pak to všem připomíná.
