@@ -31,18 +31,6 @@ export function took(name: string): boolean {
   return performance.now() - at < 300;
 }
 
-/** Joystick jako čtyři směry (chůze pěšky). */
-export function stickDirs(dead = 0.35): { up: boolean; down: boolean; left: boolean; right: boolean } {
-  return { up: touch.stickY < -dead, down: touch.stickY > dead, left: touch.stickX < -dead, right: touch.stickX > dead };
-}
-
-/** Joystick pro auto: nahoru plyn, dolů brzda a couvání, do stran zatáčení. */
-export function stickDrive(dead = 0.2): { throttle: number; steer: number } {
-  const t = -touch.stickY;
-  const s = touch.stickX;
-  return { throttle: Math.abs(t) < dead ? 0 : t, steer: Math.abs(s) < dead ? 0 : s };
-}
-
 export function detectTouch(): boolean {
   try {
     const q = new URLSearchParams(location.search).get('touch');

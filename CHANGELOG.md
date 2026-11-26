@@ -4,6 +4,10 @@ Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech
 
 ## 2026-11-26
 
+### Analogový joystick na mobilu (ADR-031)
+- Pěšky jdeš přesně tam, kam joystick ukazuje, rychlost podle vychýlení.
+- V autě joystick ukazuje, kam jet: auto zatočí samo, dozadu couvá.
+
 ### Nové rozložení eRka (ADR-030)
 - Hospoda podle náčrtu autora: salonek, kuchyň a WC, bar do L s regálem lahví, kulečník dole, dveře vlevo dole.
 - Víc stolů a židlí, šipky, paroží, koberec, bedny od piva, hrací automat, sudy za barem.

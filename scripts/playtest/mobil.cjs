@@ -79,6 +79,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await stick(55, 0, 900);
     const p1 = await G(() => { const g = window.__game.scene.getScene('Game'); return { x: g.player.x, y: g.player.y, rot: g.player.rotation }; });
     console.log('walk', JSON.stringify({ p0, p1 }));
+    // Šikmo (ne v osmi směrech): doprava dolů pod mělkým úhlem.
+    await stick(55, 18, 900);
+    const p2 = await G(() => { const g = window.__game.scene.getScene('Game'); return { x: g.player.x, y: g.player.y }; });
+    const walkAng = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    console.log('walk analog', JSON.stringify({ deg: Math.round((walkAng * 180) / Math.PI), want: Math.round((Math.atan2(18, 55) * 180) / Math.PI) }));
     // K autu a nastoupit tlačítkem E.
     await G(() => { const g = window.__game.scene.getScene('Game'); const v = g.vehicles.find((v) => v.spec.kind === 'osobak' && v.driver === 'none' && !v.wrecked); v.body.reset(g.player.x + 30, g.player.y + 40); g.player.body.reset(v.x, v.y + 16); });
     await sleep(400);
@@ -87,9 +92,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     console.log('driving', await G(() => !!window.__game.scene.getScene('Game').driving));
     await shot('06-v-aute');
     const c0 = await G(() => { const v = window.__game.scene.getScene('Game').driving; return { x: v.x, y: v.y }; });
-    await stick(0, -60, 1500); // plyn
+    const deg = () => G(() => Math.round((window.__game.scene.getScene('Game').driving.drive.angle * 180) / Math.PI));
+    console.log('car angle start', await deg());
+    await stick(0, -60, 1800); // ukázat nahoru: auto se stočí nahoru a jede
     const c1 = await G(() => { const v = window.__game.scene.getScene('Game').driving; return { x: v.x, y: v.y, speed: v.speed }; });
-    console.log('drive', JSON.stringify({ c0, c1 }));
+    console.log('drive up', JSON.stringify({ c0, c1, angle: await deg() }));
+    // Zpátky na volné místo (nahoře mohl narazit) a ukázat doprava.
+    await G((c) => { const v = window.__game.scene.getScene('Game').driving; v.body.reset(c.x, c.y); v.drive = { angle: -Math.PI / 2, vx: 0, vy: 0 }; v.setRotation(-Math.PI / 2); }, c0);
+    await stick(60, 0, 1500);
+    console.log('drive right angle', await deg());
     await tapAt(960 - 205, 540 - 60); // vystoupit
     await sleep(500);
     // Útok tlačítkem: chodec vedle hráče.

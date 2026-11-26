@@ -54,9 +54,9 @@ export class SettingsScene extends Phaser.Scene {
 
 /** Ovládání prstem (mobil, ADR-024). */
 const TOUCH_CONTROLS = [
-  ['Pěšky', 'joystick vlevo (kde se dotkneš, tam vznikne) · SPRINT podržet'],
+  ['Pěšky', 'joystick vlevo: jdeš, kam ukazuje; málo vychýlit = pomalu · SPRINT'],
   ['Útok', 'ÚTOK míří sám na nejbližšího, kdo jde po tobě · ZBRAŇ přepne'],
-  ['Auto', 'E nastoupit / vystoupit · joystick nahoru plyn, dolů brzda, do stran zatáčení'],
+  ['Auto', 'E nastoupit · joystick ukaž, kam jet: auto zatočí samo, dozadu = couvá'],
   ['', 'BRZDA = ruční brzda (drift)'],
   ['Akce', 'E: promluvit, vejít do eRka, nastoupit'],
   ['Rozhovor', 'ťukni na volbu · obchod: tlačítka 1–5'],

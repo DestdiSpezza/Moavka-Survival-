@@ -11,7 +11,7 @@ import { explosionDamageAt, EXPLOSION_RADIUS } from '../systems/damage';
 import { findPath } from '../systems/pathfind';
 import { createRng } from '../systems/rng';
 import { isAhead, type Point, steerToward } from '../systems/trafficAi';
-import { type DriveInput, lateralSpeed, surfaceFor, toKmh } from '../systems/vehicleModel';
+import { type DriveInput, forwardSpeed, lateralSpeed, surfaceFor, toKmh } from '../systems/vehicleModel';
 import { T } from '../texts/cs';
 import { type AreaDef, type AreaId, AREAS, placeLabel } from '../world/areas';
 import { type WorldMap, zoneAt } from '../world/moravka';
@@ -41,7 +41,8 @@ import { isEvening } from '../systems/clock';
 import type { Appearance } from '../systems/witness';
 import { Police } from './Police';
 import { Pals } from './Pals';
-import { stickDrive, took, touch } from '../input/touch';
+import { took, touch } from '../input/touch';
+import { stickDrive } from '../systems/stick';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
 const ENTER_RANGE = 26;
@@ -911,8 +912,9 @@ export class GameScene extends Phaser.Scene {
     const keyThrottle = (up ? 1 : 0) - (down ? 1 : 0);
     const keySteer = (right ? 1 : 0) - (left ? 1 : 0);
     if (touch.enabled && !keyThrottle && !keySteer) {
-      // Joystick: nahoru plyn, dolů brzda/couvání, do stran zatáčení; tlačítko BRZDA = ruční brzda.
-      const t = stickDrive();
+      // Joystick ukazuje, kam má auto jet (ADR-031); tlačítko BRZDA = ruční brzda.
+      const v = this.driving!;
+      const t = stickDrive(touch.stickX, touch.stickY, v.drive.angle, forwardSpeed(v.drive));
       return { throttle: t.throttle, steer: t.steer, handbrake: k.handbrake.isDown || touch.sprint };
     }
     return { throttle: keyThrottle, steer: keySteer, handbrake: k.handbrake.isDown || (touch.enabled && touch.sprint) };

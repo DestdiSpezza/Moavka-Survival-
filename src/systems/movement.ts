@@ -13,6 +13,8 @@ export interface MoveInput {
   left: boolean;
   right: boolean;
   sprint: boolean;
+  /** Analogový směr (joystick): jednotkový vektor a násobek rychlosti; má přednost před šipkami. */
+  analog?: { dx: number; dy: number; speed: number };
 }
 
 export interface MoveState {
@@ -35,6 +37,12 @@ export interface MoveResult {
 export function computeMove(input: MoveInput, state: MoveState, dt: number, terrainFactor: number): MoveResult {
   let dx = (input.right ? 1 : 0) - (input.left ? 1 : 0);
   let dy = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+  let scale = 1;
+  if (input.analog && input.analog.speed > 0 && dx === 0 && dy === 0) {
+    dx = input.analog.dx;
+    dy = input.analog.dy;
+    scale = input.analog.speed;
+  }
   const moving = dx !== 0 || dy !== 0;
   if (moving) {
     const len = Math.hypot(dx, dy);
@@ -50,6 +58,6 @@ export function computeMove(input: MoveInput, state: MoveState, dt: number, terr
   stamina = clamp(stamina, 0, STAMINA_MAX);
   if (stamina === 0) exhausted = true;
 
-  const speed = (sprinting ? SPRINT_SPEED : WALK_SPEED) * terrainFactor;
+  const speed = (sprinting ? SPRINT_SPEED : WALK_SPEED * scale) * terrainFactor;
   return { vx: dx * speed, vy: dy * speed, sprinting, state: { stamina, exhausted } };
 }

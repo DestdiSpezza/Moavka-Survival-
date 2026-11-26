@@ -7,10 +7,10 @@ Co ve hře funguje a kde to hledat. Původní technické fáze 0–9 jsou popsan
 
 | | Klávesnice a myš | Mobil (ADR-024) |
 |---|---|---|
-| Chůze | WASD / šipky, SHIFT sprint | joystick vlevo, SPRINT |
+| Chůze | WASD / šipky, SHIFT sprint | joystick vlevo (analogově: směr i rychlost), SPRINT |
 | Míření a útok | myš, levé tlačítko | ÚTOK (míří sám na nepřítele) |
 | Zbraně | 1–5, 6 čaj, Q / kolečko | ZBRAŇ |
-| Auto | E nastoupit/vystoupit, W/S, A/D, MEZERNÍK ruční brzda, R rádio | E, joystick (plyn/brzda/zatáčení), BRZDA |
+| Auto | E nastoupit/vystoupit, W/S, A/D, MEZERNÍK ruční brzda, R rádio | E, joystick ukazuje, kam jet (auto zatočí samo, dozadu couvá), BRZDA |
 | Rozhovor | E u postavy, 1–3 nebo myš | E, ťuknout na řádek volby |
 | Pauza | Esc | II |
 
