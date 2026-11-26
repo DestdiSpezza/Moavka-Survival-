@@ -1,3 +1,4 @@
+import { took } from '../input/touch';
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import type { GameScene } from './GameScene';
@@ -54,7 +55,7 @@ export class Intro {
 
   update(dt: number): void {
     if (this.phase === 'done' || this.phase === 'talk') return;
-    if (this.phase !== 'leave' && this.skipKeys.some((k) => Phaser.Input.Keyboard.JustDown(k))) {
+    if (this.phase !== 'leave' && (this.skipKeys.some((k) => Phaser.Input.Keyboard.JustDown(k)) || took('skip'))) {
       this.skip();
       return;
     }

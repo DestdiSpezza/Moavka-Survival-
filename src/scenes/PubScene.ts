@@ -1,3 +1,4 @@
+import { took } from '../input/touch';
 import Phaser from 'phaser';
 import { TILE, WORLD_ZOOM } from '../config';
 import { Player } from '../entities/Player';
@@ -139,7 +140,7 @@ export class PubScene extends Phaser.Scene {
     else if (atDoor) this.prompt.setText('E: odejít ven');
     else this.prompt.setText('WASD chůze · E u postavy = promluvit · dveře dole = ven');
 
-    if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
+    if (Phaser.Input.Keyboard.JustDown(this.eKey) || took('action')) {
       if (nearest) this.talkTo(nearest.id);
       else if (atDoor) this.story.exitPub();
     }

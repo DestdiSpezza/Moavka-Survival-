@@ -1,3 +1,4 @@
+import { touch } from '../input/touch';
 import Phaser from 'phaser';
 import { Sound } from '../audio/Sound';
 import { stepVolume } from '../systems/settings';
@@ -46,20 +47,31 @@ export class SettingsScene extends Phaser.Scene {
       },
       { label: () => 'Zpět', action: () => back(this, data.from) },
     ], 44);
-    this.add.text(width / 2, 450, 'A/D mění hodnotu · Esc zpět', pixelFont(14, '#c8c0a8')).setOrigin(0.5);
+    this.add.text(width / 2, 450, touch.enabled ? 'Ťukni vlevo/vpravo na hodnotu = ubrat/přidat' : 'A/D mění hodnotu · Esc zpět', pixelFont(14, '#c8c0a8')).setOrigin(0.5);
     this.input.keyboard!.once('keydown-ESC', () => back(this, data.from));
   }
 }
 
+/** Ovládání prstem (mobil, ADR-024). */
+const TOUCH_CONTROLS = [
+  ['Pěšky', 'joystick vlevo (kde se dotkneš, tam vznikne) · SPRINT podržet'],
+  ['Útok', 'ÚTOK míří sám na nejbližšího, kdo jde po tobě · ZBRAŇ přepne'],
+  ['Auto', 'E nastoupit / vystoupit · joystick nahoru plyn, dolů brzda, do stran zatáčení'],
+  ['', 'BRZDA = ruční brzda (drift)'],
+  ['Akce', 'E: promluvit, vejít do eRka, nastoupit'],
+  ['Rozhovor', 'ťukni na volbu · obchod: tlačítka 1–5'],
+  ['Hra', 'II pauza · telefon drž na šířku'],
+];
+
 const CONTROLS = [
   ['Pěšky', 'WASD / šipky chůze · SHIFT sprint · myš míření · levé tlačítko útok'],
-  ['Zbraně', '1–5 výběr · Q nebo kolečko další zbraň'],
+  ['Zbraně', '1–5 výběr · 6 beskydský čaj · Q nebo kolečko další'],
   ['Auto', 'E nastoupit / ukrást / vystoupit · W/S plyn a brzda · A/D zatáčení'],
   ['', 'MEZERNÍK ruční brzda (drift) · R rádio · levé tlačítko střelba z okna'],
-  ['Zakázky', 'dojdi k „!“ skupiny · 1–3 výběr · X vzdát'],
-  ['Místa', 'garáž, obchod a chata: dojdi (garáž: dojeď) a vyber 1–5'],
+  ['Rozhovor', 'E u postavy · 1–3 nebo myš volba · E u dveří eRka vejít'],
+  ['Místa', 'Vesta a chata: dojdi a vyber 1–5 · garáž: přijeď k Vysokému Dennymu'],
   ['Nápovědy', 'H skryje tutoriál'],
-  ['Hra', 'Esc pauza · uložení v chatě a automaticky po zakázce a přejezdu'],
+  ['Hra', 'Esc pauza · uložení v chatě a automaticky po misi a přejezdu'],
 ];
 
 /** Přehled ovládání. */
@@ -72,14 +84,15 @@ export class ControlsScene extends Phaser.Scene {
     const { width, height } = this.scale;
     dim(this, 0.88);
     this.add.text(width / 2, 70, 'OVLÁDÁNÍ', pixelFont(36, '#ffd23f')).setOrigin(0.5).setStroke('#000', 6);
-    CONTROLS.forEach(([head, text], i) => {
+    (touch.enabled ? TOUCH_CONTROLS : CONTROLS).forEach(([head, text], i) => {
       this.add.text(150, 140 + i * 34, head, pixelFont(17, '#ffd23f')).setStroke('#000', 4);
       this.add.text(270, 140 + i * 34, text, pixelFont(16)).setStroke('#000', 4);
     });
-    this.add.text(width / 2, height - 50, 'Esc / Enter zpět', pixelFont(16, '#c8c0a8')).setOrigin(0.5);
+    this.add.text(width / 2, height - 50, touch.enabled ? 'Ťukni = zpět' : 'Esc / Enter zpět', pixelFont(16, '#c8c0a8')).setOrigin(0.5);
     const close = () => back(this, data.from);
     this.input.keyboard!.once('keydown-ESC', close);
     this.input.keyboard!.once('keydown-ENTER', close);
+    this.input.once('pointerdown', close);
   }
 }
 

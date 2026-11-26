@@ -55,9 +55,14 @@ export class DialogScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       t.on('pointerover', () => t.setStroke('#ffd23f', 2));
       t.on('pointerout', () => t.setStroke('#000000', 0));
-      t.on('pointerdown', () => this.pick(i));
       this.optionTexts.push(t);
     }
+    // Ťuknutí kamkoli na řádek volby (prstem se text trefuje špatně).
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (p.y < top) return;
+      const i = this.optionTexts.findIndex((t) => t.visible && p.y >= t.y - 5 && p.y <= t.y + t.height + 5);
+      if (i >= 0) this.pick(i);
+    });
     const kb = this.input.keyboard!;
     ['ONE', 'TWO', 'THREE'].forEach((k, i) => kb.on(`keydown-${k}`, () => this.pick(i)));
     ['NUMPAD_ONE', 'NUMPAD_TWO', 'NUMPAD_THREE'].forEach((k, i) => kb.on(`keydown-${k}`, () => this.pick(i)));

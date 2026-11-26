@@ -1,3 +1,4 @@
+import { took } from '../input/touch';
 import Phaser from 'phaser';
 import { TILE } from '../config';
 import { Sound } from '../audio/Sound';
@@ -98,7 +99,7 @@ export class Economy {
     } satisfies MenuHud);
     this.keys.forEach((k, i) => {
       const o = menu.options[i];
-      if (Phaser.Input.Keyboard.JustDown(k) && o) {
+      if ((Phaser.Input.Keyboard.JustDown(k) || took(String(i + 1))) && o) {
         if (o.enabled) o.run();
         else g.toast('To teď nejde (peníze, hvězdy, nebo nejsi ve správném autě).');
       }

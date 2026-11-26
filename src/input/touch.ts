@@ -1,0 +1,56 @@
+/**
+ * Dotykové ovládání (mobil, ADR-024). Stav sdílí TouchScene (kreslí joystick a tlačítka)
+ * a hra (hráč, auto, boj, menu). Klávesnice a myš fungují dál; dotyk se jen přidává.
+ */
+
+export interface TouchState {
+  /** Ovládání je zapnuté (dotykové zařízení nebo ?touch=1). */
+  enabled: boolean;
+  /** Joystick: -1..1, y dolů kladně. */
+  stickX: number;
+  stickY: number;
+  /** Tlačítka, která se drží. */
+  fire: boolean;
+  sprint: boolean;
+}
+
+export const touch: TouchState = { enabled: false, stickX: 0, stickY: 0, fire: false, sprint: false };
+
+/** Jednorázová ťuknutí (akce, zbraň, pauza, přeskočit, 1–5) a kdy přišla. */
+const taps = new Map<string, number>();
+
+export function tap(name: string): void {
+  taps.set(name, performance.now());
+}
+
+/** Bylo ťuknuto (v posledních 300 ms)? Ťuknutí se tím spotřebuje. */
+export function took(name: string): boolean {
+  const at = taps.get(name);
+  if (at === undefined) return false;
+  taps.delete(name);
+  return performance.now() - at < 300;
+}
+
+/** Joystick jako čtyři směry (chůze pěšky). */
+export function stickDirs(dead = 0.35): { up: boolean; down: boolean; left: boolean; right: boolean } {
+  return { up: touch.stickY < -dead, down: touch.stickY > dead, left: touch.stickX < -dead, right: touch.stickX > dead };
+}
+
+/** Joystick pro auto: nahoru plyn, dolů brzda a couvání, do stran zatáčení. */
+export function stickDrive(dead = 0.2): { throttle: number; steer: number } {
+  const t = -touch.stickY;
+  const s = touch.stickX;
+  return { throttle: Math.abs(t) < dead ? 0 : t, steer: Math.abs(s) < dead ? 0 : s };
+}
+
+export function detectTouch(): boolean {
+  try {
+    const q = new URLSearchParams(location.search).get('touch');
+    if (q === '1') return true;
+    if (q === '0') return false;
+    // Hlavní ukazatel je prst (telefon, tablet); notebook s dotykovou obrazovkou a myší zůstane u myši.
+    return matchMedia('(pointer: coarse)').matches;
+  } catch {
+    return false;
+  }
+}

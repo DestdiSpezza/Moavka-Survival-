@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { type Arsenal, newArsenal, WEAPONS } from '../systems/combat';
 import { computeMove, type MoveState, STAMINA_MAX } from '../systems/movement';
+import { stickDirs, touch } from '../input/touch';
 import { animateWalk } from './walk';
 
 type Keys = Record<'up' | 'down' | 'left' | 'right' | 'sprint', Phaser.Input.Keyboard.Key>;
@@ -20,6 +21,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** Poslední událost, které se hráč účastnil (pro řetězení příčin). */
   lastEventId: number | null = null;
   lastEventAt = -100;
+  /** Dotykové ovládání: kam se dívat po útoku (míří na cíl), do kdy (ms herního času). */
+  aimAngle = 0;
+  aimUntil = 0;
   private keys: Keys;
   private arrows: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -58,13 +62,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   tick(dt: number, terrainFactor: number, pointer: Phaser.Input.Pointer): void {
     const k = this.keys;
     const a = this.arrows;
+    const t = touch.enabled ? stickDirs() : { up: false, down: false, left: false, right: false };
     const r = computeMove(
       {
-        up: k.up.isDown || a.up.isDown,
-        down: k.down.isDown || a.down.isDown,
-        left: k.left.isDown || a.left.isDown,
-        right: k.right.isDown || a.right.isDown,
-        sprint: k.sprint.isDown || a.shift.isDown,
+        up: k.up.isDown || a.up.isDown || t.up,
+        down: k.down.isDown || a.down.isDown || t.down,
+        left: k.left.isDown || a.left.isDown || t.left,
+        right: k.right.isDown || a.right.isDown || t.right,
+        sprint: k.sprint.isDown || a.shift.isDown || (touch.enabled && touch.sprint),
       },
       this.move,
       dt,
@@ -74,6 +79,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.sprinting = r.sprinting;
     this.setVelocity(r.vx, r.vy);
 
+    if (touch.enabled) {
+      // Prstem: čelem po směru chůze, po útoku chvíli k cíli.
+      if (this.scene.time.now < this.aimUntil) this.setRotation(this.aimAngle);
+      else if (Math.hypot(r.vx, r.vy) > 1) this.setRotation(Math.atan2(r.vy, r.vx));
+      return;
+    }
     const cam = this.scene.cameras.main;
     const target = pointer.positionToCamera(cam) as Phaser.Math.Vector2;
     this.setRotation(Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y));

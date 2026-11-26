@@ -23,6 +23,19 @@ export function createMenu(scene: Phaser.Scene, x: number, y: number, items: Men
       t.setText(`${on ? '▶ ' : ''}${items[i].label()}${on ? ' ◀' : ''}`).setColor(on ? '#ffd23f' : '#f2e9d0');
     });
   render();
+  // Ťuknutí (mobil) i klik myší: vybere položku a potvrdí ji; u nastavitelných
+  // hodnot levá polovina ubere, pravá přidá.
+  texts.forEach((t, i) => {
+    t.setInteractive({ useHandCursor: true });
+    t.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      Sound.unlock();
+      index = i;
+      const it = items[i];
+      if (it.adjust && !it.action) it.adjust(p.x < t.x ? -1 : 1);
+      else it.action?.();
+      if (scene.sys.isActive()) render();
+    });
+  });
   const kb = scene.input.keyboard!;
   const move = (d: number) => {
     index = (index + d + items.length) % items.length;

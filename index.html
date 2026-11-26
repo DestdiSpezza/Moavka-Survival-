@@ -2,7 +2,9 @@
 <html lang="cs">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>Survive Morávka</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,10 +13,16 @@
       html, body { margin: 0; height: 100%; background: #111; overflow: hidden; }
       #game { width: 100%; height: 100%; }
       canvas { image-rendering: pixelated; }
+      /* Mobil: žádné posouvání, zoom ani výběr textu prstem. */
+      html, body, #game, canvas { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+      #otoc { display: none; position: fixed; inset: 0; z-index: 10; background: #111; color: #ffd23f;
+        font: 28px 'Jersey 10', monospace; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+      @media (orientation: portrait) and (pointer: coarse) { #otoc { display: flex; } }
     </style>
   </head>
   <body>
     <div id="game"></div>
+    <div id="otoc">Otoč telefon na šířku.<br />Morávka se na výšku nevejde.</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

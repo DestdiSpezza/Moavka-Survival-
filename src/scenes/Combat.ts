@@ -15,6 +15,7 @@ import { PICKUP_RESPAWN, pickupSpots, type PickupKind } from '../world/pickups';
 import { blocksBullets, isSolid, Tile } from '../world/tiles';
 import { PED_LOOKS, TOUGH_LOOKS } from '../world/tileset';
 import type { GameScene } from './GameScene';
+import { took, touch } from '../input/touch';
 
 const PED_COUNT = 24;
 const BULLET_STEP = 4;
@@ -155,12 +156,13 @@ export class Combat {
     if (this.game.story?.inputBlocked || this.game.economy?.menuOpen) return;
     const pressed = [k.one, k.two, k.three, k.four, k.five, k.six].findIndex((key) => Phaser.Input.Keyboard.JustDown(key));
     if (pressed >= 0) this.setArsenal(selectWeapon(this.player.arsenal, WEAPON_ORDER[pressed]));
-    if (Phaser.Input.Keyboard.JustDown(k.cycle)) this.setArsenal(cycleWeapon(this.player.arsenal, 1));
+    if (Phaser.Input.Keyboard.JustDown(k.cycle) || took('cycle')) this.setArsenal(cycleWeapon(this.player.arsenal, 1));
   }
 
   private handleFire(): void {
     const pointer = this.game.input.activePointer;
-    const down = pointer.leftButtonDown();
+    // Prstem střílí tlačítko ÚTOK (ťuknutí do mapy je joystick, ne výstřel).
+    const down = touch.enabled ? touch.fire : pointer.leftButtonDown();
     const justDown = down && !this.wasDown;
     this.wasDown = down;
     const a = this.player.arsenal;
@@ -171,7 +173,14 @@ export class Combat {
     if (driving && def.melee) return;
     // Věc v ruce (čaj): „útok“ ji nabídne tomu, kdo stojí před hráčem.
     if (def.item) {
-      if (justDown && !driving && !this.game.story?.inputBlocked) this.game.events.emit('useItem', def.id);
+      if (justDown && !driving && !this.game.story?.inputBlocked) {
+        // Prstem: otoč se k nejbližšímu, komu jde věc nabídnout.
+        if (touch.enabled) {
+          const near = this.nearestPed(this.player, 36, () => true);
+          if (near) this.player.setRotation(Phaser.Math.Angle.Between(this.player.x, this.player.y, near.x, near.y));
+        }
+        this.game.events.emit('useItem', def.id);
+      }
       return;
     }
     if (!canFire(a)) {
@@ -180,8 +189,16 @@ export class Combat {
     }
     this.cooldown = def.cooldown;
     const origin: Point = driving ? { x: driving.x, y: driving.y } : { x: this.player.x, y: this.player.y };
-    const aim = pointer.positionToCamera(this.game.cameras.main) as Phaser.Math.Vector2;
-    const angle = Math.atan2(aim.y - origin.y, aim.x - origin.x);
+    let angle: number;
+    if (touch.enabled) {
+      angle = this.autoAim(origin, def.melee ? def.range + 10 : def.range, driving ? driving.rotation : this.player.rotation, def.melee);
+      this.player.aimAngle = angle;
+      this.player.aimUntil = this.game.time.now + 500;
+      if (!driving) this.player.setRotation(angle);
+    } else {
+      const aim = pointer.positionToCamera(this.game.cameras.main) as Phaser.Math.Vector2;
+      angle = Math.atan2(aim.y - origin.y, aim.x - origin.x);
+    }
     if (def.melee) this.melee(origin, angle, def.id);
     else {
       this.setArsenal(consumeAmmo(a));
@@ -211,6 +228,31 @@ export class Combat {
     // Švih: krátký oblouk před hráčem.
     this.fx.lineStyle(2, 0xffffff, 0.6).beginPath().arc(origin.x, origin.y, def.range, angle - 0.8, angle + 0.8).strokePath();
     if (hit) this.game.cameras.main.shake(60, 0.002);
+  }
+
+  /** Nejbližší živý chodec v dosahu, který splní podmínku. */
+  private nearestPed(from: Point, range: number, ok: (p: Pedestrian) => boolean): Pedestrian | null {
+    let best: Pedestrian | null = null;
+    let bd = range;
+    for (const p of this.peds) {
+      if (!p.alive || !p.active || !p.visible || !ok(p)) continue;
+      const d = Phaser.Math.Distance.Between(from.x, from.y, p.x, p.y);
+      if (d < bd) {
+        bd = d;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Míření prstem: na nejbližšího, kdo jde po hráči (policajt, rváč, naštvaná skupina);
+   * zblízka pěstí/pálkou na kohokoli před sebou; jinak rovně, kam se hráč dívá.
+   */
+  private autoAim(origin: Point, range: number, facing: number, melee: boolean): number {
+    const hostile = this.nearestPed(origin, range, (p) => p.role === 'cop' || p.foe === 'player' || p.mood === 'fight');
+    const target = hostile ?? (melee ? this.nearestPed(origin, range, (p) => inMeleeArc(origin, facing, p, range, Math.PI / 2)) : null);
+    return target ? Math.atan2(target.y - origin.y, target.x - origin.x) : facing;
   }
 
   private shoot(origin: Point, angle: number, id: WeaponId, own?: Vehicle): void {

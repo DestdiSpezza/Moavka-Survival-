@@ -43,8 +43,13 @@ export class HeroScene extends Phaser.Scene {
     });
     const nameLabel = this.add.text(width / 2, 360, 'Jméno:', pixelFont(18, '#c8c0a8')).setOrigin(0.5);
     this.nameText = this.add.text(width / 2, 392, '', pixelFont(26)).setOrigin(0.5).setStroke('#000', 4);
-    const hint = this.add.text(width / 2, height - 40, '←/→ nebo myš: hrdina / hrdinka · piš jméno · Enter = pokračovat', pixelFont(15, '#c8c0a8')).setOrigin(0.5);
-    this.layer.add([nameLabel, this.nameText, hint]);
+    // Na mobilu není klávesnice: ťuknutí na jméno otevře klávesnici telefonu.
+    const nameBox = this.add.rectangle(width / 2, 392, 320, 44, 0xffffff, 0.04).setStrokeStyle(2, 0x6a5a44).setInteractive({ useHandCursor: true });
+    nameBox.on('pointerdown', () => this.askName());
+    const go = this.add.text(width / 2, 450, '[ POKRAČOVAT ▶ ]', pixelFont(22, '#ffd23f')).setOrigin(0.5).setStroke('#000', 4).setInteractive({ useHandCursor: true });
+    go.on('pointerdown', () => this.showPost());
+    const hint = this.add.text(width / 2, height - 40, '←/→ nebo ťukni: hrdina / hrdinka · piš jméno (nebo ťukni na něj) · Enter = pokračovat', pixelFont(15, '#c8c0a8')).setOrigin(0.5);
+    this.layer.add([nameBox, nameLabel, this.nameText, go, hint]);
     this.pick('m');
     this.time.addEvent({ delay: 450, loop: true, callback: () => this.renderName() });
 
@@ -82,12 +87,21 @@ export class HeroScene extends Phaser.Scene {
     this.renderName();
   }
 
+  /** Jméno přes klávesnici telefonu (obyčejný dotaz prohlížeče). */
+  private askName(): void {
+    if (this.step !== 'hero') return;
+    const typed = window.prompt('Jméno hrdiny / hrdinky (max. 14 znaků):', this.name || DEFAULT_NAME[this.gender]);
+    if (typed !== null) this.name = typed.replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, MAX_NAME);
+    this.renderName();
+  }
+
   private get heroName(): string {
     return this.name.trim() || DEFAULT_NAME[this.gender];
   }
 
   /** Telefon: příspěvek eRka o festivalu. */
   private showPost(): void {
+    if (this.step !== 'hero') return;
     this.step = 'post';
     this.layer.setVisible(false);
     const { width, height } = this.scale;
@@ -112,7 +126,8 @@ export class HeroScene extends Phaser.Scene {
         wordWrap: { width: 244 },
       });
     this.add.text(x, height - 46, `Na Instagramu vyskočila akce. ${this.heroName} jede na Morávku.`, pixelFont(18, '#ffd23f')).setOrigin(0.5).setStroke('#000', 4);
-    this.add.text(x, height - 20, 'Enter = jedeme', pixelFont(14, '#c8c0a8')).setOrigin(0.5);
+    this.add.text(x, height - 20, 'Enter nebo ťukni = jedeme', pixelFont(14, '#c8c0a8')).setOrigin(0.5);
+    this.time.delayedCall(300, () => this.input.once('pointerdown', () => this.begin()));
   }
 
   private begin(): void {

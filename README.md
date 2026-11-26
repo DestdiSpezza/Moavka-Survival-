@@ -20,6 +20,7 @@ Hraj v prohlížeči: https://destdispezza.github.io/Moavka-Survival-/
 | Garáž | přijeď autem k Vysokému Dennymu (mimo 13–17 h, to sedí v eRku) |
 | Vesta, chata | dojdi, 1–5 výběr |
 | Hra | Esc pauza, H skryje tutoriál, F9 deník událostí (ladění) |
+| Mobil | telefon na šířku: vlevo joystick, vpravo ÚTOK (míří sám), E, SPRINT/BRZDA, ZBRAŇ, II pauza; ťukání do menu a rozhovorů |
 
 ## Co ve hře je
 

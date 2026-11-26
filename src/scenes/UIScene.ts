@@ -11,6 +11,7 @@ import type { MenuHud } from './Economy';
 import type { MissionHud } from './Story';
 import { fillText } from '../texts/gender';
 import { type GameScene, MINIMAP, type PlayerHud, type VehicleHud } from './GameScene';
+import { touch } from '../input/touch';
 
 const HP_COLORS: Record<string, number> = { ok: 0x6fd16a, smoke: 0xe0b23a, fire: 0xe0442a };
 
@@ -158,8 +159,9 @@ export class UIScene extends Phaser.Scene {
     }
 
     // Panel vozidla vpravo dole.
-    const px = width - 220;
-    const py = height - 110;
+    // Na mobilu je vpravo dole ÚTOK a E: panel auta jde doprostřed dolů.
+    const px = touch.enabled ? width / 2 - 100 : width - 220;
+    const py = touch.enabled ? height - 78 : height - 110;
     this.carName = this.add.text(0, 0, '', pixelFont(16, '#ffd23f')).setStroke('#000', 3);
     this.carSpeed = this.add.text(0, 22, '', pixelFont(28)).setStroke('#000', 5);
     const hpBack = this.add.rectangle(0, 62, 204, 12, 0x000000, 0.6).setOrigin(0);
@@ -207,7 +209,8 @@ export class UIScene extends Phaser.Scene {
 
     const car = this.registry.get('vehicle') as VehicleHud | null;
     this.carPanel.setVisible(!!car);
-    this.controlsText.setText(car ? T.controlsCar : T.controls);
+    // Na mobilu jsou ovladače popsané přímo na tlačítkách (a tutoriál mluví o klávesách).
+    this.controlsText.setText(car ? T.controlsCar : T.controls).setVisible(!touch.enabled);
     if (car) {
       this.carName.setText(car.name);
       this.carSpeed.setText(`${car.kmh} ${T.kmh}`);
@@ -228,7 +231,7 @@ export class UIScene extends Phaser.Scene {
     if (me) this.scoreText.setText(`Skóre ${me.score.toLocaleString('cs-CZ')}`);
     this.updateMissionHud();
     const hint = this.registry.get('hint') as string | null;
-    this.hintText.setVisible(!!hint && !this.boardBox.visible);
+    this.hintText.setVisible(!!hint && !this.boardBox.visible && !touch.enabled);
     if (hint) this.hintText.setText(`💡 ${hint}`).setY(this.scale.height - 95 - this.hintText.height);
 
     const gangs = this.registry.get('gangs') as RespectHud | undefined;

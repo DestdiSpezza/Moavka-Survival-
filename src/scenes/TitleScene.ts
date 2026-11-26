@@ -1,3 +1,4 @@
+import { touch } from '../input/touch';
 import Phaser from 'phaser';
 import { Sound } from '../audio/Sound';
 import { paintGround } from '../art/ground';
@@ -61,7 +62,17 @@ export class TitleScene extends Phaser.Scene {
       { label: () => 'Ovládání', action: () => this.overlay('Controls') },
     );
     createMenu(this, width / 2, 250, items, 40);
-    this.add.text(width / 2, height - 28, 'W/S vybrat · Enter potvrdit · Morávka, Beskydy, 2026', pixelFont(14, '#c8c0a8')).setOrigin(0.5).setStroke('#000', 4);
+    // Na mobilu po prvním ťuknutí přes celou obrazovku (kde to prohlížeč umí).
+    if (touch.enabled) {
+      this.input.once('pointerup', () => {
+        try {
+          if (!this.scale.isFullscreen) this.scale.startFullscreen();
+        } catch {
+          // iPhone fullscreen neumí; hra jede i tak.
+        }
+      });
+    }
+    this.add.text(width / 2, height - 28, touch.enabled ? 'Ťukni na položku · Morávka, Beskydy, 2026' : 'W/S vybrat · Enter potvrdit · Morávka, Beskydy, 2026', pixelFont(14, '#c8c0a8')).setOrigin(0.5).setStroke('#000', 4);
   }
 
   private overlay(key: string): void {

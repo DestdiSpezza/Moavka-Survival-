@@ -1,3 +1,4 @@
+import { touch } from '../input/touch';
 import { generateStoryProps } from '../art/props';
 import Phaser from 'phaser';
 import { TILE } from '../config';
@@ -38,7 +39,10 @@ export class BootScene extends Phaser.Scene {
       ? document.fonts.load('20px "Jersey 10"', 'ěščřžýáíéůúĚŠČŘŽ0123456789').catch(() => [])
       : Promise.resolve([]);
     const timeout = new Promise((resolve) => setTimeout(resolve, 2500));
-    void Promise.race([fontReady, timeout]).then(() => this.scene.start('Title'));
+    void Promise.race([fontReady, timeout]).then(() => {
+      this.scene.start('Title');
+      if (touch.enabled) this.scene.launch('Touch');
+    });
   }
 }
 

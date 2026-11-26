@@ -90,3 +90,9 @@ U každé položky je důvod, proč teď ne, a co ji podmiňuje.
 - [ ] Členové skupin za volantem.
 - [ ] Gamepad a ovládání na mobilu.
 - [ ] Ukládání stavu světa (vraky, paměti NPC, uzávěry). Určit, co přežije načtení hry.
+
+## Mobil (ADR-024)
+
+- [ ] Tutoriál pro dotykové ovládání (teď se na mobilu tutoriál s klávesami schová).
+- [ ] Rádio (R) a nápověda „R = přepnout“ nemají na mobilu tlačítko.
+- [ ] Hra je 16:9; na širokých telefonech jsou po stranách černé pruhy.

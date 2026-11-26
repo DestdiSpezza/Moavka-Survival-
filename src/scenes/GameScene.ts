@@ -40,6 +40,7 @@ import { CRASH_SPEED, type Driver, drunkDriver, HARD_BRAKE, reactToObstacle, rol
 import { isEvening } from '../systems/clock';
 import type { Appearance } from '../systems/witness';
 import { Police } from './Police';
+import { stickDrive, took, touch } from '../input/touch';
 
 export const MINIMAP = { x: 16, y: 16, w: 200, h: 150, zoom: 0.1 };
 const ENTER_RANGE = 26;
@@ -295,6 +296,7 @@ export class GameScene extends Phaser.Scene {
     this.animals = new Animals(this);
     this.townsfolk = new Townsfolk(this);
     this.story = new Story(this);
+    if (touch.enabled) this.time.delayedCall(1200, () => this.toast('Vlevo joystick, vpravo ÚTOK, E (akce), SPRINT a ZBRAŇ. II = pauza.'));
     this.debugKey = this.input.keyboard!.addKey('F9');
     this.applyProgress();
     this.input.setDefaultCursor('none');
@@ -339,7 +341,7 @@ export class GameScene extends Phaser.Scene {
     for (const v of this.vehicles) {
       if (v.wrecked || v.driver === 'none' || v.spec.kind === 'kolo') continue;
       const lat = Math.abs(lateralSpeed(v.drive));
-      const braking = v === this.driving && this.keys.handbrake.isDown && Math.abs(v.speed) > 40;
+      const braking = v === this.driving && (this.keys.handbrake.isDown || (touch.enabled && touch.sprint)) && Math.abs(v.speed) > 40;
       if (lat < 40 && !braking) continue;
       const a = v.rotation;
       const back = -v.spec.length / 2 + 4;
@@ -682,7 +684,7 @@ export class GameScene extends Phaser.Scene {
       this.refillParking();
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.enter) && !this.player.dead && !this.story.inputBlocked) {
+    if ((Phaser.Input.Keyboard.JustDown(this.keys.enter) || took('action')) && !this.player.dead && !this.story.inputBlocked) {
       const folk = this.townsfolk.nearby();
       if (this.story.nearPubDoor()) this.story.enterPub();
       else if (folk) this.townsfolk.talkTo(folk);
@@ -750,7 +752,7 @@ export class GameScene extends Phaser.Scene {
     this.water.tilePositionY += dt * 6;
     this.water.tilePositionX = Math.sin(this.time.now / 1500) * 2;
     this.updateAudio();
-    if (Phaser.Input.Keyboard.JustDown(this.keys.pause) && !this.player.dead && !this.story.cutscene) this.openPause();
+    if ((Phaser.Input.Keyboard.JustDown(this.keys.pause) || took('pause')) && !this.player.dead && !this.story.cutscene) this.openPause();
     const a = this.player.arsenal;
     const def = WEAPONS[a.current];
     this.registry.set('player', {
@@ -877,7 +879,14 @@ export class GameScene extends Phaser.Scene {
     const down = k.down.isDown || a.down.isDown;
     const left = k.left.isDown || a.left.isDown;
     const right = k.right.isDown || a.right.isDown;
-    return { throttle: (up ? 1 : 0) - (down ? 1 : 0), steer: (right ? 1 : 0) - (left ? 1 : 0), handbrake: k.handbrake.isDown };
+    const keyThrottle = (up ? 1 : 0) - (down ? 1 : 0);
+    const keySteer = (right ? 1 : 0) - (left ? 1 : 0);
+    if (touch.enabled && !keyThrottle && !keySteer) {
+      // Joystick: nahoru plyn, dolů brzda/couvání, do stran zatáčení; tlačítko BRZDA = ruční brzda.
+      const t = stickDrive();
+      return { throttle: t.throttle, steer: t.steer, handbrake: k.handbrake.isDown || touch.sprint };
+    }
+    return { throttle: keyThrottle, steer: keySteer, handbrake: k.handbrake.isDown || (touch.enabled && touch.sprint) };
   }
 
   // ---------- Nastupování a krádeže ----------
