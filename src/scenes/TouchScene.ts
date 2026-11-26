@@ -72,7 +72,7 @@ export class TouchScene extends Phaser.Scene {
   private mode(): 'hidden' | 'play' | 'menu' | 'cutscene' {
     const sm = this.scene.manager;
     const on = (k: string) => sm.isActive(k);
-    if (on('Dialog') || on('Pause') || on('Settings') || on('Controls') || on('Title') || on('Hero')) return 'hidden';
+    if (on('Dialog') || on('Pause') || on('Settings') || on('Controls') || on('Title') || on('Hero') || on('Splash') || on('Prolog')) return 'hidden';
     if (!on('Game') && !on('Pub')) return 'hidden';
     const cut = this.registry.get('cutscene') as { hint: string } | null | undefined;
     if (cut) return cut.hint ? 'cutscene' : 'hidden';

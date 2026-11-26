@@ -1,9 +1,6 @@
 import { touch } from '../input/touch';
 import Phaser from 'phaser';
 import { Sound } from '../audio/Sound';
-import { paintGround } from '../art/ground';
-import { paintWater } from '../art/water';
-import { buildWorld } from '../world/world';
 import { type Progress, readSave } from '../systems/save';
 import { T } from '../texts/cs';
 import { AREAS } from '../world/areas';
@@ -18,28 +15,13 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
-    // Pozadí: skutečná malba Morávky, kamera pomalu pluje nad vesnicí.
-    const area = AREAS.moravka;
-    if (!this.textures.exists('ground-moravka')) {
-      const art = paintGround(buildWorld(area.id), area.seed);
-      this.textures.addCanvas('ground-moravka', art.ground);
-      this.textures.addCanvas('lights-moravka', art.lights);
-      this.registry.set('chimneys-moravka', art.chimneys);
-    }
-    if (!this.textures.exists('water')) this.textures.addCanvas('water', paintWater());
-    const bg = this.add.container(0, 0);
-    const ground = this.textures.get('ground-moravka').getSourceImage() as HTMLCanvasElement;
-    const water = this.add.tileSprite(0, 0, ground.width, ground.height, 'water').setOrigin(0);
-    bg.add([water, this.add.image(0, 0, 'ground-moravka').setOrigin(0)]);
-    bg.setScale(2);
-    const path = { t: 0 };
-    this.tweens.add({
-      targets: path, t: 1, duration: 60000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-      onUpdate: () => {
-        bg.setPosition(-(600 + path.t * 900) * 2 + width / 2, -(380 + path.t * 300) * 2 + height / 2);
-        water.tilePositionY += 0.1;
-      },
-    });
+    // Pozadí: malba Morávky (eRko, Omladina, Hasiči, přehrada), pomalu pluje sem a tam.
+    const art = this.add.image(width / 2, height / 2, 'keyart');
+    const cover = Math.max(width / art.width, height / art.height) * 1.12;
+    art.setScale(cover);
+    const drift = (art.displayWidth - width) / 2;
+    this.tweens.add({ targets: art, x: { from: width / 2 + drift, to: width / 2 - drift }, duration: 40000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.add.image(54, height - 54, 'logo').setScale(0.16).setAlpha(0.9);
     // Ztmavení s vinětou, ať je menu čitelné.
     this.add.rectangle(0, 0, width, height, 0x0a0a10, 0.45).setOrigin(0);
     this.add.rectangle(0, 0, width, 210, 0x0a0a10, 0.35).setOrigin(0);
@@ -61,6 +43,8 @@ export class TitleScene extends Phaser.Scene {
       { label: () => 'Nastavení', action: () => this.overlay('Settings') },
       { label: () => 'Ovládání', action: () => this.overlay('Controls') },
     );
+    // Tmavý panel pod menu, ať se nepere s cedulí na malbě.
+    this.add.rectangle(width / 2, 250 - 24, Math.min(width - 40, 640), items.length * 40 + 8, 0x0a0a10, 0.72).setOrigin(0.5, 0).setStrokeStyle(2, 0xffd23f, 0.35);
     createMenu(this, width / 2, 250, items, 40);
     this.add.text(width / 2, height - 28, touch.enabled ? 'Ťukni na položku · Morávka, Beskydy, 2026' : 'W/S vybrat · Enter potvrdit · Morávka, Beskydy, 2026', pixelFont(14, '#c8c0a8')).setOrigin(0.5).setStroke('#000', 4);
   }
@@ -73,7 +57,7 @@ export class TitleScene extends Phaser.Scene {
   /** Nová hra: nejdřív hrdina, nebo hrdinka, a jméno. */
   private newGame(): void {
     Sound.unlock();
-    this.scene.start('Hero');
+    this.scene.start('Prolog');
   }
 
   private begin(progress: Progress): void {

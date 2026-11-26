@@ -8,6 +8,8 @@ import { DialogScene } from './scenes/DialogScene';
 import { HeroScene } from './scenes/HeroScene';
 import { PubScene } from './scenes/PubScene';
 import { TouchScene } from './scenes/TouchScene';
+import { SplashScene } from './scenes/SplashScene';
+import { PrologScene } from './scenes/PrologScene';
 import { detectTouch, keepFullscreen, touch } from './input/touch';
 import { ControlsScene, PauseScene, SettingsScene } from './scenes/OverlayScenes';
 
@@ -23,7 +25,7 @@ const game = new Phaser.Game({
   backgroundColor: '#111111',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { debug: false } },
-  scene: [BootScene, TitleScene, HeroScene, GameScene, UIScene, PubScene, DialogScene, PauseScene, SettingsScene, ControlsScene, TouchScene],
+  scene: [BootScene, SplashScene, TitleScene, PrologScene, HeroScene, GameScene, UIScene, PubScene, DialogScene, PauseScene, SettingsScene, ControlsScene, TouchScene],
   input: { activePointers: 4 },
 });
 

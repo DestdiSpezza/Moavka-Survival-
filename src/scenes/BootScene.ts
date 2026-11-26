@@ -19,6 +19,9 @@ export class BootScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const label = this.add.text(width / 2, height / 2, T.loading, pixelFont(16)).setOrigin(0.5);
     this.load.on('complete', () => label.destroy());
+    // Logo studia a malba Morávky (úvod, titulní obrazovka, prolog).
+    this.load.image('logo', 'img/logo.png');
+    this.load.image('keyart', 'img/keyart.jpg');
   }
 
   create(): void {
@@ -40,7 +43,7 @@ export class BootScene extends Phaser.Scene {
       : Promise.resolve([]);
     const timeout = new Promise((resolve) => setTimeout(resolve, 2500));
     void Promise.race([fontReady, timeout]).then(() => {
-      this.scene.start('Title');
+      this.scene.start('Splash');
       if (touch.enabled) this.scene.launch('Touch');
     });
   }
