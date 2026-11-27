@@ -42,7 +42,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   };
   try {
     await page.goto('http://localhost:4185/');
-    await page.waitForFunction(() => window.__game?.scene.getScene('Title')?.sys.isActive(), null, { timeout: 20000 });
+    await page.waitForFunction(() => window.__game?.scene.getScene('Title')?.sys.isActive(), null, { timeout: 40000 });
     await sleep(600);
     console.log('touch enabled', await G(() => window.__game.scene.getScene('Touch')?.sys.isActive()));
     await shot('01-title');

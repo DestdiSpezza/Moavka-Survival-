@@ -46,7 +46,7 @@ async function waitForServer(url, ms) {
       arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 } }, hero: { gender: 'm', name: 'Soak' },
       story: { act: 1, mission: '', introDone: true, flags: ['enteredPub', 'pubEntryDone'], rel: {}, known: [], counts: {}, job: '' } })));
     await page.reload();
-    await page.waitForFunction(() => window.__game?.scene.getScene('Title')?.sys.isActive(), null, { timeout: 20000 });
+    await page.waitForFunction(() => window.__game?.scene.getScene('Title')?.sys.isActive(), null, { timeout: 40000 });
     await page.keyboard.press('KeyS');
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => window.__game?.scene.getScene('Game')?.sys.isActive(), null, { timeout: 20000 });

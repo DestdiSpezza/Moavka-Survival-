@@ -39,3 +39,4 @@ Architecture Decision Records: proč je hra takhle, jak je. Každé rozhodnutí 
 | [ADR-033](0033-volant-a-zpatecka.md) | Volant jako půlkruh a zpátečka | přijato |
 | [ADR-034](0034-skupiny-napadaji-az-od-65.md) | Skupiny napadají až od respektu −65 | přijato |
 | [ADR-035](0035-nazev-grand-theft-moravka.md) | Název hry Grand Theft Morávka | přijato |
+| [ADR-036](0036-upozorneni-po-logu.md) | Upozornění po logu | přijato |

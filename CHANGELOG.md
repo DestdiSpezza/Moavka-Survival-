@@ -4,6 +4,9 @@ Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech
 
 ## 2026-11-27
 
+### Upozornění po logu (ADR-036)
+- Tři obrazovky po logu: postavy smyšlené, hlasy imitace, „Takže se neposerte.“ s fakáčem v pozadí.
+
 ### Nový název: Grand Theft Morávka (ADR-035)
 - Titulní obrazovka, záložka prohlížeče, ikona na ploše a dokumentace. Uložené hry zůstávají.
 

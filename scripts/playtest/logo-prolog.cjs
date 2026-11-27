@@ -20,7 +20,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.goto('http://localhost:4189/');
   await page.waitForFunction(() => window.__game?.scene.getScene('Splash')?.sys.isActive(), null, { timeout: 20000 });
   await sleep(1800); await shot('01-logo');
-  await page.waitForFunction(() => window.__game.scene.getScene('Title')?.sys.isActive(), null, { timeout: 8000 });
+  // Tři obrazovky s upozorněním (ADR-036).
+  await sleep(2900); await shot('01a-postavy');
+  await sleep(3400); await shot('01b-hlasy');
+  await sleep(4300); await shot('01c-neposerte');
+  await page.waitForFunction(() => window.__game.scene.getScene('Title')?.sys.isActive(), null, { timeout: 12000 });
   await sleep(1200); await shot('02-titul');
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.__game.scene.getScene('Prolog')?.sys.isActive(), null, { timeout: 5000 });
