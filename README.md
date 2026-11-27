@@ -1,4 +1,4 @@
-# Survive Morávka
+# Grand Theft Morávka
 
 2D hra s pohledem shora z obce Morávka v Beskydech. Příběh po aktech, volný pohyb, krádeže aut, soupeřící skupiny (Hasiči, Štamgasti, Omladina), respekt, policejní hledanost a pořádný chaos. Hraješ za hrdinu, nebo hrdinku, kterou na Morávku vytáhl příspěvek o festivalu v eRku.
 

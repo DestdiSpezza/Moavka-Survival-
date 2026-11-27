@@ -1,6 +1,6 @@
 /** Všechny texty hry na jednom místě. */
 export const T = {
-  title: 'SURVIVE MORÁVKA',
+  title: 'GRAND THEFT MORÁVKA',
   subtitle: 'Beskydy. Hospoda. Chaos.',
   loading: 'Načítám Morávku…',
   pressStart: 'Stiskni MEZERNÍK',

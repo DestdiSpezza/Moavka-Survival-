@@ -1,6 +1,6 @@
 # Příběhovka: plán po fázích
 
-Survive Morávka přechází ze zakázek na příběh. Příběh je rozdělený na **Akty** (levely),
+Grand Theft Morávka přechází ze zakázek na příběh. Příběh je rozdělený na **Akty** (levely),
 každý akt má **mise** a mise se skládají z **kroků** (jdi, dojeď, promluv, přežij…).
 Dosavadní herní mechaniky zůstávají: chůze a řízení, boj, policie se svědky, skupiny
 a respekt, provoz, nehody, divočáci, rozhlas, garáž, Veseta, Omyx, chata, den a noc.

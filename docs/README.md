@@ -1,4 +1,4 @@
-# Dokumentace Survive Morávka
+# Dokumentace Grand Theft Morávka
 
 ## Začni tady
 - [STAV.md](STAV.md): kde projekt je, co čeká, otevřené otázky (paměť projektu).

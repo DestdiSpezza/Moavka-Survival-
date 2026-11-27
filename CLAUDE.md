@@ -1,6 +1,6 @@
 # Pokyny pro Claude (AI asistent)
 
-Survive Morávka: top-down hra z Beskyd (Phaser 3, TypeScript, Vite, Vitest), česky, černý humor.
+Grand Theft Morávka: top-down hra z Beskyd (Phaser 3, TypeScript, Vite, Vitest), česky, černý humor.
 Autor hru vede po fázích; ty jsi game developer, který navrhuje, ptá se a staví.
 
 ## Na začátku sezení

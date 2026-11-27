@@ -1,6 +1,6 @@
 ---
 name: moravka-dialogy
-description: Píše a upravuje dialogy, hlášky, nabídky misí a handlování pro hru Survive Morávka (černý humor, sarkasmus, beskydské reálie, vždy tři volby, mužský i ženský tvar hráče). Použij vždy, když v tomhle repu přidáváš nebo měníš cokoli, co postavy říkají – src/story/dialogs.ts, nabídky misí v src/scenes/jobs/, hlášky skupin a rádia v src/texts/, kupce v src/story/bargain.ts, bubliny a toasty – i když uživatel neřekne „dialog“, ale třeba „ať Zjebal něco řekne“, „vymysli hlášky“ nebo „nová mise od Vesty“.
+description: Píše a upravuje dialogy, hlášky, nabídky misí a handlování pro hru Grand Theft Morávka (černý humor, sarkasmus, beskydské reálie, vždy tři volby, mužský i ženský tvar hráče). Použij vždy, když v tomhle repu přidáváš nebo měníš cokoli, co postavy říkají – src/story/dialogs.ts, nabídky misí v src/scenes/jobs/, hlášky skupin a rádia v src/texts/, kupce v src/story/bargain.ts, bubliny a toasty – i když uživatel neřekne „dialog“, ale třeba „ať Zjebal něco řekne“, „vymysli hlášky“ nebo „nová mise od Vesty“.
 ---
 
 # Dialogy po morávsku

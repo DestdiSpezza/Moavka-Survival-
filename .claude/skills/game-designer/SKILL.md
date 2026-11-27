@@ -1,9 +1,9 @@
 ---
 name: game-designer
-description: Herní design hry Survive Morávka – navrhuje a posuzuje mise, mechaniky, postavy, balanc (ceny, odměny, obtížnost, časy), UX a ovládání (počítač i mobil) v souladu s vizí hry. Použij vždy, když v tomhle repu vymýšlíš nebo měníš, co hráč dělá a proč: nová mise, akt, mechanika, parťák, úprava obtížnosti nebo odměn, ovládání, menu, HUD, tutoriál – i když uživatel řekne jen „vymysli misi pro Kibiho“, „je to moc těžké“, „přidej mechaniku“ nebo „pokračuj další fází“.
+description: Herní design hry Grand Theft Morávka – navrhuje a posuzuje mise, mechaniky, postavy, balanc (ceny, odměny, obtížnost, časy), UX a ovládání (počítač i mobil) v souladu s vizí hry. Použij vždy, když v tomhle repu vymýšlíš nebo měníš, co hráč dělá a proč: nová mise, akt, mechanika, parťák, úprava obtížnosti nebo odměn, ovládání, menu, HUD, tutoriál – i když uživatel řekne jen „vymysli misi pro Kibiho“, „je to moc těžké“, „přidej mechaniku“ nebo „pokračuj další fází“.
 ---
 
-# Game designer: Survive Morávka
+# Game designer: Grand Theft Morávka
 
 Pomáhá navrhovat hru tak, aby seděla k tomu, co už je: krátké, drzé, beskydské a hratelné
 i na telefonu. Design je tady vždycky kompromis mezi vtipem, srozumitelností a tím, co jde

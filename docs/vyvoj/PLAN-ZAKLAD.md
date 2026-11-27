@@ -1,4 +1,4 @@
-# Survive Morávka: plán vývoje po fázích
+# Grand Theft Morávka: plán vývoje po fázích
 
 > **Historie.** Tohle je původní plán technických fází 0–9 (základ mechanik). Hra pak přešla na příběhovku: plán příběhu je v [docs/hra/PRIBEH.md](../hra/PRIBEH.md), rozhodnutí v [docs/adr/](../adr/README.md), postavy v [docs/hra/POSTAVY.md](../hra/POSTAVY.md).
 

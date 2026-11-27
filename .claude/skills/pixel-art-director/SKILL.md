@@ -1,9 +1,9 @@
 ---
 name: pixel-art-director
-description: Pixel-art hry Survive Morávka – jak kódem kreslit postavy, vozidla, rekvizity, budovy, terén a efekty (Painter, Phaser Graphics), jaké barvy, velikosti, stíny a animace používat, aby nové věci seděly ke stávající grafice. Použij vždy, když v tomhle repu přidáváš nebo měníš cokoli, co je vidět: nová postava nebo NPC, vozidlo, předmět, budova, interiér, decor na mapě, efekt, animace, UI prvek, obrázek do public/img – i když uživatel řekne jen „přidej jeřáb“, „ať má Vesta červenou mikinu“ nebo „udělej parkoviště“.
+description: Pixel-art hry Grand Theft Morávka – jak kódem kreslit postavy, vozidla, rekvizity, budovy, terén a efekty (Painter, Phaser Graphics), jaké barvy, velikosti, stíny a animace používat, aby nové věci seděly ke stávající grafice. Použij vždy, když v tomhle repu přidáváš nebo měníš cokoli, co je vidět: nová postava nebo NPC, vozidlo, předmět, budova, interiér, decor na mapě, efekt, animace, UI prvek, obrázek do public/img – i když uživatel řekne jen „přidej jeřáb“, „ať má Vesta červenou mikinu“ nebo „udělej parkoviště“.
 ---
 
-# Pixel-art director: Survive Morávka
+# Pixel-art director: Grand Theft Morávka
 
 Skoro všechna grafika ve hře se kreslí kódem při startu (`BootScene`): žádné spritesheety,
 jen malíř pixel po pixelu. Díky tomu jde postavu přebarvit jedním řádkem, ale každá nová věc

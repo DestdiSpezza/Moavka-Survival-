@@ -3,7 +3,7 @@
 > Tenhle soubor je „paměť“ projektu: kde jsme skončili, co je rozdělané, co čeká na autora.
 > Aktualizuj ho na konci každé větší práce (spolu s [CHANGELOG.md](../CHANGELOG.md) a [TODO.md](../TODO.md)).
 
-**Poslední aktualizace:** 2026-11-26
+**Poslední aktualizace:** 2026-11-27
 
 ## Kde jsme
 

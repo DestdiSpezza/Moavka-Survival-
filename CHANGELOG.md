@@ -2,6 +2,11 @@
 
 Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech a v [docs/adr/](docs/adr/README.md).
 
+## 2026-11-27
+
+### Nový název: Grand Theft Morávka (ADR-035)
+- Titulní obrazovka, záložka prohlížeče, ikona na ploše a dokumentace. Uložené hry zůstávají.
+
 ## 2026-11-26
 
 ### Skupiny napadají až od −65 (ADR-034)

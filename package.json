@@ -2,7 +2,7 @@
   "name": "survive-moravka",
   "private": true,
   "version": "0.0.1",
-  "description": "Survive Morávka – 2D hra s pohledem shora z Beskyd",
+  "description": "Grand Theft Morávka – 2D hra s pohledem shora z Beskyd",
   "type": "module",
   "scripts": {
     "dev": "vite",
