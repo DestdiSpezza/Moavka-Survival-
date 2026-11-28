@@ -1,3 +1,4 @@
+import { OMLADINA_CHATTER } from '../story/omladina';
 import type { GroupId } from '../systems/respect';
 
 /**
@@ -72,6 +73,9 @@ export const CHATTER: Record<GroupId, { lines: string[]; replies: string[] }> = 
     replies: ['Zásah!', 'Stříkej!', 'To se zapije.', 'Lakatoš ví.', 'Na bál!', 'Voda je na hašení.', 'Sbor drží.', 'Kde je sekera?'],
   },
 };
+
+// Kecy o Omladině s misemi (ADR-037).
+for (const g of ['omladina', 'stamgasti', 'hasici'] as const) CHATTER[g].lines.push(...OMLADINA_CHATTER[g]);
 
 /** Dealer Omyx u řeky. */
 export const OMYX = {

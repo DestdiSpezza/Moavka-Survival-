@@ -5,7 +5,9 @@ import type { NpcId } from './npcs';
  * hráč má najednou jen jednu. Některé čekají na jiné (traktor až po Zjebalovi).
  */
 
-export type JobId = 'omyx-caj' | 'zjebal-domu' | 'denny-auto' | 'sochar-leseni' | 'metejka-kulecnik' | 'vesta-jerab' | 'kibi-schovej' | 'plotkova-flasky';
+export type JobId =
+  | 'omyx-caj' | 'zjebal-domu' | 'denny-auto' | 'sochar-leseni' | 'metejka-kulecnik' | 'vesta-jerab' | 'kibi-schovej' | 'plotkova-flasky'
+  | 'prcka-nafta' | 'awe-karel' | 'natala-pohreb' | 'minivesta-babeta';
 
 export interface JobDef {
   id: JobId;
@@ -15,6 +17,8 @@ export interface JobDef {
   requires: JobId[];
   /** Odměna při splnění (peníze z mise si hráč drží zvlášť: čaj, výkup auta). */
   reward: { money: number; rel: number };
+  /** Mise od Omladiny (ADR-037): nepočítá se do konce Aktu 1, hýbe respektem skupin. */
+  omladina?: boolean;
 }
 
 export const JOBS: JobDef[] = [
@@ -27,7 +31,41 @@ export const JOBS: JobDef[] = [
   { id: 'vesta-jerab', giver: 'vesta', title: 'Jeřáb pro Vestu', requires: [], reward: { money: 700, rel: 15 } },
   { id: 'kibi-schovej', giver: 'kibi', title: 'Schovej Kibiho', requires: [], reward: { money: 300, rel: 20 } },
   { id: 'plotkova-flasky', giver: 'plotkova', title: 'Flašky pro Omladinu', requires: [], reward: { money: 400, rel: 15 } },
+  // Omladina (zadání ze 28. 11. 2026, ADR-037). Raškovice otevírá Vesta s jeřábem.
+  { id: 'prcka-nafta', giver: 'prcka', title: 'Nafta pro Přčku', requires: ['vesta-jerab'], reward: { money: 550, rel: 15 }, omladina: true },
+  { id: 'awe-karel', giver: 'awe', title: 'Kde je Karel', requires: [], reward: { money: 500, rel: 20 }, omladina: true },
+  { id: 'natala-pohreb', giver: 'natala', title: 'Pohřeb v lese', requires: ['denny-auto'], reward: { money: 800, rel: 20 }, omladina: true },
+  { id: 'minivesta-babeta', giver: 'miniVesta', title: 'Babeta', requires: ['vesta-jerab'], reward: { money: 450, rel: 15 }, omladina: true },
 ];
+
+// ---------- Awe: Karel ----------
+
+/** Kde může Karel ležet (jména budov a míst v Morávce). */
+export const KAREL_SPOTS = ['Kostel', 'Pila', 'Hasiči', 'Chata', 'Přehrada'] as const;
+export type KarelSpot = (typeof KAREL_SPOTS)[number];
+
+/** Kdo ze štamgastů chce Karla taky (Denny sochař ne, ten má umění). */
+export const KAREL_RIVALS: NpcId[] = ['vesta', 'omyx', 'metejka', 'zjebal', 'kibi'];
+
+export interface KarelPlan {
+  /** Jedinečný kód mise téhle hry (ukáže se v HUD). */
+  code: string;
+  spot: KarelSpot;
+  rival: NpcId;
+}
+
+/**
+ * Z náhodného semínka nové hry: kód mise, skrýš a soupeř. Stejné semínko = stejná hra,
+ * takže se to po načtení nezmění.
+ */
+export function karelPlan(seed: number): KarelPlan {
+  const s = Math.abs(Math.floor(seed)) || 1;
+  const code = `KAREL-${s.toString(36).toUpperCase().padStart(6, '0').slice(-6)}`;
+  return { code, spot: KAREL_SPOTS[s % KAREL_SPOTS.length], rival: KAREL_RIVALS[Math.floor(s / 7) % KAREL_RIVALS.length] };
+}
+
+/** Kolik dá soupeř za Karla (víc než Awe, ať je to dilema). */
+export const KAREL_RIVAL_PRICE = 800;
 
 // ---------- Metějka: kulečník ----------
 
@@ -81,9 +119,9 @@ export function jobStatus(id: JobId, active: string, flags: readonly string[]): 
   return active ? 'busy' : 'open';
 }
 
-/** Všechny mise v eRku hotové? */
+/** Všechny mise v eRku hotové? (Omladina se do konce Aktu 1 nepočítá.) */
 export function allJobsDone(flags: readonly string[]): boolean {
-  return JOBS.every((j) => flags.includes(doneFlag(j.id)));
+  return JOBS.every((j) => j.omladina || flags.includes(doneFlag(j.id)));
 }
 
 // ---------- Zjebal: časový limit ----------

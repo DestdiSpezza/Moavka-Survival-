@@ -65,7 +65,7 @@ export function newProgress(hero: Hero = DEFAULT_HERO): Progress {
   return {
     version: 2, area: 'moravka', unlocked: ['moravka'], money: 500, score: 0, areaScore: {}, respect: {},
     hideouts: [], health: 100, armor: 0, clock: 0, tutorial: [],
-    arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 } },
+    arsenal: { owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0, karel: 0 } },
     hero: { ...hero }, story: newStory(),
   };
 }

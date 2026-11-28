@@ -11,6 +11,7 @@ import { Sound, type ShotKind } from '../audio/Sound';
 import { EXPLOSION_RADIUS } from '../systems/damage';
 import type { CrimeKind } from '../systems/wanted';
 import { T } from '../texts/cs';
+import { KAREL_FLEE } from '../story/omladina';
 import { PICKUP_RESPAWN, pickupSpots, type PickupKind } from '../world/pickups';
 import { blocksBullets, isSolid, Tile } from '../world/tiles';
 import { PED_LOOKS, TOUGH_LOOKS } from '../world/tileset';
@@ -50,7 +51,7 @@ export interface CrimeEvent {
   witness?: Pedestrian;
 }
 
-type WeaponKeys = Record<'one' | 'two' | 'three' | 'four' | 'five' | 'six' | 'cycle', Phaser.Input.Keyboard.Key>;
+type WeaponKeys = Record<'one' | 'two' | 'three' | 'four' | 'five' | 'six' | 'seven' | 'cycle', Phaser.Input.Keyboard.Key>;
 
 /**
  * Boj: zbraně hráče, střelba (i z auta), chodci a jejich reakce,
@@ -73,7 +74,7 @@ export class Combat {
   constructor(private game: GameScene) {
     const scene = game;
     const kb = scene.input.keyboard!;
-    this.keys = kb.addKeys({ one: 'ONE', two: 'TWO', three: 'THREE', four: 'FOUR', five: 'FIVE', six: 'SIX', cycle: 'Q' }) as WeaponKeys;
+    this.keys = kb.addKeys({ one: 'ONE', two: 'TWO', three: 'THREE', four: 'FOUR', five: 'FIVE', six: 'SIX', seven: 'SEVEN', cycle: 'Q' }) as WeaponKeys;
     scene.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => {
       if (dy !== 0) this.setArsenal(cycleWeapon(this.player.arsenal, dy > 0 ? 1 : -1));
     });
@@ -118,6 +119,7 @@ export class Combat {
       this.handleWeaponKeys();
       this.handleFire();
       this.collectPickups();
+      this.karelScare();
     }
     this.updatePeds(dt);
     this.updatePickups();
@@ -154,7 +156,7 @@ export class Combat {
     const k = this.keys;
     // V rozhovoru nebo v nabídce vybírají čísla volbu, ne zbraň.
     if (this.game.story?.inputBlocked || this.game.economy?.menuOpen) return;
-    const pressed = [k.one, k.two, k.three, k.four, k.five, k.six].findIndex((key) => Phaser.Input.Keyboard.JustDown(key));
+    const pressed = [k.one, k.two, k.three, k.four, k.five, k.six, k.seven].findIndex((key) => Phaser.Input.Keyboard.JustDown(key));
     if (pressed >= 0) this.setArsenal(selectWeapon(this.player.arsenal, WEAPON_ORDER[pressed]));
     if (Phaser.Input.Keyboard.JustDown(k.cycle) || took('cycle')) this.setArsenal(cycleWeapon(this.player.arsenal, 1));
   }
@@ -444,7 +446,20 @@ export class Combat {
     p.until = this.time + 1;
   }
 
-  private panic(p: Pedestrian, threat: Point): void {
+  private karelAt = 0;
+
+  /** S Karlem v ruce (ADR-037): kdo je blízko, utíká a něco křičí. */
+  private karelScare(): void {
+    if (this.player.arsenal.current !== 'karel' || this.game.driving || this.time < this.karelAt) return;
+    this.karelAt = this.time + 0.4;
+    for (const p of this.peds) {
+      if (!p.alive || p.role !== 'civil' || p.scripted || p.mood === 'flee') continue;
+      if (Phaser.Math.Distance.Between(p.x, p.y, this.player.x, this.player.y) > 56) continue;
+      this.panic(p, this.player, this.game.random() < 0.7 ? pick(KAREL_FLEE, this.game.random) : undefined);
+    }
+  }
+
+  private panic(p: Pedestrian, threat: Point, line?: string): void {
     const now = this.time;
     const wasCalm = p.mood !== 'flee';
     p.mood = 'flee';
@@ -453,7 +468,8 @@ export class Combat {
     p.fleeTarget = this.game.fleeSpot(p, threat, 110 + this.game.random() * 50);
     p.fleeTargetAt = now;
     // Volat policii se rozhodují svědci (Witnesses); panika jen křičí a utíká.
-    if (wasCalm && this.game.inView(p.x, p.y) && this.game.random() < 0.35) {
+    if (line && this.game.inView(p.x, p.y)) this.game.floatText(p.x, p.y - 10, line, '#ffb0f0', 1800);
+    else if (wasCalm && this.game.inView(p.x, p.y) && this.game.random() < 0.35) {
       this.game.floatText(p.x, p.y - 10, pick(T.panic, this.game.random), '#ffffff', 1600);
     }
   }
@@ -633,7 +649,7 @@ export class Combat {
       const info = penalty();
       pl.health = 100;
       pl.armor = 0;
-      pl.arsenal = { ...pl.arsenal, owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 } };
+      pl.arsenal = { ...pl.arsenal, owned: ['fists'], current: 'fists', ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0, karel: 0 } };
       pl.move = { stamina: 100, exhausted: false };
       pl.dead = false;
       pl.setTexture('player');

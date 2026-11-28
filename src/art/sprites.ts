@@ -281,7 +281,7 @@ export function generateVehicleSprites(scene: Phaser.Scene): void {
 // ================= Postavy =================
 
 export type Hair = 'short' | 'long' | 'bald' | 'mohawk' | 'cap' | 'helmet' | 'beanie' | 'gray' | 'ponytail' | 'punkf';
-export type Tool = 'none' | 'bat' | 'pistol' | 'long' | 'axe' | 'bottle' | 'sling' | 'knife';
+export type Tool = 'none' | 'bat' | 'pistol' | 'long' | 'axe' | 'bottle' | 'sling' | 'knife' | 'karel';
 
 export interface HumanLook {
   jacket: Color;
@@ -450,6 +450,12 @@ function tool(p: Painter, x: number, y: number, t: Tool): void {
       p.rect(x, y, 2, 2, 0x3a2a1a);
       p.rect(x + 2, y, 3, 1, 0xd8d8d8);
       break;
+    case 'karel':
+      // Karel: dlouhý, černý, gumový. Víc netřeba.
+      p.rect(x, y, 11, 3, 0x141418);
+      p.rect(x + 9, y - 1, 3, 5, 0x1e1e24);
+      p.rect(x + 1, y, 9, 1, 0x3a3a44);
+      break;
     default:
   }
 }
@@ -489,6 +495,12 @@ const NPC_LOOKS: Record<string, HumanLook> = {
   dennyVysoky: { jacket: 0x3a5a8a, pants: 0x3a5a8a, hair: 'cap', hairColor: 0x8a2a1a, skin: SKIN[1], tool: 'none' },
   dennySochar: { jacket: 0x7a6a5a, pants: 0x5a4a3a, hair: 'long', hairColor: 0x5a5a5a, skin: SKIN[3], tool: 'none', pattern: 'patches' },
   kibi: { jacket: 0xe86ab0, pants: 0x1a1a3a, hair: 'short', hairColor: 0xd8c070, skin: SKIN[0], tool: 'none', pattern: 'stripes' },
+  // Omladina, co dává mise (ADR-037): fialová jako skupina, ale každý jinak.
+  prcka: { jacket: 0x6a3ab0, pants: 0x2a2a2a, hair: 'cap', hairColor: 0xe8e8e8, skin: SKIN[0], tool: 'none', pattern: 'stripes' },
+  awe: { jacket: 0xe060d0, pants: 0x2a1a3a, hair: 'punkf', hairColor: 0x40e0e0, skin: SKIN[2], tool: 'none' },
+  natala: { jacket: 0x3a4a6a, pants: 0x1a1a1a, hair: 'long', hairColor: 0x1a1a1a, skin: SKIN[2], tool: 'none', pattern: 'patches' },
+  miniVesta: { jacket: 0xc8302a, pants: 0x2a2a3a, hair: 'short', hairColor: 0x2a1a10, skin: SKIN[0], tool: 'none', pattern: 'stripes' },
+  'awe-karel': { jacket: 0xe060d0, pants: 0x2a1a3a, hair: 'punkf', hairColor: 0x40e0e0, skin: SKIN[2], tool: 'karel' },
 };
 
 const GANG_LOOKS: Record<string, HumanLook> = {
@@ -503,6 +515,7 @@ export function generateHumanSprites(scene: Phaser.Scene): void {
   sh('player-bat', { ...PLAYER_LOOK, tool: 'bat' });
   sh('player-pistol', { ...PLAYER_LOOK, tool: 'pistol' });
   sh('player-long', { ...PLAYER_LOOK, tool: 'long' });
+  sh('player-karel', { ...PLAYER_LOOK, tool: 'karel' });
   CIVILIANS.forEach((l, i) => sh(`ped-${i}`, l));
   sh('driver', CIVILIANS[0]);
   sh('cop', { jacket: 0x2a4a9a, pants: 0x1a2a5a, hair: 'cap', hairColor: 0x1a2a5a, skin: SKIN[0], tool: 'pistol' });
@@ -514,6 +527,7 @@ export function generateHumanSprites(scene: Phaser.Scene): void {
   sh('player-f-bat', { ...HEROINE, tool: 'bat' });
   sh('player-f-pistol', { ...HEROINE, tool: 'pistol' });
   sh('player-f-long', { ...HEROINE, tool: 'long' });
+  sh('player-f-karel', { ...HEROINE, tool: 'karel' });
   // Postavy příběhu (docs/hra/POSTAVY.md).
   for (const [id, look] of Object.entries(NPC_LOOKS)) sh(`npc-${id}`, look);
   // Dealer Omyx: zelená mikina s pruhy, čepice.

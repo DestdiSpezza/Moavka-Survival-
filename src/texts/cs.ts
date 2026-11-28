@@ -34,6 +34,7 @@ export const T = {
     shotgun: 'Brokovnice ze staré pily. Kdo ji tam nechal, se nepřizná.',
     smg: 'Samopal u hráze. Kdo ho tu asi zapomněl…',
     caj: 'Beskydský čaj. Voní po Beskydech. A po průšvihu.',
+    karel: 'Karel. Lidi před ním utíkají. Chápeš proč.',
     vest: 'Neprůstřelná vesta. Obecní úřad šetří na špatných místech.',
     medkit: 'Lékárnička. Obvaz a půl litru slivovice.',
     money: '{Sebral|Sebrala} jsi peníze.',

@@ -2,6 +2,9 @@ import type { JobId } from '../../story/jobs';
 import type { GameScene } from '../GameScene';
 import type { Story } from '../Story';
 import { BottlesJob } from './BottlesJob';
+import { BurialJob } from './BurialJob';
+import { BabetaJob, NaftaJob } from './FetchJob';
+import { KarelJob } from './KarelJob';
 import { DennyJob } from './DennyJob';
 import { KibiJob } from './KibiJob';
 import { PoolJob } from './PoolJob';
@@ -29,5 +32,13 @@ export function createJob(id: JobId, game: GameScene, story: Story): Job {
       return new KibiJob(game, story);
     case 'plotkova-flasky':
       return new BottlesJob(game, story);
+    case 'prcka-nafta':
+      return new NaftaJob(game, story);
+    case 'awe-karel':
+      return new KarelJob(game, story);
+    case 'natala-pohreb':
+      return new BurialJob(game, story);
+    case 'minivesta-babeta':
+      return new BabetaJob(game, story);
   }
 }

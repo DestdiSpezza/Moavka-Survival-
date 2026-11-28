@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { TILE } from '../config';
 import { Pedestrian } from '../entities/Pedestrian';
 import type { Dialog, DialogOption } from '../story/dialog';
-import { NPCS, type NpcId } from '../story/npcs';
+import { NPCS, OMLADINA, type NpcId } from '../story/npcs';
+import { omladinaChat } from '../story/omladina';
 import { pixelFont } from './BootScene';
 import type { GameScene } from './GameScene';
 
@@ -32,6 +33,37 @@ export class Townsfolk {
     const s = game.world.spots;
     if (s.kobyla) this.add('kobyla', (s.kobyla.x) * TILE, (s.kobyla.y) * TILE);
     if (s.denny) this.add('dennyVysoky', (s.denny.x) * TILE, (s.denny.y) * TILE);
+    if (game.area.id === 'moravka') this.addOmladina();
+  }
+
+  /** Omladina s misemi (ADR-037): tři u hřiště (Přčka s BMW, Awe, Mini Vesta s babetou), Natala u Chaty. */
+  private addOmladina(): void {
+    const g = this.game;
+    const h = g.world.spots.hriste;
+    const at = (dx: number, dy: number) => ({ x: (h.x + dx) * TILE, y: (h.y + dy) * TILE });
+    const prop = (key: string, p: { x: number; y: number }) => {
+      const img = g.add.image(p.x, p.y, key).setDepth(5);
+      g.cameras.getCamera('minimap')?.ignore(img);
+      return img;
+    };
+    const p = at(-4, 0);
+    this.add('prcka', p.x, p.y);
+    this.bmw = prop('bmw', at(-4, 2.2));
+    const a = at(0, 0.5);
+    this.add('awe', a.x, a.y);
+    const m = at(4, 0);
+    this.add('miniVesta', m.x, m.y);
+    this.babeta = prop('babeta', at(4, 1.8));
+    const chata = g.world.buildings.find((b) => b.name === 'Chata');
+    if (chata) this.add('natala', (chata.x + chata.w / 2) * TILE, (chata.y + chata.h + 1) * TILE);
+  }
+
+  /** Přčkovo BMW a babeta Mini Vesty (rekvizity u hřiště). */
+  bmw: Phaser.GameObjects.Image | null = null;
+  babeta: Phaser.GameObjects.Image | null = null;
+
+  ped(id: NpcId): Pedestrian | null {
+    return this.folk.find((f) => f.id === id)?.ped ?? null;
   }
 
   get denny(): Pedestrian | null {
@@ -84,6 +116,7 @@ export class Townsfolk {
     const story = this.game.story;
     if (f.id === 'kobyla') story.talk('kobyla2');
     else if (f.id === 'dennyVysoky') story.talkNpc('dennyVysoky', 'Game', this.garageDialog());
+    else if (OMLADINA.includes(f.id)) story.talkNpc(f.id, 'Game', omladinaChat(f.id));
   }
 
   update(): void {

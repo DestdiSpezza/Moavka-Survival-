@@ -117,5 +117,12 @@ Všichni plnoletí (ADR-018). Pět typů, každý má slabinu (argument, který 
 - **Šimon VPN** (paranoik): zabere diskrétnost, naštve Insta.
 - **Bára Vibe**: zabere účinek, naštve původ („tam se koupe Metějka“).
 
+### Omladina s misemi (ADR-037)
+Všichni plnoletí (ADR-018), mluví Gen Z slangem.
+- **Přčka:** u hřiště s BMW (splácí máma). Prachy nemá, má aury. Mise *Nafta pro Přčku*.
+- **Awe:** u hřiště, „jako aww, ale s é“. Ztratila Karla. Mise *Kde je Karel*; Karla pak dá hráči.
+- **Ta z Chaty aj z Ostravy:** před Chatou, mluví ostravsky („šak“, „aj“). Chce vidět Dennyho s bagrem. Mise *Pohřeb v lese*.
+- **Mini Vesta:** u hřiště s babetou, taky červená mikina, Vestova ségra není. Mise *Babeta*.
+
 ### Zmínění, zatím bez role
 - **Lakatoš** (Hasiči ho pořád hledají, nechává hadice v eRku), **pan Franta** (rozhlas: odjel autem z hospody).

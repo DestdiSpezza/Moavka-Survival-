@@ -40,3 +40,4 @@ Architecture Decision Records: proč je hra takhle, jak je. Každé rozhodnutí 
 | [ADR-034](0034-skupiny-napadaji-az-od-65.md) | Skupiny napadají až od respektu −65 | přijato |
 | [ADR-035](0035-nazev-grand-theft-moravka.md) | Název hry Grand Theft Morávka | přijato |
 | [ADR-036](0036-upozorneni-po-logu.md) | Upozornění po logu | přijato |
+| [ADR-037](0037-mise-omladiny.md) | Mise Omladiny (Přčka, Awe, Ta z Chaty, Mini Vesta) | přijato |

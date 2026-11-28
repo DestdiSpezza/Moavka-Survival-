@@ -229,6 +229,117 @@ export function jobOfferDialog(story: Story, id: JobId, base: string): Dialog {
         },
       };
     }
+    // ---------- Omladina (ADR-037) ----------
+    case 'prcka-nafta': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('prcka-nafta'), next: 'ok' });
+      return {
+        id: 'job-prcka',
+        start: 'r0',
+        nodes: {
+          r0: {
+            speaker: 'prcka',
+            text: 'Bro, emergency. BMW nemá naftu. Stojí tu od úterka. V Raškovicích je benzína u obchodu, kanystr stojí pět stovek. Skočíš? Prachy ti… pak nějak.',
+            enter: (c) => c.know('prcka'),
+            options: [take('Skočím.'), { text: 'Proč nejedeš sám?', next: 'r1' }, chat],
+          },
+          r1: {
+            speaker: 'prcka',
+            text: 'Protože BMW nemá naftu, bruh. To je ten problém. A na bus nemám. A pěšky to je cringe.',
+            options: [take('Tak jo, skočím.'), { text: 'A zaplatíš mi to?', next: 'r2' }, end('Teď ne.')],
+          },
+          r2: {
+            speaker: 'prcka',
+            text: 'Jasně. Stoprocentně. Asi. Mám to na Revolutu. Teda máma má. No cap, vrátím ti to. Někdy. S úrokem v aurách.',
+            options: [take('Dobře, věřím ti. Nevím proč.'), end('To zní jako ne.'), chat],
+          },
+          ok: {
+            speaker: 'prcka',
+            text: 'W! Výjezd na Raškovice je vlevo nahoře. Kanystr přines sem k BMW, natankuju to já. Teda ty. Já budu dohlížet.',
+            options: [end('Jasně.'), end('Dohlížet. Jasně.'), end('Bruh.')],
+          },
+        },
+      };
+    }
+    case 'awe-karel': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('awe-karel'), next: 'ok' });
+      return {
+        id: 'job-awe',
+        start: 'w0',
+        nodes: {
+          w0: {
+            speaker: 'awe',
+            text: 'Hej, {jmeno}… ztratila jsem Karla. Je velkej, černej a gumovej. Byla to láska. Najdeš mi ho? Prosím. Fakt. Tohle není ironie.',
+            enter: (c) => c.know('awe'),
+            options: [take('Najdu Karla.'), { text: 'Kdo je Karel?', next: 'w1' }, chat],
+          },
+          w1: {
+            speaker: 'awe',
+            text: 'Karel je… pomůcka. Na stres. Velkej stres. Obří stres. Víc ti neřeknu, nejsi připraven{ý|á}. Hlavně ať ho nenajde někdo z eRka, ti štamgasti jsou na Karla hrozně zvědaví.',
+            options: [take('Najdu ho.'), end('Radši nechci vědět víc.'), chat],
+          },
+          ok: {
+            speaker: 'awe',
+            text: 'Naposled jsem ho měla na výletě. Nevím přesně kde, měla jsem vibe. Když ho uvidíš, poznáš ho. Neuvidíš nic jinýho.',
+            options: [end('Poznám ho.'), end('Bojím se.'), end('Slay.')],
+          },
+        },
+      };
+    }
+    case 'natala-pohreb': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('natala-pohreb'), next: 'ok' });
+      return {
+        id: 'job-natala',
+        start: 'n0',
+        nodes: {
+          n0: {
+            speaker: 'natala',
+            text: 'No čau. Ty si {ten|ta}, co pomohl{|a} Dennymu s autem, ne? Tak máš u mě kredit. Potřebuju pohřeb. Kohokoli. Na tom nezáleží, ja chcu vidět Dennyho s bagrem.',
+            enter: (c) => c.know('natala'),
+            options: [take('Kohokoli? Beru.'), { text: 'Proč proboha?', next: 'n1' }, chat],
+          },
+          n1: {
+            speaker: 'natala',
+            text: 'Šak sem z Ostravy, tam sa tak baví. Ty někoho sejmeš, naložíš do dodávky abo na traktor, odvezeš do lesa za mou Chatou. Denny přijede s bagrem. Osm stovek.',
+            options: [take('Tak jo.'), { text: 'A fízlové?', next: 'n2' }, end('Na to nemám žaludek.')],
+          },
+          n2: {
+            speaker: 'natala',
+            text: 'Fízly setřes, než přijedeš. Denny před publikem nekope. Je stydlivej. Hm.',
+            options: [take('Jdu na to.'), end('Teď ne.'), chat],
+          },
+          ok: {
+            speaker: 'natala',
+            text: 'Les hned za Chatou. Já tam budu. Vem si rukavice. Ne kvůli stopám, je to fuj.',
+            options: [end('Rukavice. Jasně.'), end('Fuj. Jasně.'), end('Hm.')],
+          },
+        },
+      };
+    }
+    case 'minivesta-babeta': {
+      const take = (text: string): DialogOption => ({ text, do: () => story.startJob('minivesta-babeta'), next: 'ok' });
+      return {
+        id: 'job-minivesta',
+        start: 'v0',
+        nodes: {
+          v0: {
+            speaker: 'miniVesta',
+            text: 'Yo. Babetě chybí karburátor. V Raškovicích v garáži maj poslední kus, prej. Přivezeš mi ho? Dám ti prachy. Teda Vesta mi je dal. Na něco jinýho.',
+            enter: (c) => c.know('miniVesta'),
+            options: [take('Přivezu.'), { text: 'Jsi Vestova ségra?', next: 'v1' }, chat],
+          },
+          v1: {
+            speaker: 'miniVesta',
+            text: 'Ne. Jen mám taky červenou mikinu. Vesta říká, že ho kopíruju. Já říkám, že on kopíruje mě, jen dřív.',
+            options: [take('Tak jo, přivezu.'), end('Teď ne.'), chat],
+          },
+          ok: {
+            speaker: 'miniVesta',
+            text: 'Výjezd na Raškovice vlevo nahoře. Garáž poznáš podle toho, že je to garáž. Karburátor si zaplať, já ti to pak dám. Fr.',
+            options: [end('Fr.'), end('Jasně.'), end('Pak. Jasně.')],
+          },
+        },
+      };
+    }
   }
 }
 
@@ -243,6 +354,10 @@ export function jobActiveDialog(story: Story, id: JobId, base: string): Dialog {
     'vesta-jerab': 'Kde je můj jeřáb? Sousedi se ptají. Teda neptají, ale budou.',
     'kibi-schovej': 'Psst. Jsou pořád venku? Nejsem tady.',
     'plotkova-flasky': 'Hik. Jedem?',
+    'prcka-nafta': 'Bro, kde je nafta? BMW se stydí. Stojí tu jak Škodovka.',
+    'awe-karel': 'Karel? Máš Karla? Neříkej mi, že ho má někdo z eRka. To bych nedala.',
+    'natala-pohreb': 'No? Kde je ten nebožtík? Denny už startuje bagr. Teda ještě ne, ale bude.',
+    'minivesta-babeta': 'Karburátor? Babeta už má mech. Fr.',
   };
   const giveUp: Record<JobId, string> = {
     'omyx-caj': 'Čaj si nech, na památku. Peníze ti nevrátím, jsem dealer, ne banka.',
@@ -253,6 +368,10 @@ export function jobActiveDialog(story: Story, id: JobId, base: string): Dialog {
     'vesta-jerab': 'Jasně. Řeknu to všem.',
     'kibi-schovej': 'Tak to jsem mrtvej. Pozdravuj mámu. Teda moji. Ne, radši ne.',
     'plotkova-flasky': 'Tak je vypiju tady. Škoda by zkazit.',
+    'prcka-nafta': 'L. Tak BMW bude dekorace. Aspoň nespotřebuje.',
+    'awe-karel': 'Ok. Karel je venku sám. Ve tmě. To je trauma, bro.',
+    'natala-pohreb': 'Pche. Venkov. V Ostravě by to někdo udělal za pivo.',
+    'minivesta-babeta': 'Tak jdu pěšky. Jak boomer.',
   };
   const speaker = jobOf(id)!.giver;
   return {

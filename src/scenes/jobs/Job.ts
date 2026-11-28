@@ -1,5 +1,7 @@
 import type { Point } from '../../systems/combat';
+import type { Dialog } from '../../story/dialog';
 import type { JobId } from '../../story/jobs';
+import type { NpcId } from '../../story/npcs';
 import type { GameScene } from '../GameScene';
 import type { Story } from '../Story';
 
@@ -30,5 +32,21 @@ export abstract class Job {
   interact(): boolean {
     return false;
   }
+  /** Rozhovor s postavou, který mise přebírá (předání věci, soupeř o Karla); null = běžný. */
+  dialogFor(_npc: NpcId, _base: string): Dialog | null {
+    return null;
+  }
+
+  /** Krátká animace: hráč stojí, kroky jdou po sobě (čekání v ms, co se stane), pak `then`. */
+  protected cutscene(steps: Array<[number, () => void]>, then: () => void): void {
+    this.story.cutscene = true;
+    let at = 0;
+    for (const [ms, fn] of steps) this.g.time.delayedCall((at += ms), fn);
+    this.g.time.delayedCall(at + 400, () => {
+      this.story.cutscene = false;
+      then();
+    });
+  }
+
   cleanup(): void {}
 }

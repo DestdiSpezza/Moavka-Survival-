@@ -3,13 +3,14 @@
 > Tenhle soubor je „paměť“ projektu: kde jsme skončili, co je rozdělané, co čeká na autora.
 > Aktualizuj ho na konci každé větší práce (spolu s [CHANGELOG.md](../CHANGELOG.md) a [TODO.md](../TODO.md)).
 
-**Poslední aktualizace:** 2026-11-27
+**Poslední aktualizace:** 2026-11-28
 
 ## Kde jsme
 
 - Hra je nasazená na https://destdispezza.github.io/Moavka-Survival-/ z větve `main`.
 - **Akt 1** je hratelný celý: úvod (logo, prolog, hrdina, autobus), hospoda eRko, osm misí od štamgastů, parťáci, těžší start.
 - Po všech osmi misích se ukáže „Akt 1 pokračuje…“: **konec Aktu 1 a přechod do Aktu 2 čeká na zadání příběhu.**
+- **Omladina** má čtyři vlastní mise (ADR-037): Nafta, Karel, Pohřeb v lese, Babeta; Karel je zbraň.
 - Hra jde hrát na počítači i na mobilu (na šířku).
 
 ## Fáze

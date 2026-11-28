@@ -2,6 +2,14 @@
 
 Co přibylo, po fázích a dnech. Nejnovější nahoře. Podrobnosti v commitech a v [docs/adr/](docs/adr/README.md).
 
+## 2026-11-28
+
+### Mise Omladiny (ADR-037)
+- Nové postavy: Přčka s BMW, Awe a Mini Vesta s babetou u hřiště, Ta z Chaty aj z Ostravy u Chaty.
+- Mise: Nafta pro Přčku a Babeta (Raškovice), Kde je Karel (náhodná skrýš, kód a soupeř za hru), Pohřeb v lese (dodávka nebo traktor, Denny s bagrem).
+- Karel jako zbraň (7 / Q): lidi utíkají a křičí.
+- Nové kecy o Omladině u všech skupin; playtest `scripts/playtest/mise-omladina.cjs`.
+
 ## 2026-11-27
 
 ### Upozornění po logu (ADR-036)

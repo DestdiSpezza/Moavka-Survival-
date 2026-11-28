@@ -29,6 +29,11 @@ const SPOTS: Record<NpcId, { x: number; y: number; face: number }> = {
   kibi: { x: 2, y: 7.8, face: Math.PI },
   kobyla: { x: 0, y: 0, face: 0 },
   ajina: { x: 0, y: 0, face: 0 },
+  // Omladina do eRka nechodí.
+  prcka: { x: 0, y: 0, face: 0 },
+  awe: { x: 0, y: 0, face: 0 },
+  natala: { x: 0, y: 0, face: 0 },
+  miniVesta: { x: 0, y: 0, face: 0 },
 };
 
 type Box = [number, number, number, number];

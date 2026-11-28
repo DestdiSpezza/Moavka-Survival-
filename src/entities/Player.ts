@@ -54,7 +54,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   updateLook(): void {
     const w = WEAPONS[this.arsenal.current];
     const base = this.female ? 'player-f' : 'player';
-    const key = w.id === 'fists' ? base : w.id === 'bat' ? `${base}-bat` : w.id === 'pistol' ? `${base}-pistol` : `${base}-long`;
+    const key = w.id === 'fists' ? base : w.id === 'bat' ? `${base}-bat` : w.id === 'pistol' ? `${base}-pistol` : w.id === 'karel' ? `${base}-karel` : `${base}-long`;
     if (this.texture.key !== key) this.setTexture(key);
     this.setOrigin(8 / 24, 0.5);
   }

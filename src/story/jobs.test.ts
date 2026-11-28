@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { allJobsDone, bottlesEnough, carriesPassenger, poolRound, dennyAccepts, doneFlag, jobBy, JOBS, jobStatus, rideTimeLimit } from './jobs';
+import { allJobsDone, bottlesEnough, carriesPassenger, poolRound, dennyAccepts, doneFlag, jobBy, JOBS, jobStatus, karelPlan, KAREL_RIVALS, KAREL_SPOTS, rideTimeLimit } from './jobs';
 
 describe('mise v eRku', () => {
-  it('osm misí, každou dává jiný štamgast', () => {
-    expect(JOBS.map((j) => j.giver)).toEqual(['omyx', 'zjebal', 'dennyVysoky', 'dennySochar', 'metejka', 'vesta', 'kibi', 'plotkova']);
+  it('osm misí od štamgastů a čtyři od Omladiny, každou dává někdo jiný', () => {
+    expect(JOBS.map((j) => j.giver)).toEqual(['omyx', 'zjebal', 'dennyVysoky', 'dennySochar', 'metejka', 'vesta', 'kibi', 'plotkova', 'prcka', 'awe', 'natala', 'miniVesta']);
     expect(new Set(JOBS.map((j) => j.giver)).size).toBe(JOBS.length);
     expect(jobBy('omyx')?.id).toBe('omyx-caj');
     expect(jobBy('kibi')?.id).toBe('kibi-schovej');
@@ -30,6 +30,27 @@ describe('mise v eRku', () => {
   it('všechny hotové', () => {
     expect(allJobsDone(JOBS.slice(1).map((j) => doneFlag(j.id)))).toBe(false);
     expect(allJobsDone(JOBS.map((j) => doneFlag(j.id)))).toBe(true);
+    // Omladina se do konce Aktu 1 nepočítá.
+    expect(allJobsDone(JOBS.filter((j) => !j.omladina).map((j) => doneFlag(j.id)))).toBe(true);
+  });
+
+  it('Omladina: Raškovice až po jeřábu, pohřeb až po Dennyho autu', () => {
+    expect(jobStatus('prcka-nafta', '', [])).toBe('locked');
+    expect(jobStatus('minivesta-babeta', '', [doneFlag('vesta-jerab')])).toBe('open');
+    expect(jobStatus('natala-pohreb', '', [])).toBe('locked');
+    expect(jobStatus('natala-pohreb', '', [doneFlag('denny-auto')])).toBe('open');
+    expect(jobStatus('awe-karel', '', [])).toBe('open');
+  });
+
+  it('Karel: stejné semínko = stejný plán, různá semínka = různé kódy', () => {
+    expect(karelPlan(123456)).toEqual(karelPlan(123456));
+    expect(karelPlan(123456).code).not.toBe(karelPlan(654321).code);
+    for (const seed of [1, 7, 99, 2 ** 31 - 1]) {
+      const p = karelPlan(seed);
+      expect(p.code).toMatch(/^KAREL-[0-9A-Z]{6}$/);
+      expect(KAREL_SPOTS).toContain(p.spot);
+      expect(KAREL_RIVALS).toContain(p.rival);
+    }
   });
 
   it('Zjebal: čas na trasu +10 %, pomalejší auto má víc času', () => {

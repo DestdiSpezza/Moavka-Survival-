@@ -1,6 +1,6 @@
 /** Zbraně, munice, zdraví a vesta. Čistá logika bez vykreslování. */
 
-export type WeaponId = 'fists' | 'bat' | 'pistol' | 'shotgun' | 'smg' | 'caj';
+export type WeaponId = 'fists' | 'bat' | 'pistol' | 'shotgun' | 'smg' | 'caj' | 'karel';
 
 export interface WeaponDef {
   id: WeaponId;
@@ -32,9 +32,11 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   shotgun: { id: 'shotgun', name: 'Brokovnice', melee: false, damage: 12, cooldown: 0.9, range: 150, pellets: 7, spread: 0.45, auto: false, pickupAmmo: 10, maxAmmo: 50, noise: 300 },
   smg: { id: 'smg', name: 'Samopal', melee: false, damage: 14, cooldown: 0.09, range: 230, pellets: 1, spread: 0.12, auto: true, pickupAmmo: 60, maxAmmo: 300, noise: 260 },
   caj: { id: 'caj', name: 'Beskydský čaj', melee: false, damage: 0, cooldown: 0.5, range: 26, pellets: 0, spread: 0, auto: false, pickupAmmo: 3, maxAmmo: 9, noise: 0, item: true },
+  // Karel od Awe (ADR-037): obří gumová věc, lidi před ní utíkají. Rána je spíš potupa.
+  karel: { id: 'karel', name: 'Karel', melee: true, damage: 14, cooldown: 0.5, range: 22, pellets: 1, spread: 0, auto: false, pickupAmmo: 0, maxAmmo: 0, noise: 0 },
 };
 
-export const WEAPON_ORDER: WeaponId[] = ['fists', 'bat', 'pistol', 'shotgun', 'smg', 'caj'];
+export const WEAPON_ORDER: WeaponId[] = ['fists', 'bat', 'pistol', 'shotgun', 'smg', 'caj', 'karel'];
 
 export interface Arsenal {
   owned: WeaponId[];
@@ -43,7 +45,7 @@ export interface Arsenal {
 }
 
 export function newArsenal(): Arsenal {
-  return { owned: ['fists'], ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0 }, current: 'fists' };
+  return { owned: ['fists'], ammo: { fists: 0, bat: 0, pistol: 0, shotgun: 0, smg: 0, caj: 0, karel: 0 }, current: 'fists' };
 }
 
 /** Sebrání zbraně: přidá ji do výbavy a doplní munici (do maxima). Novou zbraň rovnou vezme do ruky. */

@@ -28,6 +28,17 @@ Po „Do hospody“ běží volná hra a mise od štamgastů. Hráč má najedno
 
 Po všech osmi: „Akt 1 pokračuje…“ (konec aktu čeká na zadání).
 
+## Mise od Omladiny (ADR-037)
+
+Nepočítají se do konce Aktu 1; Omladina tě má radši, Hasiči a Štamgasti míň.
+
+| Mise | Kdo dává | Úkol | Odměna | Podmínka |
+|---|---|---|---|---|
+| Nafta pro Přčku | Přčka (hřiště) | Kanystr nafty z benzíny v Raškovicích (500 Kč ze svého) k BMW; tankování a kecy. | 550 Kč | Jeřáb pro Vestu |
+| Kde je Karel | Awe (hřiště) | Najít Karla (skrýš, kód a soupeř losované za hru), donést Awe, nebo prodat soupeři za 800 Kč. | 500 Kč + Karel (zbraň) | – |
+| Pohřeb v lese | Ta z Chaty aj z Ostravy (Chata) | Zabít chodce, dodávkou nebo traktorem do lesa za Chatou, bez hvězd; Denny kope bagrem. | 800 Kč | Auto pro Dennyho |
+| Babeta | Mini Vesta (hřiště) | Karburátor z garáže v Raškovicích (300 Kč). | 450 Kč | Jeřáb pro Vestu |
+
 ## Jak přidat misi
 
 1. Do `src/story/jobs.ts` přidat `JobId` a záznam v `JOBS` (kdo dává, název, podmínky, odměna).

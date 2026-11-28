@@ -68,6 +68,8 @@ export class Story {
 
   constructor(private game: GameScene) {
     this.state = game.progress.story;
+    // Semínko téhle hry pro misi Awe (kód, skrýš Karla, soupeř), ADR-037.
+    if (!this.state.counts.karelSeed) this.state.counts.karelSeed = 1 + Math.floor(Math.random() * 2 ** 31);
     const pub = game.world.buildings.find((b) => b.name === 'Hospoda')!;
     this.pubDoor = { x: (pub.x + pub.w / 2) * TILE, y: (pub.y + pub.h) * TILE + 7 };
     this.marker = game.add.circle(0, 0, 10, 0xffd23f, 0.25).setStrokeStyle(2, 0xffd23f).setDepth(6).setVisible(false);
@@ -177,7 +179,9 @@ export class Story {
       this.talk(this.makeUpDialog(npc, baseId), caller, onDone);
       return;
     }
-    if (def && status === 'open') this.talk(jobOfferDialog(this, def.id, baseId), caller, onDone);
+    const hook = this.job?.dialogFor(npc, baseId);
+    if (hook) this.talk(hook, caller, onDone);
+    else if (def && status === 'open') this.talk(jobOfferDialog(this, def.id, baseId), caller, onDone);
     else if (def && status === 'active') this.talk(jobActiveDialog(this, def.id, baseId), caller, onDone);
     else if (caller === 'Pub' && (PAL_IDS as string[]).includes(npc)) this.talk(this.palDialog(npc as PalId, baseId), caller, onDone);
     else this.talk(baseId, caller, onDone);
@@ -330,8 +334,8 @@ export class Story {
   private resumeJob(): void {
     const id = this.state.job as JobId;
     if (!id) return;
-    // Jeřáb pro Vestu přežije přejezd mezi Morávkou a Raškovicemi.
-    if ((id === 'omyx-caj' && this.game.player.arsenal.ammo.caj > 0) || id === 'vesta-jerab') {
+    // Jeřáb, nafta a babeta přežijí přejezd mezi Morávkou a Raškovicemi; Karel se hledá dál.
+    if ((id === 'omyx-caj' && this.game.player.arsenal.ammo.caj > 0) || id === 'vesta-jerab' || id === 'prcka-nafta' || id === 'minivesta-babeta' || id === 'awe-karel') {
       const job = createJob(id, this.game, this);
       this.job = job;
       job.start(true);
@@ -352,6 +356,8 @@ export class Story {
       this.flag(doneFlag(def.id));
       if (def.reward.money) this.game.player.money += def.reward.money;
       this.state.rel[def.giver] = Phaser.Math.Clamp((this.state.rel[def.giver] ?? 0) + def.reward.rel, -100, 100);
+      // Omladině pomáhat: ona tě má radši, Hasiči a Štamgasti míň (přelévání respektu).
+      if (def.omladina) this.game.gangs.mission('omladina', 'missionGreen');
       const pay = def.reward.money ? ` +${def.reward.money} Kč.` : '';
       this.announce(`MISE SPLNĚNA: ${def.title.toUpperCase()}`, `${job.doneText}${pay}`.trim());
       Sound.jingle(true);
